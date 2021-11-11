@@ -562,10 +562,10 @@ number PatchyShapeInteraction<number>::_patchy_interaction_notorsion(BaseParticl
 
 					number fa1Dsin =  _V_modDsin(PLPATCH_VM1,ta1);
 					number fb1Dsin =  _V_modDsin(PLPATCH_VM1,tb1);
-
+/*
 					tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
-					tmp_force += (qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
-
+					tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
+*/
 					//printf("CRITICAL 2 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
 					//torque VM3
 					number fa2b2Dsin =  _V_modDsin(PLPATCH_VM3,ta2b2);
@@ -586,6 +586,8 @@ number PatchyShapeInteraction<number>::_patchy_interaction_notorsion(BaseParticl
 					torquep += ppatch.cross(tmp_force);
 					torqueq += qpatch.cross(tmp_force);
 
+					tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
+					tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
 /*
 					tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1 / rdist);
 					tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin  / rdist);
