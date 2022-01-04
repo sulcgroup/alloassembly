@@ -8,7 +8,7 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 ADD_CUSTOM_TARGET(romano
 	#	DEPENDS PatchyShapeParticle PatchyShapeInteraction DirkInteraction DirkInteraction2 DirkInteractionBias NematicS Icosahedron HardIcoInteraction
-	DEPENDS HardIcoInteraction PLCluster PatchyShapeParticle PatchyShapeInteraction MCMovePatchyShape ChiralRodInteraction NematicS Swim ChiralRodExplicit Reappear CutVolume Grow Exhaust FakePressure FreeVolume Depletion NDepletion DepletionVolume AVBDepletion #MCMoveDesign
+	DEPENDS HardIcoInteraction PLCluster PLClusterTopology PatchyShapeParticle PatchyShapeInteraction MCMovePatchyShape ChiralRodInteraction NematicS Swim ChiralRodExplicit Reappear CutVolume Grow Exhaust FakePressure FreeVolume Depletion NDepletion DepletionVolume AVBDepletion #MCMoveDesign
 ) 
 
 SET(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -19,6 +19,7 @@ ADD_LIBRARY(FakePressure SHARED EXCLUDE_FROM_ALL src/Observables/FakePressure.cp
 ADD_LIBRARY(FreeVolume SHARED EXCLUDE_FROM_ALL src/Observables/FreeVolume.cpp)
 ADD_LIBRARY(PLCluster SHARED EXCLUDE_FROM_ALL  src/Observables/PLCluster.cpp  src/Interactions/PatchyShapeInteraction.cpp src/Particles/PatchyShapeParticle.cpp)
 
+ADD_LIBRARY(PLClusterTopology SHARED EXCLUDE_FROM_ALL  src/Observables/PLClusterTopology.cpp  src/Interactions/PatchyShapeInteraction.cpp src/Particles/PatchyShapeParticle.cpp)
 # Interactions
 ADD_LIBRARY(DirkInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/DirkInteraction.cpp)
 ADD_LIBRARY(DirkInteraction2 SHARED EXCLUDE_FROM_ALL src/Interactions/DirkInteraction2.cpp)
