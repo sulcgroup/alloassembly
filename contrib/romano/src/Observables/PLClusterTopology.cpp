@@ -176,12 +176,12 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
                             topologyout << k << " -> ("  ;
                             for (auto neigh = mylist.begin(); neigh != mylist.end(); ++neigh)
                             {
-                                topologyout << *neigh << " "; 
+                                topologyout << *neigh << " ";
                             }
 							// Remove last space
 							topologyout.seekp(-1, topologyout.cur);
 
-                        	topologyout << ")";
+							topologyout << "), ";
                         }
 
 						if(! this->_show_types)
@@ -195,6 +195,7 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
 						isempty = false;
 					}
 				}
+
 				if (!isempty) {
 					cluster_count++;
 					//std::sort(cluster_members.begin(),cluster_members.end());
@@ -202,8 +203,16 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
 					{
 						clusout << *k << " ";
 					}
-				    clusout << ")";
-					output_str << clusout.str() << " [" << topologyout.str() << "]";
+					// Remove last space
+					topologyout.seekp(-1, topologyout.cur);
+
+				    clusout << ") ";
+					output_str << clusout.str() << " [" << topologyout.str();
+
+					// Remove last comma and space
+					output_str.seekp(-2, output_str.cur);
+
+					output_str << "]";
 				}
 			}
 	}
