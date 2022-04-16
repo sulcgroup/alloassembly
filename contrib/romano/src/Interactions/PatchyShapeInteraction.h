@@ -160,7 +160,7 @@ public:
 	//inline number _exc_quadratic_vol_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
 
 
-	inline number _patchy_interaction_notorsion(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
+	inline number _patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
 
 	virtual bool multipatch_allowed(void) {return  ! this->_no_multipatch;}
 
@@ -211,12 +211,17 @@ public:
 	virtual void allocate_particles(BaseParticle<number> **particles, int N);
 
 	virtual number pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
+	// Returns bond energy of strongly-bonded particles (for modeling covalent bonds), and updates forces if update_forces=true
 	virtual number pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
+	// Returns bond energy of weakly-bonded particles (for modeling H bonds), and updates forces if update_forces=true
 	virtual number pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
+	// Gets energy for interaction between surfaces of particles
+	// name = type of interaction (PATCHY or EXVOL)
 	virtual number pair_interaction_term(int name, BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false) {
 		return this->_pair_interaction_term_wrapper(this, name, p, q, r, update_forces);
 	}
 
+	// reads topology from topology file
 	virtual void read_topology(int N, int *N_strands, BaseParticle<number> **particles);
 	virtual void check_input_sanity(BaseParticle<number> **particles, int N);
 

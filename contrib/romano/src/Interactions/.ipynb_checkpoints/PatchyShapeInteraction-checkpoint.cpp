@@ -616,7 +616,7 @@ PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<numbe
     _no_multipatch = 0;
 
 	this->_int_map[EXCVOL] = &PatchyShapeInteraction<number>::_exc_vol_interaction;
-	this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_interaction_notorsion;
+	this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_interaction;
 
 	//this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_LJ_interaction;
 	//this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_CUT_LJ4896_noEXC_interaction;

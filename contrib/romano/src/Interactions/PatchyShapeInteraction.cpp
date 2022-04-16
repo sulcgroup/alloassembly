@@ -450,7 +450,7 @@ number PatchyShapeInteraction<number>::_exc_vol_interaction(BaseParticle<number>
 
 //USING THIS ONE!
 template<typename number>
-number PatchyShapeInteraction<number>::_patchy_interaction_notorsion(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 	number rnorm = r->norm();
 	if(rnorm > this->_sqr_rcut) return (number) 0.f;
 
@@ -618,7 +618,7 @@ PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<numbe
     _no_multipatch = 0;
 
 	this->_int_map[EXCVOL] = &PatchyShapeInteraction<number>::_exc_vol_interaction;
-	this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_interaction_notorsion;
+	this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_interaction;
 
 	//this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_LJ_interaction;
 	//this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_CUT_LJ4896_noEXC_interaction;
@@ -652,6 +652,7 @@ PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<numbe
 
 }
 
+// deconstructor. deallocates memory arrays
 template <typename number>
 PatchyShapeInteraction<number>::~PatchyShapeInteraction() {
 
@@ -662,34 +663,49 @@ PatchyShapeInteraction<number>::~PatchyShapeInteraction() {
 	delete [] _close_vertexes;
 }
 
+//takes an input string from a file (patches.txt or equivelant) and returns a patch object
 template <typename number>
 Patch<number> PatchyShapeInteraction<number>::_process_patch_type(std::string input_string)
 {
 	input_file *obs_input = Utils::get_input_file_from_string(input_string);
-    int id;
+	// the id of the patch. used to reference patch from particles.txt
+    int id; 
+	 // the color of the patch. used to determine if binding is valid
     int color;
+	// the binding strength. defaults to 1
     float strength = 1.0f;
+	 // patch angles. 
+	 //a1 is the patch orientation vector (should be tangent to the surface of the particle)
+	 //a2 is the "up" vector, should be perpendicular to the surface of the particle
     LR_vector<number> a1, a2;
+	// the position of the patch relative to the center of the particle
     LR_vector<number> position;
     string vec;
 
+	// load id, color, strength
     getInputInt(obs_input,"id",&id,1);
     getInputInt(obs_input,"color",&color,1);
-    getInputFloat(obs_input,"strength",&strength,0);
+    getInputFloat(obs_input,"strength",&strength0);
 
+	// load patch angles and position vector
     a1 = getVector<number>(obs_input,"a1");
     a2 = getVector<number>(obs_input,"a2");
     position = getVector<number>(obs_input,"position");
 
+	// normalize patch angle vectors, since vector magnitude really should not be relevant here
     a1 = a1 / a1.norm();
     a2 = a2 / a2.norm();
+	// construct patch. can be a straight up object since this will be immutable
     Patch<number> loaded_patch(a1,a2,position,id,color,strength);
 
     //printf("Loaded patch %d with color %d \n",loaded_patch.id,loaded_patch.color);
+	// deallocate memory for file reader
 	delete obs_input;
+	//return patch object
 	return loaded_patch;
 }
 
+// loads particle type data from a file (particles.txt or equivelant) and returns a PatchyShapeParticle object
 template <typename number>
 PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_type(std::string input_string)
 {
@@ -740,19 +756,20 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 
 
 template <typename number> void
+//loads patch data from patches.txt and particles.txt
 PatchyShapeInteraction<number>::_load_patchy_particle_files(std::string& patchy_file, std::string& particle_file)
 {
 	//first process patches
 	FILE *fpatch = fopen(patchy_file.c_str(),"r");
-	if(!fpatch)
+	if(!fpatch) // if file not found
 	{
 		throw oxDNAException("Could not open file %s ",patchy_file.c_str());
 	}
 	input_file obs_input;
-	loadInput(&obs_input,fpatch);
+	loadInput(&obs_input,fpatch); // open patch file input
 
 	int no = 0;
-	char patch_no[1024];
+	char patch_no[1024]; //this is probably bad
 	snprintf(patch_no,1020,"patch_%d",no);
 	std::string patch_string;
 
@@ -839,6 +856,7 @@ void PatchyShapeInteraction<number>::_load_interaction_tensor(std::string &tenso
 
 
 template<typename number>
+// loads settings from the input file passed as an arguement
 void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 	IBaseInteraction<number>::get_settings(inp);
 
@@ -1059,6 +1077,8 @@ void PatchyShapeInteraction<number>::init() {
 	_patch_E_cut = -1.001f * expf(-(number)0.5f * r8b10 * SQR(PATCHY_CUTOFF));
 	OX_LOG(Logger::LOG_INFO, "INFO: setting _patch_E_cut to %f which is %f, with alpha=%f", _patch_E_cut,-1.001f * expf(-(number)0.5f * r8b10 * SQR(PATCHY_CUTOFF)),_patch_alpha);
 
+	// choose narrow type
+	// narrow type determines the distance required for binding between two patches(?)
 	if(_narrow_type == 0)
 	{
  	  //default option, very wide!
@@ -1144,7 +1164,7 @@ number PatchyShapeInteraction<number>::pair_interaction_nonbonded(BaseParticle<n
 
 	number energy;
 
-	energy = this->_patchy_interaction_notorsion(p, q, r, update_forces);
+	energy = this->_patchy_interaction(p, q, r, update_forces);
 	energy += this->_exc_vol_interaction(p,q,r,update_forces);
 
 	return energy;
@@ -1197,13 +1217,15 @@ void PatchyShapeInteraction<number>::generate_random_configuration(BaseParticle<
 
 }
 */
+
+// loads topology data from a topology file
 template<typename number>
 void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BaseParticle<number> **particles) {
 	*N_strands = N;
     int N_types;
-	std::ifstream topology(this->_topology_filename, ios::in);
+	std::ifstream topology(this->_topology_filename, ios::in); // open a file stream to topology file
 	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
-	char line[4096];
+	char line[4096]; // bad code, has caused segfault issue in the past. TODO: rewrite
 	topology.getline(line, 512);
 	sscanf(line, "%*d %d\n", &N_types);
 	allocate_particles(particles, N);
@@ -1211,7 +1233,7 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 	topology.getline(line,4090);
 	//printf ("N:%d FIRST LINE:--%s--\n", N, line);
 
-    std::stringstream ss(line);
+    std::stringstream ss(line); // create a string stream for line
 
     //int count_type;
     int total_count = 0;
