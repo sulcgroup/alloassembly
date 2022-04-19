@@ -9,6 +9,39 @@
 #define PATCHYSPARTICLE_H_
 
 #include "../../../../src/Particles/BaseParticle.h"
+#include <unordered_map>
+
+struct ParticleStateChange {
+	const bool* _state;
+	const int _state_size;
+	const int _change;
+	ParticleStateChange(bool* state, int state_size, int change) : _state(state), _state_size(state_size), _change(change){}
+	~ParticleStateChange(){
+		delete [] _state;
+	}
+	bool operator==(const ParticleStateChange &other) const{
+		// highly unlikely to occur but if it did the consequences would be... bad
+		if (this->_state_size != other._state_size){
+			return false;
+		}
+		for (int i = 0; i < this->_state_size; i++) {
+			if (this->_state[i] != other._state[i]){
+				return false;
+			}
+		}
+		return true;
+	}
+};
+
+template <>
+struct std::hash<ParticleStateChange>{
+	std::size_t operator()(ParticleStateChange const &st) const{
+		// reasonable to assume that all ParticleStateChange instances in a map will have the same length
+		std::size_t size_hash = std::hash<const bool*>{}(st._state);
+		return size_hash ^ (st._change << 1); // HOPING THIS WORKS
+	}
+};
+
 
 /// A structure describing the patch; Each particle can have multiple patches, positioned at different places; The patches are directional and each
 /// patch interacts only with its specific complementary patch;
@@ -29,11 +62,16 @@ struct Patch {
  number a1_x, a1_y, a1_z;
  number a2_x, a2_y, a2_z;
 
+ // this is a string representing a conditional that can activate/deactivate the patch
+ // default value true means that the patch is always active
+ // important to note that this var will be processed to create the particle's overall
+ // control table; it is not directly in the simulation
+ std::string allostery_conditional;
 
  Patch() {active = false; id = 0; color = -1; strength = 1; a1_x = a1_y = a1_z = a2_x = a2_y = a2_z = 0; set_lock(-1,-1,0);}
 
- Patch(LR_vector<number> _a1_xyz, LR_vector<number> _a2_xyz, LR_vector<number> _position, int _id,int _color, number _strength=1.0,  bool _active = true) :
-	 position(_position), id(_id), active(_active),   color(_color), strength(_strength)
+ Patch(LR_vector<number> _a1_xyz, LR_vector<number> _a2_xyz, LR_vector<number> _position, int _id,int _color, number _strength=1.0,  bool _active = true, std::string _allostery_conditional = "(true)") :
+	 position(_position), id(_id), active(_active),   color(_color), strength(_strength), allostery_conditional(_allostery_conditional)
  {
 	 a1_x = _a1_xyz.x;
 	 a1_y = _a1_xyz.y;
@@ -63,6 +101,10 @@ struct Patch {
 
  void unlock() {locked_to_particle = -1;}
 
+ bool is_active() const {return this->active;}
+ void set_active(bool bNewVal) {this->active = bNewVal;}
+ bool toggle_active() {this->active = !this->active; return this->active;}
+
 };
 
 ///Excluded volume center
@@ -87,6 +129,7 @@ public:
     Patch<number> *patches;
     LR_vector<number> *_vertexes;
 
+	std::unordered_map<ParticleStateChange, std::vector<int>> allostery_map;
 
 	void _set_base_patches();
 
@@ -115,6 +158,11 @@ public:
 	bool locked_to_particle_id(int particle_id); // {return is_locked() && particle_id == locked_to_particle;}
 	void unlock_patches(void);
 
+	bool patch_status(bool* particle_status, int patch_idx) const{
+		return this->patch_status(particle_status, this->patches[patch_idx].allostery_conditional);
+	};
+	bool patch_status(bool* particle_status, std::string logic) const;
+	void update_active_patches(int toggle_idx);
 
 };
 

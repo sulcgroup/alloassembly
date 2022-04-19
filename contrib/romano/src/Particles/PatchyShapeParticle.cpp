@@ -231,5 +231,74 @@ void PatchyShapeParticle<number>::_set_icosahedron_vertexes() {
 	this->set_positions();
 }
 
+template<typename number>
+bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::string logic) const{
+	int paren_count = -1;
+	std::string::iterator paren_start;
+	std::string numstr;
+	bool prefix;
+	bool prefix_defined = false;
+	char op = 0;
+	for (std::string::iterator paren_it = logic.begin(); paren_it != logic.end(); ++paren_it) {
+		if (int('0') <= *paren_it && *paren_it <= int('9')) {
+			numstr += *paren_it;
+		}
+		else{
+			if (*paren_it == '('){
+				if (paren_count < 1)
+				{
+					paren_start = paren_it; //should invoke copy constructor
+					if (paren_count == -1)
+					{
+						paren_count++;
+					}
+				}
+				paren_count++;
+			}
+			else if (*paren_it == ')'){
+				paren_count--;
+				if (paren_count == 0 && paren_it != logic.begin()){
+					std::string subexpr(paren_start + 1, paren_it);
+					prefix = this->patch_status(particle_status, subexpr);
+				}
+			}
+			else if (paren_count == 0) { // if we are mid-paren, don't perform more operations until we get a close-paren
+				if (*paren_it == '|' || *paren_it == '&'){
+					op = *paren_it;
+				}
+			}
+			int patch_idx = std::stoi(numstr);
+			numstr = ""; //clear numeric string
+			if (op == 0) {
+				prefix = particle_status[patch_idx];
+			}
+			else {
+				if (op == '&') {
+					prefix &= particle_status[patch_idx];
+				}
+				else {
+					prefix |= particle_status[patch_idx];
+				}
+			}
+		}
+	}
+	return prefix;
+}
+
+template<typename number>
+void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
+	bool particle_status[this->N_patches];
+	for (int i = 0; i < this->N_patches; i++)
+	{
+		particle_status[i] = this->patches[i].is_locked();
+	}
+	ParticleStateChange change(particle_status, this->N_patches, toggle_idx);
+	std::vector<int> updates = this->allostery_map[change];
+	for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
+	{
+		this->patches[*it].toggle_active();
+	}
+}
+
 template class PatchyShapeParticle<float>;
 template class PatchyShapeParticle<double>;

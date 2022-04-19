@@ -179,6 +179,12 @@ input_map::iterator getInputValue(input_file *inp, const char *skey, int mandato
 	return it;
 }
 
+/*
+ * input_file : pointer to an input file object
+ * skey : string (char array) the key to get the value for
+ * dest : string (std::string) the object in which to place the value associated with skey
+ * mandatory : ???? i didn't write this code
+ */
 int getInputString(input_file *inp, const char *skey, std::string &dest, int mandatory) {
 	input_map::iterator it = getInputValue(inp, skey, mandatory);
 	if(it == inp->keys.end()) return KEY_NOT_FOUND;
@@ -187,7 +193,12 @@ int getInputString(input_file *inp, const char *skey, std::string &dest, int man
 
 	return KEY_FOUND;
 }
-
+/*
+ * input_file : pointer to an input file object
+ * skey : string (char array) the key to get the value for
+ * dest : string (char array) the object in which to place the value associated with skey
+ * mandatory : ???? i didn't write this code
+ */
 int getInputString(input_file *inp, const char *skey, char *dest, int mandatory) {
 	string s_dest;
 	int res = getInputString(inp, skey, s_dest, mandatory);
