@@ -556,6 +556,7 @@ number PatchyShapeInteraction<number>::_patchy_interaction_notorsion(BaseParticl
 					}
 
 					// update allosteric control
+					// whether the patch is going locked->unlocked or vice versa, toggle activation
 					pp->update_active_patches(pi);
 					qq->update_active_patches(pj);
 

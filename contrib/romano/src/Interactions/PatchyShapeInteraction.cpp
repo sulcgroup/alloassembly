@@ -550,7 +550,10 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
 
 					}
 
-
+					// update allosteric control
+					// whether the patch is going locked->unlocked or vice versa, toggle activation
+					pp->update_active_patches(pi);
+					qq->update_active_patches(pj);
 
 					//printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f, cos: %f %f %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part,pp->patches[pi].a1.x,pp->patches[pi].a1.y,pp->patches[pi].a1.z);
 
@@ -656,6 +659,10 @@ PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<numbe
 template <typename number>
 PatchyShapeInteraction<number>::~PatchyShapeInteraction() {
 
+	// clear allostery map
+	for (int i_particle = 0; i_particle < this->_N_particle_types; i_particle++) {
+		delete this->_particle_types[i_particle].allostery_map; //deallocate memory for map object
+	}
 	delete [] _patch_types;
 	delete [] _particle_types;
 	delete [] _interaction_table_types;
@@ -757,7 +764,7 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 		position++;
 	}
 
-	std::unordered_map<ParticleStateChange, std::vector<int>> allosteric_control;
+	std::unordered_map<ParticleStateChange, std::vector<int>>* allosteric_control = new std::unordered_map<ParticleStateChange, std::vector<int>>();
 	// construct allosteric control
 	for (int i = 0; i < pow(2, _N_patches); i++){
 		for (int iSwap = 0; iSwap < _N_patches; iSwap++)
@@ -773,6 +780,7 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 			for (int j = 0; j < _N_patches; j++) {
 				key_after[j] = key[j];
 			}
+			key_after[iSwap] = !key_after[iSwap];
 
 			// loop through the patches on this particle
 			for (int iPatch = 0; iPatch < _N_patches; iPatch++){
@@ -783,15 +791,9 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 					affected_patches.push_back(iPatch);
 				}
 			}
-			delete [] key_after;
 			if (affected_patches.size() > 0)
 			{
-				allosteric_control[change] = affected_patches;
-				// DO NOT delete key! the change object needs it!
-
-			}
-			else {
-				delete [] key;
+				(*allosteric_control)[change] = affected_patches;
 			}
 		}
 	}
@@ -1179,6 +1181,7 @@ void PatchyShapeInteraction<number>::init() {
 	}
 }
 
+// allocates memory for particles, which must be then copies from PatchyShapeInteraction::_particle_types
 template<typename number>
 void PatchyShapeInteraction<number>::allocate_particles(BaseParticle<number> **particles, int N) {
 	for(int i = 0; i < N; i++) {
@@ -1590,7 +1593,6 @@ void PatchyShapeInteraction<number>::check_patchy_locks(ConfigInfo<number>  *Inf
 		}
 	}
 }
-
 
 template class PatchyShapeInteraction<float>;
 template class PatchyShapeInteraction<double>;

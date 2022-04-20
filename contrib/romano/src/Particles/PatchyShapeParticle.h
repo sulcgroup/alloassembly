@@ -16,9 +16,6 @@ struct ParticleStateChange {
 	const int _state_size;
 	const int _change;
 	ParticleStateChange(bool* state, int state_size, int change) : _state(state), _state_size(state_size), _change(change){}
-	~ParticleStateChange(){
-		delete [] _state;
-	}
 	bool operator==(const ParticleStateChange &other) const{
 		// highly unlikely to occur but if it did the consequences would be... bad
 		if (this->_state_size != other._state_size){
@@ -36,8 +33,11 @@ struct ParticleStateChange {
 template <>
 struct std::hash<ParticleStateChange>{
 	std::size_t operator()(ParticleStateChange const &st) const{
-		// reasonable to assume that all ParticleStateChange instances in a map will have the same length
-		std::size_t size_hash = std::hash<const bool*>{}(st._state);
+		std::size_t size_hash;
+		for (int i = 0; i < st._state_size; i++)
+		{
+			size_hash ^= int(st._state[i] << i); // HOPING THIS WILL WORK
+		}
 		return size_hash ^ (st._change << 1); // HOPING THIS WORKS
 	}
 };
@@ -129,7 +129,7 @@ public:
     Patch<number> *patches;
     LR_vector<number> *_vertexes;
 
-	std::unordered_map<ParticleStateChange, std::vector<int>> allostery_map;
+	std::unordered_map<ParticleStateChange, std::vector<int>>* allostery_map;
 
 	void _set_base_patches();
 

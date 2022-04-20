@@ -75,6 +75,9 @@ void PatchyShapeParticle<number>::copy_from(const BaseParticle<number> &b)
       // this->int_centers[i] = bb->int_centers[i];
        this->_vertexes[i] = bb->_vertexes[i];
   }
+  // pass by reference since copies of particles will inherit the base particle type's conditionals
+  // should save memory, especially in large simulations with particles with many patches
+  allostery_map = bb->allostery_map;
 
 }
 
@@ -136,7 +139,14 @@ template<typename number>
 void PatchyShapeParticle<number>::unlock_patches(void) {
 	for(int i = 0; i < this->N_patches; i++)
 	{
+		bool bToggle = false;
+		if (this->patches[i].is_locked()){
+			bToggle = true;
+		}
 		this->patches[i].set_lock(); //cleans the lock
+		if (bToggle){
+			this->update_active_patches(i);
+		}
 	}
 }
 
@@ -233,17 +243,32 @@ void PatchyShapeParticle<number>::_set_icosahedron_vertexes() {
 
 template<typename number>
 bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::string logic) const{
+	if (logic == "true"){
+		return true;
+	}
+	else if (logic == "false") {
+		return false;
+	}
 	int paren_count = -1;
 	std::string::iterator paren_start;
 	std::string numstr;
 	bool prefix;
 	bool prefix_defined = false;
+	bool negate_flag = true; // default to no negation
 	char op = 0;
 	for (std::string::iterator paren_it = logic.begin(); paren_it != logic.end(); ++paren_it) {
+		if (*paren_it == ' '){
+			continue; // ignore whitespace
+		}
 		if (int('0') <= *paren_it && *paren_it <= int('9')) {
 			numstr += *paren_it;
 		}
 		else{
+			if (*paren_it == '!')
+			{
+				negate_flag = false;
+				continue;
+			}
 			if (*paren_it == '('){
 				if (paren_count < 1)
 				{
@@ -254,18 +279,22 @@ bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::strin
 					}
 				}
 				paren_count++;
+				continue;
 			}
-			else if (*paren_it == ')'){
+			if (*paren_it == ')'){
 				paren_count--;
 				if (paren_count == 0 && paren_it != logic.begin()){
 					std::string subexpr(paren_start + 1, paren_it);
-					prefix = this->patch_status(particle_status, subexpr);
+					prefix = this->patch_status(particle_status, subexpr) != negate_flag; // apply negation if applicable
+					negate_flag=  true; //reset negate flag
 				}
+				continue;
 			}
-			else if (paren_count == 0) { // if we are mid-paren, don't perform more operations until we get a close-paren
+			if (paren_count == 0) { // if we are mid-paren, don't perform more operations until we get a close-paren
 				if (*paren_it == '|' || *paren_it == '&'){
 					op = *paren_it;
 				}
+				continue;
 			}
 			int patch_idx = std::stoi(numstr);
 			numstr = ""; //clear numeric string
@@ -280,6 +309,8 @@ bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::strin
 					prefix |= particle_status[patch_idx];
 				}
 			}
+			prefix = prefix != negate_flag;
+			negate_flag = true; //reset negate flag
 		}
 	}
 	return prefix;
@@ -293,7 +324,7 @@ void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
 		particle_status[i] = this->patches[i].is_locked();
 	}
 	ParticleStateChange change(particle_status, this->N_patches, toggle_idx);
-	std::vector<int> updates = this->allostery_map[change];
+	std::vector<int> updates = (*this->allostery_map)[change];
 	for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
 	{
 		this->patches[*it].toggle_active();
