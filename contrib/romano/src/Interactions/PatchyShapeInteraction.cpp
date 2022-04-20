@@ -797,6 +797,15 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 			}
 		}
 	}
+
+	//initialize state
+	bool default_state[_N_patches];
+	for (int i = 0; i < _N_patches; i++){
+		default_state[i] = false; // default state = no bonding
+	}
+	for (int i = 0; i < _N_patches; i++){
+		p.patches[i].active = p.patch_status(default_state, i);
+	}
 	p.allostery_map = allosteric_control;
 
 	return p;
