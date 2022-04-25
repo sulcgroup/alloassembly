@@ -120,7 +120,7 @@ void PatchyShapeParticle<number>::set_positions() {
     }
 	for(int i = 0; i < this->N_vertexes; i++)
 	{
-			this->int_centers[this->N_patches+i] = this->orientation * this->_vertexes[i];
+		this->int_centers[this->N_patches+i] = this->orientation * this->_vertexes[i];
 	}
 
 	/*
@@ -252,7 +252,7 @@ bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::strin
 	int paren_count = -1;
 	std::string::iterator paren_start;
 	std::string numstr;
-	bool prefix;
+	bool prefix = true;
 	bool prefix_defined = false;
 	bool negate_flag = true; // default to no negation
 	char op = 0;
@@ -295,23 +295,39 @@ bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::strin
 					op = *paren_it;
 				}
 				continue;
-			}
-			int patch_idx = std::stoi(numstr);
-			numstr = ""; //clear numeric string
-			if (op == 0) {
-				prefix = particle_status[patch_idx];
-			}
-			else {
-				if (op == '&') {
-					prefix &= particle_status[patch_idx];
+				int patch_idx = std::stoi(numstr);
+				numstr = ""; //clear numeric string
+				if (op == 0) {
+					prefix = particle_status[patch_idx];
 				}
 				else {
-					prefix |= particle_status[patch_idx];
+					if (op == '&') {
+						prefix &= particle_status[patch_idx];
+					}
+					else {
+						prefix |= particle_status[patch_idx];
+					}
 				}
+				prefix = prefix != negate_flag;
+				negate_flag = true; //reset negate flag
 			}
-			prefix = prefix != negate_flag;
-			negate_flag = true; //reset negate flag
 		}
+	}
+	if (numstr != ""){
+		int patch_idx = std::stoi(numstr);
+		numstr = ""; //clear numeric string
+		if (op == 0) {
+			prefix = particle_status[patch_idx];
+		}
+		else {
+			if (op == '&') {
+				prefix &= particle_status[patch_idx];
+			}
+			else {
+				prefix |= particle_status[patch_idx];
+			}
+		}
+		prefix = prefix != negate_flag;
 	}
 	return prefix;
 }

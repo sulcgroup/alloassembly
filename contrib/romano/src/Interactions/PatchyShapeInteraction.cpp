@@ -826,8 +826,8 @@ PatchyShapeInteraction<number>::_load_patchy_particle_files(std::string& patchy_
 	loadInput(&obs_input,fpatch); // open patch file input
 
 	int no = 0;
-	char patch_no[1024]; //this is probably bad
-	snprintf(patch_no,1020,"patch_%d",no);
+	char patch_no[1024]; //instantiate C string buffer - 1024 chars should be enough
+	snprintf(patch_no,1020,"patch_%d",no); // write patch index
 	std::string patch_string;
 
 	while(  getInputString(&obs_input,patch_no,patch_string,0) == KEY_FOUND )
