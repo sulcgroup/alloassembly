@@ -542,23 +542,18 @@ number PatchyShapeInteraction<number>::_patchy_interaction_notorsion(BaseParticl
 						// if a bond is formed, set the particles to be locked together
 						if (energy_ij < this->_lock_cutoff )
 						{
-							qq->patches[pj].set_lock(p->index,pi,energy_ij);
-							pp->patches[pi].set_lock(q->index,pj,energy_ij);
+							qq->set_lock(pj, p->index,pi,energy_ij);
+							pp->set_lock(pi,q->index,pj,energy_ij);
 						}
 						else
 						{
 							// otherwise break them apart
-							qq->patches[pj].unlock();
-							pp->patches[pi].unlock();
+							qq->unlock(pj);
+							pp->unlock(pi);
 
 						}
 
 					}
-
-					// update allosteric control
-					// whether the patch is going locked->unlocked or vice versa, toggle activation
-					pp->update_active_patches(pi);
-					qq->update_active_patches(pj);
 
 					//printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f, cos: %f %f %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part,pp->patches[pi].a1.x,pp->patches[pi].a1.y,pp->patches[pi].a1.z);
 
@@ -1443,8 +1438,8 @@ void PatchyShapeInteraction<number>::_init_patchy_locks(ConfigInfo<number>  *Inf
 					if(new_ene < this->get_patch_cutoff_energy())
 					{
 						//throw oxDNAException("Locking ");
-						p->patches[ppatch].set_lock(qq->index,qqpatch);
-						qq->patches[qqpatch].set_lock(p->index,ppatch);
+						p->set_lock(ppatch, qq->index,qqpatch);
+						qq->set_lock(qqpatch, p->index,ppatch);
 						//printf("!!INITPATCHY: Locking %d (%d) to %d (%d) \n",p->index,ppatch,qq->index,qqpatch);
 					}
 				}

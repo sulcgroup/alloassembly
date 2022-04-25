@@ -147,8 +147,8 @@ void MCMovePatchyShape<number>::apply (llint curr_step) {
 
 				//printf("I am particle %d breaking lock %d with %d (%d) \n",p->index,i,qid,qpatch);
 				// broken_locks.push_back(p->patches[i]);
-				p->patches[i].unlock();
-				q->patches[qpatch].unlock();
+				p->unlock(i);
+				q->unlock(qpatch);
 				locks_to_restore.push_back(  lock(p->index,q->index,i,qpatch));
 				//throw oxDNAException("here...");
 			}
@@ -180,8 +180,8 @@ void MCMovePatchyShape<number>::apply (llint curr_step) {
 				number new_ene = interaction->just_two_patch_interaction(q,qq,qpatch,qqpatch,&r);
 				if(new_ene < interaction->get_patch_cutoff_energy())
 				{
-					q->patches[qpatch].set_lock(qq->index,qqpatch);
-					qq->patches[qqpatch].set_lock(qid,qpatch);
+					q->set_lock(qpatch, qq->index,qqpatch);
+					qq->set_lock(qqpatch, qid,qpatch);
 					//make sure the lock is not counted before
 					lock newlock =  lock(q->index,qq->index,qpatch,qqpatch);
 					bool known = false;
@@ -221,8 +221,8 @@ void MCMovePatchyShape<number>::apply (llint curr_step) {
 					number new_ene = interaction->just_two_patch_interaction(p,qq,ppatch,qqpatch,&r);
 					if(new_ene < interaction->get_patch_cutoff_energy())
 					{
-						p->patches[ppatch].set_lock(qq->index,qqpatch);
-						qq->patches[qqpatch].set_lock(p->index,ppatch);
+						p->set_lock(ppatch, qq->index,qqpatch);
+						qq->set_lock(qqpatch, p->index,ppatch);
 						// printf("setting lock %d (%d) %d (%d) \n",p->index,ppatch,qq->index,qqpatch);
 
 					}
@@ -244,16 +244,16 @@ void MCMovePatchyShape<number>::apply (llint curr_step) {
 		{
 			PatchyShapeParticle<number> *pp = static_cast< PatchyShapeParticle<number> *>(this->_Info->particles[i->pid]);
 			PatchyShapeParticle<number> *qq = static_cast< PatchyShapeParticle<number> *>(this->_Info->particles[i->qid]);
-			pp->patches[i->ppatchid].unlock();
-			qq->patches[i->qpatchid].unlock();
+			pp->unlock(i->ppatchid);
+			qq->unlock(i->qpatchid);
 			//printf("unsetting lock %d %d %d %d \n",pp->index,i->ppatchid,qq->index,i->qpatchid);
 		}
 		for (vector<lock>::iterator i = locks_to_restore.begin(); i != locks_to_restore.end(); ++i)
 		{
 			PatchyShapeParticle<number> *pp = static_cast< PatchyShapeParticle<number> *>(this->_Info->particles[i->pid]);
 			PatchyShapeParticle<number> *qq = static_cast< PatchyShapeParticle<number> *>(this->_Info->particles[i->qid]);
-			pp->patches[i->ppatchid].set_lock(i->qid,i->qpatchid);
-			qq->patches[i->qpatchid].set_lock(i->pid,i->ppatchid);
+			pp->set_lock(i->ppatchid, i->qid,i->qpatchid);
+			qq->set_lock(i->qpatchid, i->pid,i->ppatchid);
 			//printf("restoring lock %d %d %d %d \n",pp->index,i->ppatchid,qq->index,i->qpatchid);
 		}
 

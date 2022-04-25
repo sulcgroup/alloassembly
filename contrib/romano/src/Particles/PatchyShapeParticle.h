@@ -82,7 +82,7 @@ struct Patch {
 
 	 set_lock(-1,-1,0);
  }
-
+ /* deprecated. Use PatchyShapeParticle.set_lock(...) instead*/
  void set_lock(int particle=-1,int patch=-1,number energy=0)
  {
 	 locked_to_particle = particle;
@@ -99,6 +99,7 @@ struct Patch {
  void get_lock(int& particle_id, int& patch_id) {particle_id = locked_to_particle; patch_id =  locked_to_patch;}
  number get_lock_energy(void) {return locked_energy;}
 
+ /** deprecated. use PatchyShapeParticle.unlock() instead*/
  void unlock() {locked_to_particle = -1;}
 
  bool is_active() const {return this->active;}
@@ -157,12 +158,16 @@ public:
 
 	bool locked_to_particle_id(int particle_id); // {return is_locked() && particle_id == locked_to_particle;}
 	void unlock_patches(void);
+	void set_lock(int patch_idx, int particle=-1,int patch=-1,number energy=0, bool ignore_refresh=false);
+	void unlock(int patch_idx, bool ignore_refresh=false);
 
 	bool patch_status(bool* particle_status, int patch_idx) const{
 		return this->patch_status(particle_status, this->patches[patch_idx].allostery_conditional);
 	};
 	bool patch_status(bool* particle_status, std::string logic) const;
 	void update_active_patches(int toggle_idx);
+
+	bool* get_state() const;
 
 };
 

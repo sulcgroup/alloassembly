@@ -17,6 +17,7 @@ PatchyShapeParticle<number>::PatchyShapeParticle(int _N_patches, int _type, int 
 	N_vertexes = _N_vertexes;
 
 	this->N_int_centers = N_patches+N_vertexes;
+
 	if(N_patches + N_vertexes> 0)
 	{
 		this->int_centers = new LR_vector<number>[N_patches+N_vertexes];
@@ -139,15 +140,24 @@ template<typename number>
 void PatchyShapeParticle<number>::unlock_patches(void) {
 	for(int i = 0; i < this->N_patches; i++)
 	{
-		bool bToggle = false;
-		if (this->patches[i].is_locked()){
-			bToggle = true;
-		}
-		this->patches[i].set_lock(); //cleans the lock
-		if (bToggle){
-			this->update_active_patches(i);
-		}
+		this->set_lock(i); //cleans the lock
 	}
+}
+
+template<typename number>
+void PatchyShapeParticle<number>::set_lock(int patch_idx, int particle,int patch,number energy, bool ignore_refresh){
+	 bool state_change = this->patches[patch_idx].locked_to_particle != particle;
+	 if (state_change && !ignore_refresh){
+		 this->update_active_patches(patch_idx);
+	 }
+	 this->patches[patch_idx].locked_to_particle = particle;
+	 this->patches[patch_idx].locked_to_patch = patch;
+	 this->patches[patch_idx].locked_energy = energy;
+}
+
+template<typename number>
+void PatchyShapeParticle<number>::unlock(int patch_idx, bool ignore_refresh) {
+	this->set_lock(patch_idx, ignore_refresh);
 }
 
 template<typename number>
@@ -327,24 +337,55 @@ bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::strin
 				prefix |= particle_status[patch_idx];
 			}
 		}
-		prefix = prefix != negate_flag;
+		prefix = prefix == negate_flag;
 	}
 	return prefix;
 }
 
 template<typename number>
-void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
-	bool particle_status[this->N_patches];
+// WARNING: the array returned by this method allocates memory, which must be deallocated!
+bool* PatchyShapeParticle<number>::get_state() const {
+	bool* particle_status = new bool[this->N_patches];
 	for (int i = 0; i < this->N_patches; i++)
 	{
 		particle_status[i] = this->patches[i].is_locked();
 	}
+	return particle_status;
+}
+
+template<typename number>
+void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
+	bool* particle_status = this->get_state();
 	ParticleStateChange change(particle_status, this->N_patches, toggle_idx);
 	std::vector<int> updates = (*this->allostery_map)[change];
+
+//#ifdef DEBUG
+	std::string flips = "[";
+//#endif
 	for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
 	{
+//#ifdef DEBUG
+		flips += std::to_string(*it) + ":" + (this->patches[*it].active ? "A" : "NA") + "->" + (!this->patches[*it].active ? "A" : "NA");
+//#endif
 		this->patches[*it].toggle_active();
 	}
+//#ifdef DEBUG
+	flips += "]";
+	std::string status_before_str = "[";
+	std::string status_after_str = "[";
+	for (int i = 0; i < this->N_patches; i++) {
+		status_before_str += (particle_status[i] ? " T" : " F");
+		status_after_str += (particle_status[i] != (i == toggle_idx) ? " T" : " F"); //right?
+	}
+	status_before_str += "]";
+	status_after_str += "]";
+	OX_LOG(Logger::LOG_INFO, "Particle with ID %d changed internal state from %s to %s, affecting patches %s",
+			this->index,
+			status_before_str.c_str(),
+			status_after_str.c_str(),
+			flips.c_str());
+//#endif
+	delete[] particle_status;
 }
 
 template class PatchyShapeParticle<float>;
