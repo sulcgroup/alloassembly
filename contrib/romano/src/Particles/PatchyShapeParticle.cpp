@@ -157,7 +157,7 @@ void PatchyShapeParticle<number>::set_lock(int patch_idx, int particle,int patch
 
 template<typename number>
 void PatchyShapeParticle<number>::unlock(int patch_idx, bool ignore_refresh) {
-	this->set_lock(patch_idx, ignore_refresh);
+	this->set_lock(patch_idx, -1, -1, 0, ignore_refresh);
 }
 
 template<typename number>
@@ -339,6 +339,7 @@ bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::strin
 		}
 		prefix = prefix == negate_flag;
 	}
+
 	return prefix;
 }
 
@@ -373,17 +374,21 @@ void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
 	flips += "]";
 	std::string status_before_str = "[";
 	std::string status_after_str = "[";
+	std::string new_activations = "[";
 	for (int i = 0; i < this->N_patches; i++) {
 		status_before_str += (particle_status[i] ? " T" : " F");
 		status_after_str += (particle_status[i] != (i == toggle_idx) ? " T" : " F"); //right?
+		new_activations += std::to_string(i) + ":" + (this->patches[i].active ? "T " : "F ");
 	}
 	status_before_str += "]";
 	status_after_str += "]";
-	OX_LOG(Logger::LOG_INFO, "Particle with ID %d changed internal state from %s to %s, affecting patches %s",
+	new_activations += "]";
+	OX_LOG(Logger::LOG_INFO, "Particle with ID %d changed internal state from %s to %s, affecting patches %s. \nNew patch activations: %s.",
 			this->index,
 			status_before_str.c_str(),
 			status_after_str.c_str(),
-			flips.c_str());
+			flips.c_str(),
+			new_activations.c_str());
 //#endif
 	delete[] particle_status;
 }

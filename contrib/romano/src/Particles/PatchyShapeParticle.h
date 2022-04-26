@@ -162,7 +162,18 @@ public:
 	void unlock(int patch_idx, bool ignore_refresh=false);
 
 	bool patch_status(bool* particle_status, int patch_idx) const{
-		return this->patch_status(particle_status, this->patches[patch_idx].allostery_conditional);
+//		return this->patch_status(particle_status, this->patches[patch_idx].allostery_conditional);
+		bool status = this->patch_status(particle_status, this->patches[patch_idx].allostery_conditional);
+		//DEBUG LOGGING - might actually want to keep some of this in
+		std::string status_str = "[";
+		for (int i = 0; i < this->N_patches; i++) {
+			status_str += (particle_status[i] ? " T" : " F");
+		}
+		status_str += "]";
+		if ( this->patches[patch_idx].allostery_conditional != "true") {
+			OX_LOG(Logger::LOG_INFO, "Patch %d of particle type %d with binding state %s will be %s according to patch logic \"%s\".", patch_idx, this->type, status_str.c_str(), std::to_string(status).c_str(), this->patches[patch_idx].allostery_conditional.c_str());
+		}
+		return status;
 	};
 	bool patch_status(bool* particle_status, std::string logic) const;
 	void update_active_patches(int toggle_idx);
