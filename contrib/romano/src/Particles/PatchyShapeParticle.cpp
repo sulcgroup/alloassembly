@@ -358,6 +358,15 @@ template<typename number>
 void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
 	bool* particle_status = this->get_state();
 	ParticleStateChange change(particle_status, this->N_patches, toggle_idx);
+
+	//DEBUGGING
+//	for (std::unordered_map<ParticleStateChange, std::vector<int>>::iterator it = this->allostery_map->begin(); it != this->allostery_map->end(); ++it)
+//	{
+//		if (*it == change)
+//		{
+//
+//		}
+//	}
 	std::vector<int> updates = (*this->allostery_map)[change];
 
 //#ifdef DEBUG
@@ -390,7 +399,7 @@ void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
 			flips.c_str(),
 			new_activations.c_str());
 //#endif
-	delete[] particle_status;
+	//don't need to delete particle_status b/c that will be done automatically when change goes out of scope
 }
 
 template class PatchyShapeParticle<float>;

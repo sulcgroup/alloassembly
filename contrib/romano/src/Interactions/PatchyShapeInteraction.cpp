@@ -764,11 +764,11 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 	for (int i = 0; i < pow(2, _N_patches); i++){
 		for (int iSwap = 0; iSwap < _N_patches; iSwap++)
 		{
-			bool key[_N_patches];
+			bool* key = new bool[_N_patches];
 			for (int iPatch = 0; iPatch < _N_patches; iPatch++) {
 				key[iPatch] = i % int(pow(2, _N_patches - iPatch)) < pow(2, _N_patches - iPatch - 1);
 			}
-			ParticleStateChange change(key, _N_patches, iSwap);
+			ParticleStateChange* change = new ParticleStateChange(key, _N_patches, iSwap);
 			std::vector<int> affected_patches;
 			bool key_after[_N_patches];
 			// REALLY feels like there's a better way of doing this
@@ -788,7 +788,10 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 			}
 			if (affected_patches.size() > 0)
 			{
-				(*allosteric_control)[change] = affected_patches;
+				(*allosteric_control)[*change] = affected_patches;
+			}
+			else {
+				delete change;
 			}
 		}
 	}
@@ -803,6 +806,9 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 	}
 	p.allostery_map = allosteric_control;
 
+//	ParticleStateChange test_change(default_state, 2, 0);
+
+//	std::vector<int> t = (*p.allostery_map)[test_change];
 	return p;
 }
 

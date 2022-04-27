@@ -16,6 +16,9 @@ struct ParticleStateChange {
 	const int _state_size;
 	const int _change;
 	ParticleStateChange(bool* state, int state_size, int change) : _state(state), _state_size(state_size), _change(change){}
+	~ParticleStateChange(){
+		delete [] this->_state;
+	}
 	bool operator==(const ParticleStateChange &other) const{
 		// highly unlikely to occur but if it did the consequences would be... bad
 		if (this->_state_size != other._state_size){
@@ -33,12 +36,22 @@ struct ParticleStateChange {
 template <>
 struct std::hash<ParticleStateChange>{
 	std::size_t operator()(ParticleStateChange const &st) const{
-		std::size_t size_hash;
-		for (int i = 0; i < st._state_size; i++)
-		{
-			size_hash ^= int(st._state[i] << i); // HOPING THIS WILL WORK
+//		std::size_t size_hash;
+//		for (int i = 0; i < st._state_size; i++)
+//		{
+//			size_hash ^= int(st._state[i] << i); // HOPING THIS WILL WORK
+//		}
+//		return size_hash ^ (st._change << 1); // HOPING THIS WORKS
+		std::size_t size_hash = 0;
+		int i;
+		for (i = 0; i < st._state_size; i++){
+			if (st._state[i]){
+				size_hash += pow(2, i);
+			}
 		}
-		return size_hash ^ (st._change << 1); // HOPING THIS WORKS
+		size_hash ^= st._change >> st._state_size;
+//		size_hash += ((st._state_size * std::size_t(pow(2, i))) >> (i - st._change));
+		return size_hash;
 	}
 };
 
