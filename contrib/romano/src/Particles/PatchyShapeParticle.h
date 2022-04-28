@@ -81,10 +81,14 @@ struct Patch {
  // control table; it is not directly in the simulation
  std::string allostery_conditional;
 
+ bool activation_reversible; //NOT YET IMPLEMENTED
+
+ bool flipped;
+
  Patch() {active = false; id = 0; color = -1; strength = 1; a1_x = a1_y = a1_z = a2_x = a2_y = a2_z = 0; set_lock(-1,-1,0);}
 
- Patch(LR_vector<number> _a1_xyz, LR_vector<number> _a2_xyz, LR_vector<number> _position, int _id,int _color, number _strength=1.0,  bool _active = true, std::string _allostery_conditional = "(true)") :
-	 position(_position), id(_id), active(_active),   color(_color), strength(_strength), allostery_conditional(_allostery_conditional)
+ Patch(LR_vector<number> _a1_xyz, LR_vector<number> _a2_xyz, LR_vector<number> _position, int _id,int _color, number _strength=1.0,  bool _active = true, std::string _allostery_conditional = "(true)", bool _activation_reversible = false) :
+	 position(_position), id(_id), active(_active), color(_color), strength(_strength), allostery_conditional(_allostery_conditional), activation_reversible(_activation_reversible), flipped(false)
  {
 	 a1_x = _a1_xyz.x;
 	 a1_y = _a1_xyz.y;
@@ -117,8 +121,15 @@ struct Patch {
 
  bool is_active() const {return this->active;}
  void set_active(bool bNewVal) {this->active = bNewVal;}
- bool toggle_active() {this->active = !this->active; return this->active;}
-
+ bool toggle_active()
+ {
+	 if (this->activation_reversible || !this->flipped)
+	 {
+		 this->active = !this->active;
+		 this->flipped = true;
+	 }
+	 return this->active;
+ }
 };
 
 ///Excluded volume center
@@ -145,12 +156,17 @@ public:
 
 	std::unordered_map<ParticleStateChange, std::vector<int>>* allostery_map;
 
+
 	void _set_base_patches();
 
 public:
 	PatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0);
 	PatchyShapeParticle(const PatchyShapeParticle<number> &b)
-	{patches = 0; this->_vertexes =  0; this->copy_from(b);}
+	{
+		patches = 0;
+		this->_vertexes =  0;
+		this->copy_from(b);
+	}
 
 	virtual ~PatchyShapeParticle();
 

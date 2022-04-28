@@ -543,7 +543,7 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
 						}
 						else
 						{
-							qq->unlock(pj);
+							qq->unldock(pj);
 							pp->unlock(pi);
 
 						}
