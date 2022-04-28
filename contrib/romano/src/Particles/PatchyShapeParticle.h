@@ -49,8 +49,8 @@ struct std::hash<ParticleStateChange>{
 				size_hash += pow(2, i);
 			}
 		}
-		size_hash ^= st._change >> st._state_size;
-//		size_hash += ((st._state_size * std::size_t(pow(2, i))) >> (i - st._change));
+//		size_hash ^= st._change >> st._state_size;
+		size_hash += st._change * std::size_t(pow(2, st._state_size));
 		return size_hash;
 	}
 };

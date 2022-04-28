@@ -374,10 +374,11 @@ void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
 //#endif
 	for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
 	{
-//#ifdef DEBUG
-		flips += std::to_string(*it) + ":" + (this->patches[*it].active ? "A" : "NA") + "->" + (!this->patches[*it].active ? "A" : "NA");
-//#endif
-		this->patches[*it].toggle_active();
+		bool a_before = this->patches[*it].active;
+		bool a_after = this->patches[*it].toggle_active();
+		flips += std::to_string(*it) + ":" + (a_before ? "A" : "!A") + "->" + (a_after ? "A" : "NA") + ",Flp=" + std::to_string(this->patches[*it].flipped);
+
+
 	}
 //#ifdef DEBUG
 	flips += "]";
