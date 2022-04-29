@@ -996,6 +996,22 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 		OX_LOG(Logger::LOG_INFO, "Particles of the same type cannot bond");
 	}
 
+	//load allosteric logic type
+	std::string allostery_logic_type;
+	if (getInputString(&inp, "allosteric_logic_type", allostery_logic_type, 1) == KEY_FOUND){
+		if (allostery_logic_type == "simple"){
+			this->_allostery_logic_type = ALLOSTERY_LOGIC_SIMPLE;
+		} else if (allostery_logic_type == "complex") {
+			this->_allostery_logic_type = ALLOSTERY_LOGIC_COMPLEX;
+		}
+		else {
+			this->_allostery_logic_type = ALLOSTERY_LOGIC_NONE;
+		}
+	}
+	else {
+		this->_allostery_logic_type = ALLOSTERY_LOGIC_NONE;
+	}
+
 	getInputInt(&inp,"patch_types_N",&_N_patch_types,1);
 	getInputInt(&inp,"particle_types_N",&_N_particle_types,1);
 

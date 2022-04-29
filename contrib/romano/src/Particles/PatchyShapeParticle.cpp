@@ -251,6 +251,23 @@ void PatchyShapeParticle<number>::_set_icosahedron_vertexes() {
 	this->set_positions();
 }
 
+//helper function
+void parse_boolean_statement(bool &status, bool operand, char &op){ //0/10 function name
+	if (op == 0){
+		status = operand;
+	}
+	else if (op == '&'){
+		status &= operand;
+	}
+	else if (op == '|'){
+		status |= operand;
+	}
+	else {
+		throw oxDNAException("Malformed logic.");
+	}
+	op = 0; //reset operation
+}
+
 template<typename number>
 bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::string logic) const{
 	if (logic == "true"){
@@ -259,85 +276,70 @@ bool PatchyShapeParticle<number>::patch_status(bool* particle_status, std::strin
 	else if (logic == "false") {
 		return false;
 	}
-	int paren_count = -1;
+//	int paren_count = 0;
+	int paren_count = 0;
 	std::string::iterator paren_start;
 	std::string numstr;
 	bool prefix = true;
-	bool prefix_defined = false;
 	bool negate_flag = true; // default to no negation
 	char op = 0;
-	for (std::string::iterator paren_it = logic.begin(); paren_it != logic.end(); ++paren_it) {
-		if (*paren_it == ' '){
-			continue; // ignore whitespace
-		}
-		if (int('0') <= *paren_it && *paren_it <= int('9')) {
-			numstr += *paren_it;
-		}
-		else{
-			if (*paren_it == '!')
+	for (std::string::iterator it = logic.begin(); it != logic.end(); ++it) {
+		if (*it == '('){
+			if (paren_count == 0)
 			{
+				paren_start = it; //should invoke copy constructor
+			}
+			paren_count++;
+		}
+		else if (*it == ')') {
+			paren_count--;
+			if (paren_count == 0)
+			{
+				std::string subexpr(paren_start + 1, it);
+				bool paren_statement_val = this->patch_status(particle_status, subexpr) == negate_flag;
+				parse_boolean_statement(prefix, paren_statement_val, op);
+			}
+		}
+		else if (paren_count == 0) { //if program is mid-parentheses, continue until it finds a close-paren
+			if (*it == '!'){
 				negate_flag = false;
 				continue;
+
 			}
-			if (*paren_it == '('){
-				if (paren_count < 1)
-				{
-					paren_start = paren_it; //should invoke copy constructor
-					if (paren_count == -1)
-					{
-						paren_count++;
-					}
-				}
-				paren_count++;
+			if (int('0') <= *it && *it <= int('9')) {
+				numstr += *it;
 				continue;
 			}
-			if (*paren_it == ')'){
-				paren_count--;
-				if (paren_count == 0 && paren_it != logic.begin()){
-					std::string subexpr(paren_start + 1, paren_it);
-					prefix = this->patch_status(particle_status, subexpr) != negate_flag; // apply negation if applicable
-					negate_flag=  true; //reset negate flag
-				}
-				continue;
+			if (*it == '&' || *it == '|') {
+
+				op = *it;
+				 //deliberately no "else" here; evaluating numstr can coexist w/ operators
 			}
-			if (paren_count == 0) { // if we are mid-paren, don't perform more operations until we get a close-paren
-				if (*paren_it == '|' || *paren_it == '&'){
-					op = *paren_it;
+			if (numstr != ""){ // either whitespace or an operator terminate a logical statement
+				int patch = stoi(numstr);
+				if (patch >= this->N_patches){
+					throw oxDNAException("Patch index " + numstr + " out of bounds.");
 				}
-				continue;
-				int patch_idx = std::stoi(numstr);
-				numstr = ""; //clear numeric string
-				if (op == 0) {
-					prefix = particle_status[patch_idx];
-				}
-				else {
-					if (op == '&') {
-						prefix &= particle_status[patch_idx];
-					}
-					else {
-						prefix |= particle_status[patch_idx];
-					}
-				}
-				prefix = prefix != negate_flag;
-				negate_flag = true; //reset negate flag
+				bool val = particle_status[patch] == negate_flag;
+
+				parse_boolean_statement(prefix, val, op);
+
+				// clear numstr and negate_flag
+				negate_flag = true;
+				numstr = "";
 			}
 		}
 	}
-	if (numstr != ""){
-		int patch_idx = std::stoi(numstr);
-		numstr = ""; //clear numeric string
-		if (op == 0) {
-			prefix = particle_status[patch_idx];
+
+	//parse suffix
+	if (numstr != ""){ // either whitespace or an operator terminate a logical statement
+		int patch = stoi(numstr);
+		if (patch >= this->N_patches){
+			throw oxDNAException("Patch index " + numstr + " out of bounds.");
 		}
-		else {
-			if (op == '&') {
-				prefix &= particle_status[patch_idx];
-			}
-			else {
-				prefix |= particle_status[patch_idx];
-			}
-		}
-		prefix = prefix == negate_flag;
+		bool val = particle_status[patch] == negate_flag;
+
+		parse_boolean_statement(prefix, val, op);
 	}
 
 	return prefix;

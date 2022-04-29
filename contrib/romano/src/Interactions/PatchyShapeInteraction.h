@@ -35,6 +35,11 @@
 #define PLEXCL_V48RC  1.19798
 #define PLEXCL_V48EPS 2.0f
 
+//allostery logic options
+#define ALLOSTERY_LOGIC_NONE       0
+#define ALLOSTERY_LOGIC_SIMPLE     1
+#define ALLOSTERY_LOGIC_COMPLEX    2
+
 //there are two types of modulation
 #define PLEXCL_NARROW_N 2
 
@@ -129,6 +134,9 @@ protected:
 	PatchyShapeParticle<number> *_particle_types;
 
 	number _sphere_radius;
+
+	// none, simple, or complex
+	int _allostery_logic_type;
 
 	//model constants
 	number PLPATCHY_THETA_TC[PLEXCL_NARROW_N];
