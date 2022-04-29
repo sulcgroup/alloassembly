@@ -998,7 +998,7 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 
 	//load allosteric logic type
 	std::string allostery_logic_type;
-	if (getInputString(&inp, "allosteric_logic_type", allostery_logic_type, 1) == KEY_FOUND){
+	if (getInputString(&inp, "allosteric_logic_type", allostery_logic_type, 0) == KEY_FOUND){
 		if (allostery_logic_type == "simple"){
 			this->_allostery_logic_type = ALLOSTERY_LOGIC_SIMPLE;
 		} else if (allostery_logic_type == "complex") {
