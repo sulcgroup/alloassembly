@@ -236,7 +236,6 @@ public:
 	//virtual void generate_random_configuration(BaseParticle<number> **particles, int N, number box_side);
 };
 
-
 #ifndef MCMOVE_CUSTOM
  extern "C" IBaseInteraction<float> * make_float()   { return new PatchyShapeInteraction<float> () ; }
  extern "C" IBaseInteraction<double> * make_double() { return new PatchyShapeInteraction<double> () ; }

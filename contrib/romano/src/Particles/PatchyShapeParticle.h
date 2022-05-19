@@ -154,10 +154,9 @@ public:
     Patch<number> *patches;
     LR_vector<number> *_vertexes;
 
-	std::unordered_map<ParticleStateChange, std::vector<int>>* allostery_map;
-
-
 	void _set_base_patches();
+
+    void init_allostery();
 
 public:
 	PatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0);
@@ -190,25 +189,68 @@ public:
 	void set_lock(int patch_idx, int particle=-1,int patch=-1,number energy=0, bool ignore_refresh=false);
 	void unlock(int patch_idx, bool ignore_refresh=false);
 
-	bool patch_status(bool* particle_status, int patch_idx) const{
-//		return this->patch_status(particle_status, this->patches[patch_idx].allostery_conditional);
-		bool status = this->patch_status(particle_status, this->patches[patch_idx].allostery_conditional);
-		//DEBUG LOGGING - might actually want to keep some of this in
-		std::string status_str = "[";
-		for (int i = 0; i < this->N_patches; i++) {
-			status_str += (particle_status[i] ? " T" : " F");
-		}
-		status_str += "]";
-		if ( this->patches[patch_idx].allostery_conditional != "true") {
-			OX_LOG(Logger::LOG_INFO, "Patch %d of particle type %d with binding state %s will be %s according to patch logic \"%s\".", patch_idx, this->type, status_str.c_str(), std::to_string(status).c_str(), this->patches[patch_idx].allostery_conditional.c_str());
-		}
-		return status;
-	};
-	bool patch_status(bool* particle_status, std::string logic) const;
-	void update_active_patches(int toggle_idx);
+	virtual bool patch_status(bool* binding_status, int patch_idx) const;
 
-	bool* get_state() const;
+	virtual void update_active_patches(int toggle_idx);
+
+	bool* get_binding_state() const;
 
 };
+
+template <typename number>
+class SimpleAllosteryPatchyShapeParticle : public PatchyShapeParticle<number>{
+public:
+	std::unordered_map<ParticleStateChange, std::vector<int>>* allostery_map;
+
+public:
+	SimpleAllosteryPatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0) : PatchyShapeParticle<number>(N_patches, type, N_vertexes){};
+	SimpleAllosteryPatchyShapeParticle(const SimpleAllosteryPatchyShapeParticle<number> &p){
+		this->patches = 0;
+		this->_vertexes =  0;
+		this->copy_from(p);
+	}
+
+	void copy_from(const BaseParticle<number> &bb);
+
+	bool patch_status(bool* binding_status, int patch_idx) const{
+	//		return this->patch_status(bindingstatus, this->patches[patch_idx].allostery_conditional);
+			bool status = this->patch_status(binding_status, this->patches[patch_idx].allostery_conditional);
+			//DEBUG LOGGING - might actually want to keep some of this in
+			std::string status_str = "[";
+			for (int i = 0; i < this->N_patches; i++) {
+				status_str += (binding_status[i] ? " T" : " F");
+			}
+			status_str += "]";
+			if ( this->patches[patch_idx].allostery_conditional != "true") {
+				OX_LOG(Logger::LOG_INFO, "Patch %d of particle type %d with binding state %s will be %s according to patch logic \"%s\".", patch_idx, this->type, status_str.c_str(), std::to_string(status).c_str(), this->patches[patch_idx].allostery_conditional.c_str());
+			}
+			return status;
+		};
+	bool patch_status(bool* particle_status, std::string logic) const;
+	void update_active_patches(int toggle_idx);
+    void init_allostery();
+};
+
+template <typename number>
+class AdvAllosteryPatchyShapeParticle : public PatchyShapeParticle<number>{
+public:
+	int _internal_state_size;
+	bool* _internal_state;
+public:
+	AdvAllosteryPatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0, int state_size=0)
+			: PatchyShapeParticle<number>(N_patches, type, N_vertexes) {
+		_internal_state_size = state_size;
+	};
+	AdvAllosteryPatchyShapeParticle(const AdvAllosteryPatchyShapeParticle<number> &p) {
+		this->patches = 0;
+		this->_vertexes =  0;
+		this->copy_from(p);
+	};
+	~AdvAllosteryPatchyShapeParticle() {
+		delete[] _internal_state;
+	};
+	void copy_from(const BaseParticle<number> &p);
+};
+
 
 #endif /* PLPATCHYPARTICLE_H_ */

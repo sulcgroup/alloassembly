@@ -654,10 +654,6 @@ PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<numbe
 template <typename number>
 PatchyShapeInteraction<number>::~PatchyShapeInteraction() {
 
-	// clear allostery map
-	for (int i_particle = 0; i_particle < this->_N_particle_types; i_particle++) {
-		delete this->_particle_types[i_particle].allostery_map; //deallocate memory for map object
-	}
 	delete [] _patch_types;
 	delete [] _particle_types;
 	delete [] _interaction_table_types;
@@ -746,11 +742,21 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 		N_vertexes = 12;
 	}
 	OX_LOG(Logger::LOG_INFO,"Particle of type %d has %d vertexes",type,N_vertexes);
-	PatchyShapeParticle<number> p(_N_patches,type,N_vertexes);
+	PatchyShapeParticle<number> p;
+	switch (this->_allostery_logic_type){
+	case ALLOSTERY_LOGIC_NONE:
+		p = PatchyShapeParticle<number>(_N_patches,type,N_vertexes);
+		break;
+	case ALLOSTERY_LOGIC_SIMPLE:
+		p = SimpleAllosteryPatchyShapeParticle<number>(_N_patches,type,N_vertexes);
+		break;
+	case ALLOSTERY_LOGIC_COMPLEX:
+		p = AdvAllosteryPatchyShapeParticle<number>(_N_patches, type, N_vertexes);
+		break;
+	}
 	if (N_vertexes  != 0)
 	{
 		p._set_vertexes();
-
 	}
 	int position = 0;
 	for(typename std::vector<Patch<number> >::iterator i = all_patches.begin(); i != all_patches.end(); ++i)
@@ -758,53 +764,7 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 		p.add_patch(*i,position);
 		position++;
 	}
-
-	std::unordered_map<ParticleStateChange, std::vector<int>>* allosteric_control = new std::unordered_map<ParticleStateChange, std::vector<int>>();
-	// construct allosteric control
-	for (int i = 0; i < pow(2, _N_patches); i++){
-		for (int iSwap = 0; iSwap < _N_patches; iSwap++)
-		{
-			bool* key = new bool[_N_patches];
-			for (int iPatch = 0; iPatch < _N_patches; iPatch++) {
-				key[iPatch] = i % int(pow(2, _N_patches - iPatch)) < pow(2, _N_patches - iPatch - 1);
-			}
-			ParticleStateChange* change = new ParticleStateChange(key, _N_patches, iSwap);
-			std::vector<int> affected_patches;
-			bool key_after[_N_patches];
-			// REALLY feels like there's a better way of doing this
-			for (int j = 0; j < _N_patches; j++) {
-				key_after[j] = key[j];
-			}
-			key_after[iSwap] = !key_after[iSwap];
-
-			// loop through the patches on this particle
-			for (int iPatch = 0; iPatch < _N_patches; iPatch++){
-				// if the patch
-				bool patch_status_before = p.patch_status(key, iPatch);
-				bool patch_status_after = p.patch_status(key_after, iPatch);
-				if (patch_status_before != patch_status_after){
-					affected_patches.push_back(iPatch);
-				}
-			}
-			if (affected_patches.size() > 0)
-			{
-				(*allosteric_control)[*change] = affected_patches;
-			}
-			else {
-				delete change;
-			}
-		}
-	}
-
-	//initialize state
-	bool default_state[_N_patches];
-	for (int i = 0; i < _N_patches; i++){
-		default_state[i] = false; // default state = no bonding
-	}
-	for (int i = 0; i < _N_patches; i++){
-		p.patches[i].active = p.patch_status(default_state, i);
-	}
-	p.allostery_map = allosteric_control;
+	p.init_allostery();
 
 //	ParticleStateChange test_change(default_state, 2, 0);
 
@@ -860,6 +820,14 @@ PatchyShapeInteraction<number>::_load_patchy_particle_files(std::string& patchy_
 	std::string particle_string;
 
 	while (getInputString(&p_input, particle_no, particle_string, 0) == KEY_FOUND) {
+		switch (this->_allostery_logic_type){
+		case ALLOSTERY_LOGIC_NONE:
+			break;
+		case ALLOSTERY_LOGIC_SIMPLE:
+			break;
+		case ALLOSTERY_LOGIC_COMPLEX:
+            break;
+		}
 		PatchyShapeParticle<number> particle = _process_particle_type(particle_string);
 		if(p_no >= _N_particle_types)
 			throw oxDNAException ("More particle types in particle config file than specified in the input file. Aborting");
