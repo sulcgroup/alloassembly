@@ -5,13 +5,14 @@
  *      Author: lorenzo
  */
 
-#include "PatchyShapeParticle.h"
+#include "AllostericPatchyParticle.h"
 #include "../../../../src/Utilities/oxDNAException.h"
+#include "../../../romano/src/Particles/PatchyShapeParticle.h"
 
 #define HALF_ISQRT3 0.28867513459481292f
 
 template<typename number>
-PatchyShapeParticle<number>::PatchyShapeParticle(int _N_patches, int _type, int _N_vertexes) :  BaseParticle<number>() {
+AllostericPatchyParticle<number>::AllostericPatchyParticle(int _N_patches, int _type, int _N_vertexes) :  BaseParticle<number>() {
 	this->type = _type;
 	N_patches =  _N_patches;
 	N_vertexes = _N_vertexes;
@@ -21,7 +22,7 @@ PatchyShapeParticle<number>::PatchyShapeParticle(int _N_patches, int _type, int 
 	if(N_patches + N_vertexes> 0)
 	{
 		this->int_centers = new LR_vector<number>[N_patches+N_vertexes];
-		this->patches = new Patch<number>[N_patches];
+		this->patches = new AllostericPatch<number>[N_patches];
 		this->_vertexes = new LR_vector<number>[N_vertexes];
 
 	}
@@ -35,15 +36,15 @@ PatchyShapeParticle<number>::PatchyShapeParticle(int _N_patches, int _type, int 
 }
 
 template<typename number>
-PatchyShapeParticle<number>::~PatchyShapeParticle() {
+AllostericPatchyParticle<number>::~AllostericPatchyParticle() {
 	delete[] patches;
 	delete [] _vertexes;
 }
 
 template<typename number>
-void PatchyShapeParticle<number>::copy_from(const BaseParticle<number> &b)
+void AllostericPatchyParticle<number>::copy_from(const BaseParticle<number> &b)
 {
-	const PatchyShapeParticle<number> *bb = dynamic_cast<const PatchyShapeParticle<number> *>(&b);
+	const AllostericPatchyParticle<number> *bb = dynamic_cast<const AllostericPatchyParticle<number> *>(&b);
 	if (bb == 0)
 	{
 		throw oxDNAException("Can't convert particle to PatchyShapeParticle by dynamic cast'. Aborting");
@@ -60,7 +61,7 @@ void PatchyShapeParticle<number>::copy_from(const BaseParticle<number> &b)
 		this->N_vertexes = bb->N_vertexes;
 
 		this->int_centers = new LR_vector<number>[bb->N_int_centers];
-		patches = new Patch<number>[bb->N_patches];
+		patches = new AllostericPatch<number>[bb->N_patches];
 		_vertexes = new LR_vector<number>[bb->N_vertexes];
 	}
 
@@ -79,7 +80,7 @@ void PatchyShapeParticle<number>::copy_from(const BaseParticle<number> &b)
 }
 
 template<typename number> void
-PatchyShapeParticle<number>::add_patch(Patch<number> &patch,int position) {
+AllostericPatchyParticle<number>::add_patch(AllostericPatch<number> &patch,int position) {
 
 	if(position < 0 || position >= this->N_int_centers)
 	{
@@ -90,7 +91,7 @@ PatchyShapeParticle<number>::add_patch(Patch<number> &patch,int position) {
 
 
 template<typename number>
-void PatchyShapeParticle<number>::_set_base_patches() {
+void AllostericPatchyParticle<number>::_set_base_patches() {
 
 
 	for(int i = 0; i < this->N_int_centers; i++) {
@@ -101,7 +102,7 @@ void PatchyShapeParticle<number>::_set_base_patches() {
 }
 
 template<typename number>
-void PatchyShapeParticle<number>::set_positions() {
+void AllostericPatchyParticle<number>::set_positions() {
 	/*
 	 if(this->index == 0)
         printf("I am in set_positions for particle %d, N_patches=%d, N_vertices=%d, N_int_centers=%d \n",this->index,this->N_patches,this->N_vertexes,this->N_int_centers);
@@ -133,7 +134,7 @@ void PatchyShapeParticle<number>::set_positions() {
 }
 
 template<typename number>
-void PatchyShapeParticle<number>::unlock_patches(void) {
+void AllostericPatchyParticle<number>::unlock_patches(void) {
 	for(int i = 0; i < this->N_patches; i++)
 	{
 		this->set_lock(i); //cleans the lock
@@ -141,7 +142,7 @@ void PatchyShapeParticle<number>::unlock_patches(void) {
 }
 
 template<typename number>
-void PatchyShapeParticle<number>::set_lock(int patch_idx, int particle,int patch,number energy, bool ignore_refresh){
+void AllostericPatchyParticle<number>::set_lock(int patch_idx, int particle,int patch,number energy, bool ignore_refresh){
 	bool state_change = this->patches[patch_idx].locked_to_particle != particle;
 	if (state_change && !ignore_refresh){
 		this->update_active_patches(patch_idx);
@@ -152,12 +153,12 @@ void PatchyShapeParticle<number>::set_lock(int patch_idx, int particle,int patch
 }
 
 template<typename number>
-void PatchyShapeParticle<number>::unlock(int patch_idx, bool ignore_refresh) {
+void AllostericPatchyParticle<number>::unlock(int patch_idx, bool ignore_refresh) {
 	this->set_lock(patch_idx, -1, -1, 0, ignore_refresh);
 }
 
 template<typename number>
-bool PatchyShapeParticle<number>::locked_to_particle_id(int particle_id)
+bool AllostericPatchyParticle<number>::locked_to_particle_id(int particle_id)
 {
 	for(int i = 0; i < this->N_patches; i++)
 	{
@@ -168,11 +169,8 @@ bool PatchyShapeParticle<number>::locked_to_particle_id(int particle_id)
 	return false;
 }
 
-
-
-
 template<typename number>
-void PatchyShapeParticle<number>::_set_vertexes()
+void AllostericPatchyParticle<number>::_set_vertexes()
 {
 	if(N_vertexes == 12)
 	{
@@ -184,7 +182,7 @@ void PatchyShapeParticle<number>::_set_vertexes()
 }
 
 template<typename number>
-void PatchyShapeParticle<number>::_set_icosahedron_vertexes() {
+void AllostericPatchyParticle<number>::_set_icosahedron_vertexes() {
 	double t = (1. + sqrt(5.))/2;      // golden radius
 	double r = 2. * sin(2. * M_PI/5);  // radius of icosahedron of edge lenght two
 	number a = 1./ (2. * r);           // will generate patches at a distance 0.5 from center
@@ -343,7 +341,7 @@ bool SimpleAllosteryPatchyShapeParticle<number>::patch_status(bool* particle_sta
 
 template<typename number>
 // WARNING: the array returned by this method allocates memory, which must be deallocated!
-bool* PatchyShapeParticle<number>::get_binding_state() const {
+bool* AllostericPatchyParticle<number>::get_binding_state() const {
 	bool* particle_status = new bool[this->N_patches];
 	for (int i = 0; i < this->N_patches; i++)
 	{
@@ -410,7 +408,7 @@ void SimpleAllosteryPatchyShapeParticle<number>::copy_from(const BaseParticle<nu
 	{
 		throw oxDNAException("Can't convert particle to PatchyShapeParticle by dynamic cast'. Aborting");
 	}
-	PatchyShapeParticle<number>::copy_from(bb);
+    AllostericPatchyParticle<number>::copy_from(bb);
 	allostery_map = bb->allostery_map;
 }
 
@@ -471,7 +469,7 @@ void AdvAllosteryPatchyShapeParticle<number>::copy_from(const BaseParticle<numbe
 	{
 		throw oxDNAException("Can't convert particle to PatchyShapeParticle by dynamic cast'. Aborting");
 	}
-	PatchyShapeParticle<number>::copy_from(bb);
+    AllostericPatchyParticle<number>::copy_from(bb);
 	this->_internal_state_size = bb->_internal_state_size;
 	delete [] this->_internal_state;
 	_internal_state = new bool[_internal_state_size];
@@ -480,5 +478,5 @@ void AdvAllosteryPatchyShapeParticle<number>::copy_from(const BaseParticle<numbe
 	}
 }
 
-template class PatchyShapeParticle<float>;
-template class PatchyShapeParticle<double>;
+template class AllostericPatchyParticle<float>;
+template class AllostericPatchyParticle<double>;

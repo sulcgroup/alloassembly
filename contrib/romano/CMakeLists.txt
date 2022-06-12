@@ -7,9 +7,9 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 #INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/Particles)
 
 ADD_CUSTOM_TARGET(romano
-	#	DEPENDS PatchyShapeParticle PatchyShapeInteraction DirkInteraction DirkInteraction2 DirkInteractionBias NematicS Icosahedron HardIcoInteraction
-	DEPENDS HardIcoInteraction PLCluster PLClusterTopology PatchyShapeParticle PatchyShapeInteraction MCMovePatchyShape ChiralRodInteraction NematicS Swim ChiralRodExplicit Reappear CutVolume Grow Exhaust FakePressure FreeVolume Depletion NDepletion DepletionVolume AVBDepletion #MCMoveDesign
-) 
+		#	DEPENDS PatchyShapeParticle PatchyShapeInteraction DirkInteraction DirkInteraction2 DirkInteractionBias NematicS Icosahedron HardIcoInteraction
+		DEPENDS HardIcoInteraction PLCluster PLClusterTopology PatchyShapeParticle PatchyShapeInteraction MCMovePatchyShape ChiralRodInteraction NematicS Swim ChiralRodExplicit Reappear CutVolume Grow Exhaust FakePressure FreeVolume Depletion NDepletion DepletionVolume AVBDepletion #MCMoveDesign
+		)
 
 SET(CMAKE_SHARED_LIBRARY_PREFIX "")
 

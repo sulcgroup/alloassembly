@@ -1,14 +1,15 @@
 /*
  * PatchyShapeParticle.h
  *
- *  Created on: 15/mar/2013
- *      Author: lorenzo
+ *  Created on: 11/june/2022
+ *      Author: josh, based off lorenzo's work
  */
 
-#ifndef PATCHYSPARTICLE_H_
-#define PATCHYSPARTICLE_H_
+#ifndef ALLOPATCHYPARTICLE_H_
+#define ALLOPATCHYPARTICLE_H_
 
 #include "../../../../src/Particles/BaseParticle.h"
+#include "../../../romano/src/Particles/PatchyShapeParticle.h"
 #include <unordered_map>
 
 struct ParticleStateChange {
@@ -58,8 +59,9 @@ struct std::hash<ParticleStateChange>{
 
 /// A structure describing the patch; Each particle can have multiple patches, positioned at different places; The patches are directional and each
 /// patch interacts only with its specific complementary patch;
+// TODO: have this extend Patch if feasable
 template <typename number>
-struct Patch {
+struct AllostericPatch  : public BaseParticle<number> {
  LR_vector<number> position; //the position of the patch with respect to the CM of the particle
  LR_vector<number> a1;  //vector that is to be compared against the vector connecting the patches r_pp, needs to be parallel
  LR_vector<number> a2; // vector which needs to be parallel with a2 on the complementary patch
@@ -85,9 +87,9 @@ struct Patch {
 
  bool flipped;
 
- Patch() {active = false; id = 0; color = -1; strength = 1; a1_x = a1_y = a1_z = a2_x = a2_y = a2_z = 0; set_lock(-1,-1,0);}
+    AllostericPatch() {active = false; id = 0; color = -1; strength = 1; a1_x = a1_y = a1_z = a2_x = a2_y = a2_z = 0; set_lock(-1,-1,0);}
 
- Patch(LR_vector<number> _a1_xyz, LR_vector<number> _a2_xyz, LR_vector<number> _position, int _id,int _color, number _strength=1.0,  bool _active = true, std::string _allostery_conditional = "(true)", bool _activation_reversible = false) :
+    AllostericPatch(LR_vector<number> _a1_xyz, LR_vector<number> _a2_xyz, LR_vector<number> _position, int _id,int _color, number _strength=1.0,  bool _active = true, std::string _allostery_conditional = "(true)", bool _activation_reversible = false) :
 	 position(_position), id(_id), active(_active), color(_color), strength(_strength), allostery_conditional(_allostery_conditional), activation_reversible(_activation_reversible), flipped(false)
  {
 	 a1_x = _a1_xyz.x;
@@ -132,26 +134,17 @@ struct Patch {
  }
 };
 
-///Excluded volume center
-template <typename number>
-struct ExcVolCenter {
- LR_vector<number> position; //the position of the excvol with respect to the CM of the particle
- number radius;  //radius of the excvol
- //LR_vector<number> a2; // vector which needs to be parallel with a2 on the complementary patch
-
-};
-
 /**
  * @brief Incapsulates a patchy particle with 2, 3, or 4 spherical patches. Used by PatchyInteraction.
  */
 template<typename number>
-class PatchyShapeParticle : public BaseParticle<number> {
+class AllostericPatchyParticle : public BaseParticle<number> {
 public:
 	//LR_vector<number> *_base_patches;
 	int N_patches; //number of patches  = number of patches
 	int N_vertexes; //number of vertices of the shape; 0 = sphere
 
-    Patch<number> *patches;
+    AllostericPatch<number> *patches;
     LR_vector<number> *_vertexes;
 
 	void _set_base_patches();
@@ -159,22 +152,22 @@ public:
     void init_allostery();
 
 public:
-	PatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0);
-	PatchyShapeParticle(const PatchyShapeParticle<number> &b)
+    AllostericPatchyParticle(int N_patches=1 , int type = 0,int N_vertexes=0);
+    AllostericPatchyParticle(const AllostericPatchyParticle<number> &b)
 	{
 		patches = 0;
 		this->_vertexes =  0;
 		this->copy_from(b);
 	}
 
-	virtual ~PatchyShapeParticle();
+	virtual ~AllostericPatchyParticle();
 
 	void set_positions();
 
 	virtual void copy_from(const BaseParticle<number> &);
 
-	PatchyShapeParticle<number>& operator = (const PatchyShapeParticle<number>& b) {this->copy_from(b);  return *this;}
-	void add_patch(Patch<number> &patch,int position);
+    AllostericPatchyParticle<number>& operator = (const AllostericPatchyParticle<number>& b) {this->copy_from(b);  return *this;}
+	void add_patch(AllostericPatch<number> &patch,int position);
 
 	int get_patch_color(int patchid)  {return this->patches[patchid].get_color();}
 	virtual bool is_rigid_body() {
@@ -198,12 +191,12 @@ public:
 };
 
 template <typename number>
-class SimpleAllosteryPatchyShapeParticle : public PatchyShapeParticle<number>{
+class SimpleAllosteryPatchyShapeParticle : public AllostericPatchyParticle<number>{
 public:
 	std::unordered_map<ParticleStateChange, std::vector<int>>* allostery_map;
 
 public:
-	SimpleAllosteryPatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0) : PatchyShapeParticle<number>(N_patches, type, N_vertexes){};
+	SimpleAllosteryPatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0) : AllostericPatchyParticle<number>(N_patches, type, N_vertexes){};
 	SimpleAllosteryPatchyShapeParticle(const SimpleAllosteryPatchyShapeParticle<number> &p){
 		this->patches = 0;
 		this->_vertexes =  0;
@@ -232,13 +225,13 @@ public:
 };
 
 template <typename number>
-class AdvAllosteryPatchyShapeParticle : public PatchyShapeParticle<number>{
+class AdvAllosteryPatchyShapeParticle : public AllostericPatchyParticle<number>{
 public:
 	int _internal_state_size;
 	bool* _internal_state;
 public:
 	AdvAllosteryPatchyShapeParticle(int N_patches=1 , int type = 0,int N_vertexes=0, int state_size=0)
-			: PatchyShapeParticle<number>(N_patches, type, N_vertexes) {
+			: AllostericPatchyParticle<number>(N_patches, type, N_vertexes) {
 		_internal_state_size = state_size;
 	};
 	AdvAllosteryPatchyShapeParticle(const AdvAllosteryPatchyShapeParticle<number> &p) {

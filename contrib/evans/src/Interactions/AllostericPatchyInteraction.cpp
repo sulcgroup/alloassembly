@@ -1,7 +1,8 @@
-#include "PatchyShapeInteraction.h"
-#include "../Particles/PatchyShapeParticle.h"
-#include "../../../../src/Utilities/Utils.h"
+#include "AllostericPatchyInteraction.h"
+#include "../../../romano/src/Particles/PatchyShapeParticle.h"
+#include "Utilities/Utils.h"
 #include "Interactions/InteractionUtils.h"
+#include "../Particles/AllostericPatchyParticle.h"
 #include <sstream>
 
 template <typename number> LR_vector<number> getVector(input_file *obs_input,const char *key)
@@ -23,7 +24,7 @@ template <typename number> LR_vector<number> getVector(input_file *obs_input,con
 
 // implementation of inline functions:
 template<typename number>
-bool PatchyShapeInteraction<number>::_patches_compatible(PatchyShapeParticle<number>  *p, PatchyShapeParticle<number>  *q, int pi, int pj ) {
+bool AllostericPatchyInteraction<number>::_patches_compatible(AllostericPatchyParticle<number>  *p, AllostericPatchyParticle<number>  *q, int pi, int pj ) {
 	if(abs(p->patches[pi].color)  < 10 &&  abs(q->patches[pj].color ) < 10  )  //we are in the self-complementary regime
 	{
 		if(p->patches[pi].color == q->patches[pj].color ) { //patches are the same, hence complementary
@@ -46,7 +47,7 @@ bool PatchyShapeInteraction<number>::_patches_compatible(PatchyShapeParticle<num
 
 // implementation of inline functions:
 template<typename number>
-inline bool PatchyShapeInteraction<number>::_bonding_allowed(PatchyShapeParticle<number>  *p, PatchyShapeParticle<number>  *q, int pi, int pj )
+inline bool AllostericPatchyInteraction<number>::_bonding_allowed(AllostericPatchyParticle<number>  *p, AllostericPatchyParticle<number>  *q, int pi, int pj )
 {
 	// printf("@@@@\n");
 	bool allowed = false;
@@ -105,7 +106,7 @@ inline bool PatchyShapeInteraction<number>::_bonding_allowed(PatchyShapeParticle
 
 
 template<typename number>
-number PatchyShapeInteraction<number>:: _V_mod(int type, number t)
+number AllostericPatchyInteraction<number>:: _V_mod(int type, number t)
 {
 	number val = (number) 0;
 	t -= PLPATCHY_THETA_T0[type];
@@ -125,7 +126,7 @@ number PatchyShapeInteraction<number>:: _V_mod(int type, number t)
 
 
 template<typename number>
-number PatchyShapeInteraction<number>:: _V_modD(int type, number t)
+number AllostericPatchyInteraction<number>:: _V_modD(int type, number t)
 {
 	number val = (number) 0;
 	number m = (number) 1;
@@ -150,7 +151,7 @@ number PatchyShapeInteraction<number>:: _V_modD(int type, number t)
 
 
 template<typename number>
-number PatchyShapeInteraction<number>:: _V_modDsin(int type, number t)
+number AllostericPatchyInteraction<number>:: _V_modDsin(int type, number t)
 {
 	number val = (number) 0;
 	number m = (number) 1;
@@ -180,7 +181,7 @@ number PatchyShapeInteraction<number>:: _V_modDsin(int type, number t)
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::_repulsive_lj(const LR_vector<number> &r, LR_vector<number> &force, number sigma, number rstar, number b, number rc, bool update_forces) {
+number AllostericPatchyInteraction<number>::_repulsive_lj(const LR_vector<number> &r, LR_vector<number> &force, number sigma, number rstar, number b, number rc, bool update_forces) {
 	// this is a bit faster than calling r.norm()
 	number rnorm = SQR(r.x) + SQR(r.y) + SQR(r.z);
 	number energy = (number) 0;
@@ -212,7 +213,7 @@ number PatchyShapeInteraction<number>::_repulsive_lj(const LR_vector<number> &r,
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::_repulsive_lj_n(const LR_vector<number> &r, LR_vector<number> &force, number sigma, number rstar, number b, number rc, int n, bool update_forces) {
+number AllostericPatchyInteraction<number>::_repulsive_lj_n(const LR_vector<number> &r, LR_vector<number> &force, number sigma, number rstar, number b, number rc, int n, bool update_forces) {
 	// this is a bit faster than calling r.norm()
 	number rnorm = SQR(r.x) + SQR(r.y) + SQR(r.z);
 	number energy = (number) 0;
@@ -239,7 +240,7 @@ number PatchyShapeInteraction<number>::_repulsive_lj_n(const LR_vector<number> &
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::_exc_LJ_vol_interaction_sphere(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number AllostericPatchyInteraction<number>::_exc_LJ_vol_interaction_sphere(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 
 	LR_vector<number> force(0,0,0);
 
@@ -270,7 +271,7 @@ number PatchyShapeInteraction<number>::_exc_LJ_vol_interaction_sphere(BasePartic
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::_exc_vol_hard_icosahedron(BaseParticle<number> *ap, BaseParticle<number> *aq, LR_vector<number> *r,bool update_forces) {
+number AllostericPatchyInteraction<number>::_exc_vol_hard_icosahedron(BaseParticle<number> *ap, BaseParticle<number> *aq, LR_vector<number> *r,bool update_forces) {
 	if (update_forces)
 		throw oxDNAException("No forces, figlio di ndrocchia");
 
@@ -436,7 +437,7 @@ number PatchyShapeInteraction<number>::_exc_vol_hard_icosahedron(BaseParticle<nu
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::_exc_vol_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number AllostericPatchyInteraction<number>::_exc_vol_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 
 	if(this->_shape == SPHERE_SHAPE) {
 		return this->_exc_LJ_vol_interaction_sphere(p,q,r,update_forces);
@@ -450,7 +451,7 @@ number PatchyShapeInteraction<number>::_exc_vol_interaction(BaseParticle<number>
 
 //USING THIS ONE!
 template<typename number>
-number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number AllostericPatchyInteraction<number>::_patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 	number rnorm = r->norm();
 	if(rnorm > this->_sqr_rcut) return (number) 0.f;
 
@@ -469,8 +470,8 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
 	 */
 	//printf("Particles %d and %d: distance %f  repulsion ene: %f\n",p->index,q->index,sqrt(rnorm),energy);
 
-	PatchyShapeParticle<number> *pp = static_cast<PatchyShapeParticle<number> *>(p);
-	PatchyShapeParticle<number> *qq = static_cast<PatchyShapeParticle<number> *>(q);
+	AllostericPatchyParticle<number> *pp = static_cast<AllostericPatchyParticle<number> *>(p);
+    AllostericPatchyParticle<number> *qq = static_cast<AllostericPatchyParticle<number> *>(q);
 
 	int c = 0;
 	LR_vector<number> tmptorquep(0, 0, 0);
@@ -609,17 +610,17 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
 
 
 template <typename number>
-PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<number, PatchyShapeInteraction<number> >()  {
-	//this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_interaction;
+AllostericPatchyInteraction<number>::AllostericPatchyInteraction() : BaseInteraction<number, AllostericPatchyInteraction<number> >()  {
+	//this->_int_map[PATCHY] = &AllostericPatchyInteraction<number>::_patchy_interaction;
 	_close_vertexes = NULL;
 
 	_no_multipatch = 0;
 
-	this->_int_map[EXCVOL] = &PatchyShapeInteraction<number>::_exc_vol_interaction;
-	this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_interaction;
+	this->_int_map[EXCVOL] = &AllostericPatchyInteraction<number>::_exc_vol_interaction;
+	this->_int_map[PATCHY] = &AllostericPatchyInteraction<number>::_patchy_interaction;
 
-	//this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_LJ_interaction;
-	//this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_CUT_LJ4896_noEXC_interaction;
+	//this->_int_map[PATCHY] = &AllostericPatchyInteraction<number>::_patchy_LJ_interaction;
+	//this->_int_map[PATCHY] = &AllostericPatchyInteraction<number>::_patchy_CUT_LJ4896_noEXC_interaction;
 
 	//default option, very wide!
 	PLPATCHY_THETA_T0[0] = PLPATCHY_THETA_T0[1] = 0.;
@@ -652,7 +653,7 @@ PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<numbe
 
 // deconstructor. deallocates memory arrays
 template <typename number>
-PatchyShapeInteraction<number>::~PatchyShapeInteraction() {
+AllostericPatchyInteraction<number>::~AllostericPatchyInteraction() {
 
 	delete [] _patch_types;
 	delete [] _particle_types;
@@ -663,7 +664,7 @@ PatchyShapeInteraction<number>::~PatchyShapeInteraction() {
 
 //takes an input string from a file (patches.txt or equivelant) and returns a patch object
 template <typename number>
-Patch<number> PatchyShapeInteraction<number>::_process_patch_type(std::string input_string)
+AllostericPatch<number> AllostericPatchyInteraction<number>::_process_patch_type(std::string input_string)
 {
 	input_file *obs_input = Utils::get_input_file_from_string(input_string);
 	// the id of the patch. used to reference patch from particles.txt
@@ -700,7 +701,7 @@ Patch<number> PatchyShapeInteraction<number>::_process_patch_type(std::string in
 	getInputString(obs_input, "allostery_conditional", allostery_conditional, 1); //1?
 
 	// construct patch. can be a straight up object since this will be immutable
-	Patch<number> loaded_patch(a1,a2,position,id,color,strength, true, allostery_conditional);
+    AllostericPatch<number> loaded_patch(a1,a2,position,id,color,strength, true, allostery_conditional);
 
 	//printf("Loaded patch %d with color %d \n",loaded_patch.id,loaded_patch.color);
 	// deallocate memory for file reader
@@ -711,13 +712,13 @@ Patch<number> PatchyShapeInteraction<number>::_process_patch_type(std::string in
 
 // loads particle type data from a file (particles.txt or equivelant) and returns a PatchyShapeParticle object
 template <typename number>
-PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_type(std::string input_string)
+AllostericPatchyParticle<number> AllostericPatchyInteraction<number>::_process_particle_type(std::string input_string)
 {
 	input_file *obs_input = Utils::get_input_file_from_string(input_string);
 	int type;
 	getInputInt(obs_input,"type",&type,1);
 
-	std::vector<Patch<number> > all_patches;
+	std::vector<AllostericPatch<number> > all_patches;
 	int _N_patches;
 	std::string patches;
 	if( getInputString(obs_input,"patches",patches,1) == KEY_FOUND )
@@ -728,7 +729,7 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 		int patch_id;
 		while( s >> patch_id)
 		{
-			Patch<number> patch(this->_patch_types[patch_id]);
+            AllostericPatch<number> patch(this->_patch_types[patch_id]);
 			all_patches.push_back(patch);
 			OX_LOG(Logger::LOG_INFO,"Particle of type %d adding a patch of color %d",type,patch.color);
 			//s >> patch_id;
@@ -742,10 +743,10 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 		N_vertexes = 12;
 	}
 	OX_LOG(Logger::LOG_INFO,"Particle of type %d has %d vertexes",type,N_vertexes);
-	PatchyShapeParticle<number> p;
+    AllostericPatchyParticle<number> p;
 	switch (this->_allostery_logic_type){
 	case ALLOSTERY_LOGIC_NONE:
-		p = PatchyShapeParticle<number>(_N_patches,type,N_vertexes);
+		p = AllostericPatchyParticle<number>(_N_patches,type,N_vertexes);
 		break;
 	case ALLOSTERY_LOGIC_SIMPLE:
 		p = SimpleAllosteryPatchyShapeParticle<number>(_N_patches,type,N_vertexes);
@@ -759,7 +760,7 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 		p._set_vertexes();
 	}
 	int position = 0;
-	for(typename std::vector<Patch<number> >::iterator i = all_patches.begin(); i != all_patches.end(); ++i)
+	for(typename std::vector<AllostericPatch<number> >::iterator i = all_patches.begin(); i != all_patches.end(); ++i)
 	{
 		p.add_patch(*i,position);
 		position++;
@@ -775,7 +776,7 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
 
 template <typename number> void
 //loads patch data from patches.txt and particles.txt
-PatchyShapeInteraction<number>::_load_patchy_particle_files(std::string& patchy_file, std::string& particle_file)
+AllostericPatchyInteraction<number>::_load_patchy_particle_files(std::string& patchy_file, std::string& particle_file)
 {
 	//first process patches
 	FILE *fpatch = fopen(patchy_file.c_str(),"r");
@@ -793,7 +794,7 @@ PatchyShapeInteraction<number>::_load_patchy_particle_files(std::string& patchy_
 
 	while(  getInputString(&obs_input,patch_no,patch_string,0) == KEY_FOUND )
 	{
-		Patch<number> patch = _process_patch_type(patch_string);
+		AllostericPatch<number> patch = _process_patch_type(patch_string);
 		if(no >= _N_patch_types)
 		{
 			throw oxDNAException("Number of patch types is larger than N_patch_types = %d ",_N_patch_types);
@@ -828,7 +829,7 @@ PatchyShapeInteraction<number>::_load_patchy_particle_files(std::string& patchy_
 		case ALLOSTERY_LOGIC_COMPLEX:
             break;
 		}
-		PatchyShapeParticle<number> particle = _process_particle_type(particle_string);
+        AllostericPatchyParticle<number> particle = _process_particle_type(particle_string);
 		if(p_no >= _N_particle_types)
 			throw oxDNAException ("More particle types in particle config file than specified in the input file. Aborting");
 
@@ -845,7 +846,7 @@ PatchyShapeInteraction<number>::_load_patchy_particle_files(std::string& patchy_
 }
 
 template<typename number>
-void PatchyShapeInteraction<number>::_load_interaction_tensor(std::string &tensor_file)
+void AllostericPatchyInteraction<number>::_load_interaction_tensor(std::string &tensor_file)
 {
 	int p1, p2, patch1, patch2;
 	std::ifstream inf(tensor_file.c_str());
@@ -883,7 +884,7 @@ void PatchyShapeInteraction<number>::_load_interaction_tensor(std::string &tenso
 
 template<typename number>
 // loads settings from the input file passed as an arguement
-void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
+void AllostericPatchyInteraction<number>::get_settings(input_file &inp) {
 	IBaseInteraction<number>::get_settings(inp);
 
 	//getInputInt(&inp, "PATCHY_N", &_N_patches, 1);
@@ -934,12 +935,12 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 	}
 	if(this->_use_torsion)
 	{
-	    this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_1PONLY_LJ4896_noEXC_interaction;
+	    this->_int_map[PATCHY] = &AllostericPatchyInteraction<number>::_patchy_1PONLY_LJ4896_noEXC_interaction;
 	    printf("Torsional constraints are on\n");
 	}
 	else
 	{
-		this->_int_map[PATCHY]  = &PatchyShapeInteraction<number>::_patchy_1PONLY_LJ4896_noEXCnoTorsion_interaction;
+		this->_int_map[PATCHY]  = &AllostericPatchyInteraction<number>::_patchy_1PONLY_LJ4896_noEXCnoTorsion_interaction;
 		printf("Torsional constraints are off\n");
 	}
 	 */
@@ -983,8 +984,8 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 	getInputInt(&inp,"patch_types_N",&_N_patch_types,1);
 	getInputInt(&inp,"particle_types_N",&_N_particle_types,1);
 
-	_patch_types = new Patch<number> [_N_patch_types];
-	_particle_types = new PatchyShapeParticle<number> [_N_particle_types];
+	_patch_types = new AllostericPatch<number> [_N_patch_types];
+	_particle_types = new AllostericPatchyParticle<number> [_N_particle_types];
 
 	std::string patchy_file; //this file contains information about types of patches
 	getInputString(&inp, "patchy_file", patchy_file, 1);
@@ -1011,11 +1012,11 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 	{
 		for(int i = 0; i < _N_particle_types; i++)
 		{
-			PatchyShapeParticle<number>  *p = &_particle_types[i];
+            AllostericPatchyParticle<number>  *p = &_particle_types[i];
 
 			for(int j = i; j < _N_particle_types; j++)
 			{
-				PatchyShapeParticle<number>  *q = &_particle_types[j];
+                AllostericPatchyParticle<number>  *q = &_particle_types[j];
 				for(int pi = 0; pi < p->N_patches; pi++)
 				{
 					for(int qj = 0; qj < q->N_patches; qj++)
@@ -1044,8 +1045,8 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 		for(int j = i; j < _N_particle_types; j++)
 		{
 			bool possible_bond = false;
-			PatchyShapeParticle<number>  *p = &_particle_types[i];
-			PatchyShapeParticle<number>  *q = &_particle_types[j];
+            AllostericPatchyParticle<number>  *p = &_particle_types[i];
+            AllostericPatchyParticle<number>  *q = &_particle_types[j];
 			for(int pi = 0; pi < p->N_patches; pi++)
 			{
 				for(int qi = 0; qi < q->N_patches; qi++)
@@ -1103,12 +1104,12 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 	getInputFloat(&inp, "PATCHY_multi_cutoff", &tmp, 0);
 	_lock_cutoff = (number) tmp;
 
-	OX_LOG(Logger::LOG_INFO, "(PatchyShapeInteraction) using radius=%g, alpha=%g, cutoff=%g, multipatch=%d", _sphere_radius, _patch_alpha, _lock_cutoff, _no_multipatch);
+	OX_LOG(Logger::LOG_INFO, "(AllostericPatchyInteraction) using radius=%g, alpha=%g, cutoff=%g, multipatch=%d", _sphere_radius, _patch_alpha, _lock_cutoff, _no_multipatch);
 
 }
 
 template<typename number>
-void PatchyShapeInteraction<number>::init() {
+void AllostericPatchyInteraction<number>::init() {
 
 	_E_cut = powf((number) this->_rcut, -PATCHY_POWER);
 	this->_sqr_rcut = SQR(this->_rcut);
@@ -1175,30 +1176,30 @@ void PatchyShapeInteraction<number>::init() {
 	}
 }
 
-// allocates memory for particles, which must be then copies from PatchyShapeInteraction::_particle_types
+// allocates memory for particles, which must be then copies from AllostericPatchyInteraction::_particle_types
 template<typename number>
-void PatchyShapeInteraction<number>::allocate_particles(BaseParticle<number> **particles, int N) {
+void AllostericPatchyInteraction<number>::allocate_particles(BaseParticle<number> **particles, int N) {
 	for(int i = 0; i < N; i++) {
 		//int i_patches = (i < _N_A) ? _N_patches : _N_patches_B;
-		particles[i] = new PatchyShapeParticle<number>(1);
+		particles[i] = new AllostericPatchyParticle<number>(1);
 	}
 }
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number AllostericPatchyInteraction<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 	return pair_interaction_nonbonded(p, q, r, update_forces);
 }
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number AllostericPatchyInteraction<number>::pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 	return (number) 0.f;
 }
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number AllostericPatchyInteraction<number>::pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 	LR_vector<number> computed_r(0, 0, 0);
 	if(r == NULL) {
 		computed_r = this->_box->min_image(p->pos, q->pos);
@@ -1217,7 +1218,7 @@ number PatchyShapeInteraction<number>::pair_interaction_nonbonded(BaseParticle<n
 
 /*
 template<typename number>
-void PatchyShapeInteraction<number>::generate_random_configuration(BaseParticle<number> **particles, int N, number box_side) {
+void AllostericPatchyInteraction<number>::generate_random_configuration(BaseParticle<number> **particles, int N, number box_side) {
 	number old_rcut = this->_rcut;
 	this->_rcut = 1;
 
@@ -1263,7 +1264,7 @@ void PatchyShapeInteraction<number>::generate_random_configuration(BaseParticle<
 
 // loads topology data from a topology file
 template<typename number>
-void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BaseParticle<number> **particles) {
+void AllostericPatchyInteraction<number>::read_topology(int N, int *N_strands, BaseParticle<number> **particles) {
 	*N_strands = N;
 	int N_types;
 	std::ifstream topology(this->_topology_filename, ios::in); // open a file stream to topology file
@@ -1317,11 +1318,11 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 	{
 		//printf("Particle %d has %d patches, which have the following colors: ",i,dynamic_cast<PatchyShapeParticle<number> *>(particles[i])->N_patches);
 		particles[i]->set_positions();
-		for(int c = 0; c < dynamic_cast<PatchyShapeParticle<number> *>( particles[i])->N_patches; c++)
+		for(int c = 0; c < dynamic_cast<AllostericPatchyParticle<number> *>( particles[i])->N_patches; c++)
 		{
 			//now assign each patch its unique id
 			//printf("%d ",dynamic_cast<PatchyShapeParticle<number> *>(particles[i])->patches[c].color);
-			dynamic_cast<PatchyShapeParticle<number> *>(particles[i])->patches[c].index = patch_index;
+			dynamic_cast<AllostericPatchyParticle<number> *>(particles[i])->patches[c].index = patch_index;
 			patch_index++;
 			//printf("%d (%f %f %f) ",dynamic_cast<PatchyShapeParticle<number> *>(particles[i])->patches[c].color, dynamic_cast<PatchyShapeParticle<number> *>(particles[i])->patches[c].a1.x,dynamic_cast<PatchyShapeParticle<number> *>(particles[i])->patches[c].a1.y,dynamic_cast<PatchyShapeParticle<number> *>(particles[i])->patches[c].a1.z);
 		}
@@ -1335,22 +1336,22 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 
 
 template<typename number>
-void PatchyShapeInteraction<number>::check_input_sanity(BaseParticle<number> **particles, int N) {
+void AllostericPatchyInteraction<number>::check_input_sanity(BaseParticle<number> **particles, int N) {
 
 }
 
 
 
 template<typename number>
-number PatchyShapeInteraction<number>::just_two_patch_interaction(PatchyShapeParticle<number> *p, PatchyShapeParticle<number> *q, int pi,int  qi,LR_vector<number> *r)
+number AllostericPatchyInteraction<number>::just_two_patch_interaction(AllostericPatchyParticle<number> *p, AllostericPatchyParticle<number> *q, int pi,int  qi,LR_vector<number> *r)
 {
 	number rnorm = r->norm();
 	if(rnorm > this->_sqr_rcut) return (number) 0.f;
 
 	number energy = (number) 0.f;
 
-	PatchyShapeParticle<number> *pp = static_cast<PatchyShapeParticle<number> *>(p);
-	PatchyShapeParticle<number> *qq = static_cast<PatchyShapeParticle<number> *>(q);
+    AllostericPatchyParticle<number> *pp = static_cast<AllostericPatchyParticle<number> *>(p);
+    AllostericPatchyParticle<number> *qq = static_cast<AllostericPatchyParticle<number> *>(q);
 
 	LR_vector<number> ppatch = p->int_centers[pi];
 	if(this->_bonding_allowed(pp,qq,pi,qi) )
@@ -1407,12 +1408,12 @@ number PatchyShapeInteraction<number>::just_two_patch_interaction(PatchyShapePar
 
 
 template<typename number>
-void PatchyShapeInteraction<number>::_init_icosahedron(void)
+void AllostericPatchyInteraction<number>::_init_icosahedron(void)
 {
 	_close_vertexes = new int[12 * 5]; // 5 close vertexes for each vertex
 	_tworinscribed = (number) (2.*sqrt((1./12.) + (1./(6.*sqrt(5.))))); // twice the radius of inscribed sphere
 	// compute the close vertexes thanks to a temporary hard icosahedron
-	PatchyShapeParticle<number> tmp (0,0,12);
+    AllostericPatchyParticle<number> tmp (0,0,12);
 	tmp._set_icosahedron_vertexes();
 
 	/*
@@ -1462,7 +1463,7 @@ void PatchyShapeInteraction<number>::_init_icosahedron(void)
 
 
 template<typename number>
-void PatchyShapeInteraction<number>::_init_patchy_locks(ConfigInfo<number>  *Info)
+void AllostericPatchyInteraction<number>::_init_patchy_locks(ConfigInfo<number>  *Info)
 {
 	if (Info == NULL)
 	{
@@ -1473,7 +1474,7 @@ void PatchyShapeInteraction<number>::_init_patchy_locks(ConfigInfo<number>  *Inf
 	Info->lists->global_update();
 	for(int pid = 0; pid < *Info->N; pid++)
 	{
-		PatchyShapeParticle<number> *p = static_cast< PatchyShapeParticle<number> *>(Info->particles[pid]);
+        AllostericPatchyParticle<number> *p = static_cast< AllostericPatchyParticle<number> *>(Info->particles[pid]);
 		//printf("XXXXXXXXXXXXXXXXXXxParticle has %d partches\n",p->N_patches);
 		//fflush(stdout);
 		//p->_set_vertexes();
@@ -1483,12 +1484,12 @@ void PatchyShapeInteraction<number>::_init_patchy_locks(ConfigInfo<number>  *Inf
 	for(int pid = 0; pid < *Info->N; pid++)
 	{
 
-		PatchyShapeParticle<number> *p = static_cast< PatchyShapeParticle<number> *>(Info->particles[pid]);
+        AllostericPatchyParticle<number> *p = static_cast< AllostericPatchyParticle<number> *>(Info->particles[pid]);
 		//printf("Pidf is %d, p->index is %d\n",pid,p->index);
 
 		//std::vector<BaseParticle<number> *> neighs = Info->lists->get_neigh_list(p);;
 		for(int n = pid+1; n < *Info->N; n++) {
-			PatchyShapeParticle<number> *qq =   static_cast< PatchyShapeParticle<number> *>(Info->particles[n]);
+            AllostericPatchyParticle<number> *qq =   static_cast< AllostericPatchyParticle<number> *>(Info->particles[n]);
 			//printf("qid is %d, qq->index is %d\n",n,qq->index);
 
 			LR_vector<number> r = Info->box->min_image(p,qq);
@@ -1531,7 +1532,7 @@ void PatchyShapeInteraction<number>::_init_patchy_locks(ConfigInfo<number>  *Inf
 
 
 template<typename number>
-void PatchyShapeInteraction<number>::check_patchy_locks(ConfigInfo<number>  *Info)
+void AllostericPatchyInteraction<number>::check_patchy_locks(ConfigInfo<number>  *Info)
 {
 	if (Info == NULL) {
 		Info = &ConfigInfo<number>::ref_instance();
@@ -1540,10 +1541,10 @@ void PatchyShapeInteraction<number>::check_patchy_locks(ConfigInfo<number>  *Inf
 	//Info->lists->global_update();
 	for(int pid = 0; pid < *Info->N; pid++)
 	{
-		PatchyShapeParticle<number> *p = static_cast< PatchyShapeParticle<number> *>(Info->particles[pid]);
+        AllostericPatchyParticle<number> *p = static_cast< AllostericPatchyParticle<number> *>(Info->particles[pid]);
 		//std::vector<BaseParticle<number> *> neighs = Info->lists->get_neigh_list(p);
 		for(int qid = 0; qid < pid; qid++) {
-			PatchyShapeParticle<number> *qq =   static_cast< PatchyShapeParticle<number> *>(Info->particles[qid]);
+            AllostericPatchyParticle<number> *qq =   static_cast< AllostericPatchyParticle<number> *>(Info->particles[qid]);
 
 			LR_vector<number> r = Info->box->min_image(p,qq);
 			for(int ppatch = 0; ppatch < p->N_patches; ppatch++)
@@ -1588,6 +1589,6 @@ void PatchyShapeInteraction<number>::check_patchy_locks(ConfigInfo<number>  *Inf
 	}
 }
 
-template class PatchyShapeInteraction<float>;
-template class PatchyShapeInteraction<double>;
+template class AllostericPatchyInteraction<float>;
+template class AllostericPatchyInteraction<double>;
 

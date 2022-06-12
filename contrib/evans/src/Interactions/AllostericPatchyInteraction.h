@@ -1,25 +1,12 @@
 /*
- * PatchyShapeInteraction.h
+ * AllostericPatchyInteraction.h
  *
  *  Created on: 14/jul/2018
  *      Author: petr
  */
 
-#ifndef PATCHYSHAPEINTERACTION_H_
-#define PATCHYSHAPEINTERACTION_H_
-
-
-#define PLPATCH_VM1 0
-#define PLPATCH_VM3 1
-
-#define PATCHY_POWER 200
-#define PATCHY_CUTOFF 0.18f
-
-#define PLEXCL_S   1.0f
-#define PLEXCL_R   0.9053f
-#define PLEXCL_B   677.505671539f
-#define PLEXCL_RC  0.99888f
-#define PLEXCL_EPS 2.0f
+#ifndef ALLOSTERICPATCHYINTERACTION_H_
+#define ALLOSTERICPATCHYINTERACTION_H_
 
 //constants based on villars paper
 #define PLEXCL_VS   1.0f
@@ -44,8 +31,10 @@
 #define PLEXCL_NARROW_N 2
 
 #include "../../../../src/Interactions/BaseInteraction.h"
-#include "../Particles/PatchyShapeParticle.h"
+#include "../Particles/AllostericPatchyParticle.h"
 #include "../../../../src/Observables/BaseObservable.h"
+#include "../../../romano/src/Interactions/PatchyShapeInteraction.h"
+
 /**
  * @brief Manages the interaction between simple patchy particles, each can have multiple patches of different colors and rigid body of different shapes (
  *
@@ -92,7 +81,7 @@ particle_type_id1 particle_type_id2  patch_1  patch_2
 
 
 template <typename number>
-class PatchyShapeInteraction: public BaseInteraction<number, PatchyShapeInteraction<number> > {
+class AllostericPatchyInteraction: public BaseInteraction<number, AllostericPatchyInteraction<number> > {
 protected:
 	/// Number of patches per particle
 
@@ -130,8 +119,8 @@ protected:
 
     number _lock_cutoff;
 
-	Patch<number> *_patch_types;
-	PatchyShapeParticle<number> *_particle_types;
+	AllostericPatch<number> *_patch_types;
+    AllostericPatchyParticle<number> *_particle_types;
 
 	number _sphere_radius;
 
@@ -151,8 +140,8 @@ protected:
 
 
 public:
-	virtual bool _bonding_allowed(PatchyShapeParticle<number>  *p, PatchyShapeParticle<number>  *q, int pi, int pj );
-	bool _patches_compatible(PatchyShapeParticle<number>  *p, PatchyShapeParticle<number>  *q, int pi, int pj );
+	virtual bool _bonding_allowed(AllostericPatchyParticle<number>  *p, AllostericPatchyParticle<number>  *q, int pi, int pj );
+	bool _patches_compatible(AllostericPatchyParticle<number>  *p, AllostericPatchyParticle<number>  *q, int pi, int pj );
 
 
 	number _V_mod(int type, number cosr1);
@@ -176,12 +165,12 @@ public:
     bool can_interact(BaseParticle<number> *p, BaseParticle<number> *q) {return (bool) this->_interaction_table_types[p->type*_N_particle_types + q->type]; }
 
 	//virtual int check_valence(ConfigInfo<number> &conf_info) {return 0;} //scans all interacting particles if one patch is bond to more particles, it breaks all bonds but 1;
-	virtual number just_two_patch_interaction(PatchyShapeParticle<number> *p, PatchyShapeParticle<number> *q, int pi,int  qi,LR_vector<number> *r);
+	virtual number just_two_patch_interaction(AllostericPatchyParticle<number> *p, AllostericPatchyParticle<number> *q, int pi,int  qi,LR_vector<number> *r);
 
 	number get_patch_cutoff_energy() {return this->_lock_cutoff;}
 
-	Patch<number> _process_patch_type(std::string input_string); //this function processes patch type from the input file
-	PatchyShapeParticle<number> _process_particle_type(std::string input_string);
+    AllostericPatch<number> _process_patch_type(std::string input_string); //this function processes patch type from the input file
+    AllostericPatchyParticle<number> _process_particle_type(std::string input_string);
 
     void _load_patchy_particle_files(std::string& patchy_file, std::string& particle_file);
 
@@ -205,8 +194,8 @@ public:
 		ICOSAHEDRON_SHAPE = 1
 	};
 
-	PatchyShapeInteraction();
-	virtual ~PatchyShapeInteraction();
+	AllostericPatchyInteraction();
+	virtual ~AllostericPatchyInteraction();
 
 	virtual void get_settings(input_file &inp);
 	virtual void init();
@@ -235,10 +224,10 @@ public:
 
 	//virtual void generate_random_configuration(BaseParticle<number> **particles, int N, number box_side);
 };
-
-#ifndef MCMOVE_CUSTOM
- extern "C" IBaseInteraction<float> * make_float()   { return new PatchyShapeInteraction<float> () ; }
- extern "C" IBaseInteraction<double> * make_double() { return new PatchyShapeInteraction<double> () ; }
-#endif
+//
+//#ifndef MCMOVE_CUSTOM
+// extern "C" IBaseInteraction<float> * make_float()   { return new AllostericPatchyInteraction<float> () ; }
+// extern "C" IBaseInteraction<double> * make_double() { return new AllostericPatchyInteraction<double> () ; }
+//#endif
 
 #endif /* PATCHYINTERACTION_H_ */
