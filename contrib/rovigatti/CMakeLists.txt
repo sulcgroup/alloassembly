@@ -43,7 +43,7 @@ ADD_LIBRARY(StarrInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/StarrInter
 ADD_LIBRARY(CPMixtureInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/CPMixtureInteraction.cpp)
 ADD_LIBRARY(LevyInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/LevyInteraction.cpp)
 ADD_LIBRARY(MGInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/MGInteraction.cpp)
-ADD_LIBRARY(AOInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/AOInteraction.cpp)
+ADD_LIBRARY(AOInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/AOInteraction.cpp ../evans/src/Interactions/CUDAAllostericPatchyInteraction.cpp)
 ADD_LIBRARY(PolydisperseLTInteraction SHARED EXCLUDE_FROM_ALL src/Interactions/PolydisperseLTInteraction.cpp)
 
 FIND_PACKAGE(PkgConfig)
