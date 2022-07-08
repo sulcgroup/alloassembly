@@ -5,6 +5,8 @@
 #define _GNU_SOURCE
 #endif
 
+#include <nlohmann/json.hpp>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -27,69 +29,95 @@
 #define NOTHING_READ 1
 
 struct input_value {
-	std::string value;
-	int read;
+	std::string key, value, expanded_value;
+	std::vector<std::string> depends_on;
+	int read = 0;
 
-	input_value() : value(""), read(0) {}
-	input_value(std::string v) : value(v), read(0) {}
+	input_value() : key(""), value("") {}
+	input_value(std::string k, std::string v) : key(k), value(v) {}
+
+	bool has_dependencies();
+	void expand_value(std::map<std::string, std::string> expanded_dependency_values);
 };
 
 typedef std::map<std::string, input_value> input_map;
+
 struct input_file {
+	static input_file *main_input;
+	static std::set<std::string> true_values;
+	static std::set<std::string> false_values;
+
 	input_map keys;
 	std::vector<std::string> unread_keys;
 	int state;
+	bool show_overwrite_warnings = true;
 
-	std::set<std::string> true_values;
-	std::set<std::string> false_values;
+	bool is_main_input = false;
 
+	input_file(bool is_main);
 	input_file();
+	virtual ~input_file();
+
+	/**
+	 * @brief Initialise the structure from the given input file, given as a file descriptor.
+	 * @param inp_file
+	 */
+	void init_from_file(FILE *inp_file);
+
+	/**
+	 * @brief Initialise the structure from the given input file, given as a filename.
+	 * @param filename
+	 */
+	void init_from_filename(std::string filename);
+
+	/**
+	 * @brief Initialise the structure from the given string.
+	 * @param s_inp string to be parsed
+	 */
+	void init_from_string(std::string s_inp);
+
+	void init_from_json(const nlohmann::json &json);
+
+	/**
+	 * @brief Load keys and values from command line's argc and argv variables
+	 *
+	 * This function will build the data structures out of argv. The first non-zero element should be
+	 * the name of the input file, while the rest of the elements will be interpreted as key=value pairs.
+	 * This method can optional skip additional argv elements that come after the input file and that
+	 * should not interpreted as key=value pairs.
+	 *
+	 * @param argc
+	 * @param argv
+	 * @param args_to_skip optional parameter that sets the number of argv elements that should not be considered key=value pairs (in addition to the first one)
+	 */
+	void init_from_command_line_args(int argc, char *argv[], int args_to_skip=0);
+
+	/**
+	 * @brief Add the keys and values found in the desc file.
+	 * @param desc input file to be parsed
+	 */
+	void add_input_source(FILE *desc);
+
+	/**
+	 * @brief Add the keys and values found in the string.
+	 * @param s_inp string to be parsed
+	 */
+	void add_input_source(std::string s_inp);
+
+	/**
+	 * @brief Print out all the keys and values stored.
+	 * @param filename
+	 */
+	void print(char *filename);
+
+	void set_unread_keys();
+
+	std::string get_value(std::string key, int mandatory, bool &found);
+	void set_value(std::string key, std::string value);
+	void unset_value(std::string key);
+
+	std::string to_string() const;
 };
-
-/**
- * @brief Load the keys and values found in the filename into the given input_file
- * This function is a simple wrapper around loadInput so that it is possible to accept a
- * filename instead of a file descriptor as input.
- * @param inp
- * @param filename
- */
-void loadInputFile(input_file *inp, const char *filename);
-
-/**
- * @brief Load the keys and values found in the desc file into the given input_file
- * @param inp
- * @param desc
- */
-void loadInput(input_file *inp, FILE *desc);
-
-/**
- * @brief Add the keys and values found in the desc file to the given input_file.
- * @param inp target input_file structure
- * @param desc input file to be parsed
- */
-void addInput(input_file *inp, FILE *desc);
-
-/**
- * @brief Add the keys and values found in the string to the given input_file.
- * @param inp target input_file structure
- * @param s_inp string to be parsed
- */
-void addInput(input_file *inp, std::string s_inp);
-
-/**
- * @brief Print out all the keys and values stored in the given input_file structure.
- * @param inp
- * @param filename
- */
-void printInput(input_file *inp, char *filename);
-
-/**
- * @brief Add the keys and values stored in argv to the given input_file
- * @param inp target input_file structure
- * @param argc number of options
- * @param argv array of options
- */
-void addCommandLineArguments(input_file *inp, int argc, char *argv[]);
 
 /**
  * @brief Parse a line of the input file
@@ -123,23 +151,6 @@ int getInputChar(input_file *inp, const char *skey, char *dest, int mandatory);
  * @param mandatory whether at least one of these strings should be mandatory
  * @return the number of keys matching the string.
  */
-int getInputKeys (input_file *inp, std::string begins_with, std::vector<std::string> * dest, int mandatory);
-
-/**
- * @brief Strip whitespace from the beginning and end of src
- * src is left unchanged and the resulting, trimmed string is stored in dest. This function
- * does not allocate memory for dest.
- * @param src
- * @param dest
- */
-void getTrimmedString(const char *src, char *dest);
-
-void setUnreadKeys(input_file *inp);
-
-/**
- * @brief Clean up the given input_file structure
- * @param inp
- */
-void cleanInputFile(input_file *inp);
+int getInputKeys(input_file *inp, std::string begins_with, std::vector<std::string> * dest, int mandatory);
 
 #endif

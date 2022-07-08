@@ -9,14 +9,14 @@
 
 
 //---------------------------------------------------------------------------------------
-template <typename number> void Serialized_particle_force_torque<number>::read_from(BaseParticle<number> &par)
+ void Serialized_particle_force_torque::read_from(BaseParticle &par)
 {
 	index = par.index;
 	torque = par.torque;
 	force = par.force;
 }
 //----------------------------------------------------------------------------------------
-template <typename number> int Serialized_particle_force_torque<number>::add_to(BaseParticle<number> &par)
+ int Serialized_particle_force_torque::add_to(BaseParticle &par)
 {
 	if(par.index != index)
 	{
@@ -30,7 +30,7 @@ template <typename number> int Serialized_particle_force_torque<number>::add_to(
 	return index;
 }
 //---------------------------------------------------------------------------------------
-template <typename number> void Serialized_particle_position<number>::read_from(BaseParticle<number> &par)
+ void Serialized_particle_position::read_from(BaseParticle &par)
 {
 	index = par.index;
 	pos = par.pos;
@@ -42,7 +42,7 @@ template <typename number> void Serialized_particle_position<number>::read_from(
 	_N_neigh = par._N_neigh;
 }
 //----------------------------------------------------------------------------------------
-template <typename number> int Serialized_particle_position<number>::write_to(BaseParticle<number> &par)
+ int Serialized_particle_position::write_to(BaseParticle &par)
 {
 	if(par.index != index)
 	{
@@ -62,8 +62,8 @@ template <typename number> int Serialized_particle_position<number>::write_to(Ba
 	return par.index;
 }
 //---------------------------------------------------------------------------------------
-template <typename number>
-int MD_MPIBackend<number>::_MPI_send_block_data(void *data,size_t size,int node_to,int TAG)
+
+int MD_MPIBackend::_MPI_send_block_data(void *data,size_t size,int node_to,int TAG)
 {
 	  int ret =  MPI_Send((void *)data,size,MPI_CHAR,node_to,TAG,MPI_COMM_WORLD);
 	  if(ret != MPI_SUCCESS)
@@ -75,8 +75,8 @@ int MD_MPIBackend<number>::_MPI_send_block_data(void *data,size_t size,int node_
 	  return 0;
 }
 //---------------------------------------------------------------------------------------
-template <typename number>
-int MD_MPIBackend<number>::_MPI_receive_block_data(void *data, size_t size, int node_from, int TAG)
+
+int MD_MPIBackend::_MPI_receive_block_data(void *data, size_t size, int node_from, int TAG)
 {
 	     MPI_Status stat;
 	     int ret = MPI_Recv( (void *) data,size,MPI_CHAR,node_from,TAG,MPI_COMM_WORLD,&stat);
@@ -91,9 +91,8 @@ int MD_MPIBackend<number>::_MPI_receive_block_data(void *data, size_t size, int 
 }
 
 //---------------------------------------------------------------------------------------
-template<typename number>
-MD_MPIBackend<number>::MD_MPIBackend() : MD_CPUBackend<number>() {
-	this->_is_CUDA_sim = false;
+
+MD_MPIBackend::MD_MPIBackend() : MD_CPUBackend() {
 	this->_mpi_lists_are_old = true;
 
 	MPI_Comm_rank (MPI_COMM_WORLD, &(this->_myid));
@@ -127,8 +126,8 @@ MD_MPIBackend<number>::MD_MPIBackend() : MD_CPUBackend<number>() {
 
 //-----------------------------------------------------------------------------------------
 
-template<typename number>
-MD_MPIBackend<number>::~MD_MPIBackend() {
+
+MD_MPIBackend::~MD_MPIBackend() {
 
 	//delete [] this->_particles_to_process;
 	//delete [] this->_communicate_particles;
@@ -136,22 +135,22 @@ MD_MPIBackend<number>::~MD_MPIBackend() {
 	delete [] this->_serialized_forces ;
 }
 //-------------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_send_serialized_particle_to_slave(Serialized_particle_position<number>& part,int slave_id)
+int MD_MPIBackend::_MPI_send_serialized_particle_to_slave(Serialized_particle_position& part,int slave_id)
 {
 	return this->_MPI_send_block_data( (void *)&part,sizeof(part),slave_id);
 }
 //---------------------------------------------------------------------------------------------------
 
-template<typename number> int MD_MPIBackend<number>::_MPI_send_serialized_particle_with_neighbors_to_slave(Serialized_particle_position<number> &part,int slave_id)
+int MD_MPIBackend::_MPI_send_serialized_particle_with_neighbors_to_slave(Serialized_particle_position &part,int slave_id)
 {
 	 this->_MPI_send_block_data( (void *)&part,sizeof(part),slave_id);
  	 int ret =  this->_MPI_send_block_data( static_cast<void *>(this->_particles[part.index].get_verlet_list()) ,sizeof(int)*part._N_neigh,slave_id);
      return ret;
 }
 //---------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_receive_serialized_particle(int from_id)
+int MD_MPIBackend::_MPI_receive_serialized_particle(int from_id)
 {
-	Serialized_particle_position<number> part;
+	Serialized_particle_position part;
 	this->_MPI_receive_block_data( (void *)&part,sizeof(part),from_id);
 	if(part.index < 0 || part.index >= this->_N)
 		throw oxDNAException(" Received particle with impossible index %d",part.index);
@@ -159,9 +158,9 @@ template<typename number> int MD_MPIBackend<number>::_MPI_receive_serialized_par
 	return part.index;
 }
 //---------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_receive_serialized_particle_with_neighbors(int from_id)
+int MD_MPIBackend::_MPI_receive_serialized_particle_with_neighbors(int from_id)
 {
-	Serialized_particle_position<number> part;
+	Serialized_particle_position part;
 	this->_MPI_receive_block_data( (void *)&part,sizeof(part),from_id);
 
 	if(part.index < 0 || part.index >= this->_N)
@@ -173,9 +172,9 @@ template<typename number> int MD_MPIBackend<number>::_MPI_receive_serialized_par
 }
 /*
 //----------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_receive_force_from_slave(int slave_id)
+int MD_MPIBackend::_MPI_receive_force_from_slave(int slave_id)
 {
-	Serialized_particle_force_torque<number> ftrq;
+	Serialized_particle_force_torque ftrq;
 	_MPI_receive_block_data( (void *)&ftrq,sizeof(ftrq),slave_id);
 
 	if(ftrq.index < 0 || ftrq.index >= this->_N)
@@ -185,26 +184,26 @@ template<typename number> int MD_MPIBackend<number>::_MPI_receive_force_from_sla
 	return ftrq.index;
 }
 //---------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_send_force_to_master(int particle_id,int master_id)
+int MD_MPIBackend::_MPI_send_force_to_master(int particle_id,int master_id)
 {
-	Serialized_particle_force_torque<number> ftrq;
+	Serialized_particle_force_torque ftrq;
 	ftrq.read_from(this->_particles[particle_id]);
 	return _MPI_send_block_data( (void *)&ftrq,sizeof(ftrq),master_id);
 }
 */
 //---------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_send_master_to_slave_info(Master_to_node_info& inf,int send_to)
+int MD_MPIBackend::_MPI_send_master_to_slave_info(Master_to_node_info& inf,int send_to)
 {
    return this->_MPI_send_block_data( (void *)&inf,sizeof(inf),send_to);
 }
 //-----------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_receive_master_to_slave_info(Master_to_node_info& inf,int rec_from)
+int MD_MPIBackend::_MPI_receive_master_to_slave_info(Master_to_node_info& inf,int rec_from)
 {
    return this->_MPI_receive_block_data( (void *)&inf,sizeof(inf),rec_from);
 }
 
 //--------------------------------------------------------------------------------------------------------
-template<typename number> void MD_MPIBackend<number>::_Serialize_all_particles(void)
+void MD_MPIBackend::_Serialize_all_particles(void)
 {
   for(int i = 0; i < this->_N; i++)
   {
@@ -213,7 +212,7 @@ template<typename number> void MD_MPIBackend<number>::_Serialize_all_particles(v
 }
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------
-template<typename number> void MD_MPIBackend<number>::_Serialize_all_forces(void)
+void MD_MPIBackend::_Serialize_all_forces(void)
 {
   for(int i = 0; i < this->_N; i++)
   {
@@ -221,11 +220,11 @@ template<typename number> void MD_MPIBackend<number>::_Serialize_all_forces(void
   }
 }
 //----------------------------------------------------------------------------------------------------------
-template<typename number> void MD_MPIBackend<number>::_Evaluate_my_particles(void)
+void MD_MPIBackend::_Evaluate_my_particles(void)
 {
 
 	int neigh;
-	BaseParticle<number> *p;
+	BaseParticle *p;
 
 	//forces have to be set to 0 (on slave nodes) before evaluating this:
 	this->_U = this->_U_hydr = (number) 0;
@@ -233,10 +232,10 @@ template<typename number> void MD_MPIBackend<number>::_Evaluate_my_particles(voi
 		p = &this->_particles[i];
 		this->_U += _particle_particle_bonded_interaction(p);
 
-		std::vector<BaseParticle<number> *> neighs = this->_lists->get_neigh_list(p);
+		std::vector<BaseParticle *> neighs = this->_lists->get_neigh_list(p);
 		for(unsigned int n = 0; n < neighs.size(); n++) {
-			BaseParticle<number> *q = neighs[n];
-			this->_U += this->_interaction->pair_interaction_nonbonded(p, q, NULL, true);
+			BaseParticle *q = neighs[n];
+			this->_U += this->_interaction->pair_interaction_nonbonded(p, q, true, true);
 		}
 	}
 	//this can be optimized
@@ -248,15 +247,15 @@ template<typename number> void MD_MPIBackend<number>::_Evaluate_my_particles(voi
 }
 //---------------------------------------------------------------------------------------------------------
 
-template<typename number>
-void MD_MPIBackend<number>::sim_step(llint curr_step) {
+
+void MD_MPIBackend::sim_step() {
 
   if(this->_myid == 0)   //this is master node
   {
     get_time(&this->_timer, 0);
 
 	get_time(&this->_timer, 2);
-	MD_CPUBackend<number>::_first_step(curr_step);
+	MD_CPUBackend::_first_step();
 	get_time(&this->_timer, 3);
 
 	get_time(&this->_timer, 6);
@@ -271,15 +270,12 @@ void MD_MPIBackend<number>::sim_step(llint curr_step) {
 
 	this->_MPI_compute_forces();
 
-	MD_CPUBackend<number>::_second_step();
+	MD_CPUBackend::_second_step();
 
 	get_time(&this->_timer, 9);
 
 	get_time(&this->_timer, 10);
-	if(this->_thermostat != this->THERMOSTAT_NO && (curr_step % this->_newtonian_steps == 0)) {
-		if(this->_thermostat == this->THERMOSTAT_JOHN) MD_CPUBackend<number>::_activate_john_thermostat();
-		else MD_CPUBackend<number>::_activate_refresh_thermostat();
-	}
+	_thermostat->apply(_particles, current_step());
 	get_time(&this->_timer, 11);
 
 	get_time(&this->_timer, 1);
@@ -290,13 +286,11 @@ void MD_MPIBackend<number>::sim_step(llint curr_step) {
   {
   	this->_MPI_compute_forces();  //slave node just computes forces
   }
-
-
 }
 //------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_send_all_serialized_particles_with_neighbors_to_slave(int slave_id)
+int MD_MPIBackend::_MPI_send_all_serialized_particles_with_neighbors_to_slave(int slave_id)
 {
   if(slave_id > this->_proc_size - 1)
   {
@@ -314,7 +308,7 @@ template<typename number> int MD_MPIBackend<number>::_MPI_send_all_serialized_pa
   return retval;
 }
 //-------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_master_send_interactions(void) {
+int MD_MPIBackend::_MPI_master_send_interactions(void) {
 	Master_to_node_info info_struct_send;
 	if(this->_mpi_lists_are_old) //we are refreshing neighbour lists
 	{
@@ -420,7 +414,7 @@ template<typename number> int MD_MPIBackend<number>::_MPI_master_send_interactio
  return 1;
 }
 //--------------------------------------------------------------------------------------------------
-template<typename number> int MD_MPIBackend<number>::_MPI_slave_receive_interactions(void)
+int MD_MPIBackend::_MPI_slave_receive_interactions(void)
 {
 	Master_to_node_info info;
 
@@ -449,18 +443,18 @@ template<typename number> int MD_MPIBackend<number>::_MPI_slave_receive_interact
 	//now, we set all forces in existing particles to 0
 	for(int i =0; i < this->_N; i++)
 	{
-	  this->_particles[i].force = LR_vector<number>(0,0,0);
-	  this->_particles[i].torque = LR_vector<number>(0,0,0);
+	  this->_particles[i].force = LR_vector(0,0,0);
+	  this->_particles[i].torque = LR_vector(0,0,0);
 	}
 
 	return info.particle_count;
 }
 //--------------------------------------------------------------------------------------------------
 
-template<typename number> int MD_MPIBackend<number>::_MPI_receive_and_fill_forces_from_slave(int slave_id)
+int MD_MPIBackend::_MPI_receive_and_fill_forces_from_slave(int slave_id)
 {
-	Energy_info<number> einfo;
-	_MPI_receive_block_data((void *)(this->_serialized_forces), sizeof( Serialized_particle_force_torque<number>)*this->_N, slave_id);
+	Energy_info einfo;
+	_MPI_receive_block_data((void *)(this->_serialized_forces), sizeof( Serialized_particle_force_torque)*this->_N, slave_id);
 	int retval = _MPI_receive_block_data((void *)&einfo,sizeof(einfo),slave_id);
 
 	this->_U += einfo.U;
@@ -475,12 +469,12 @@ template<typename number> int MD_MPIBackend<number>::_MPI_receive_and_fill_force
 }
 //--------------------------------------------------------------------------------------------------
 
-template<typename number> int MD_MPIBackend<number>::_MPI_send_serialized_forces_to_master(int master_id)
+int MD_MPIBackend::_MPI_send_serialized_forces_to_master(int master_id)
 {
-	 Energy_info<number> einfo;
+	 Energy_info einfo;
 	 einfo.U = this->_U;
 	 einfo.U_hydr = this->_U_hydr;
-	 this->_MPI_send_block_data((void *)(this->_serialized_forces), sizeof( Serialized_particle_force_torque<number>)*this->_N, master_id);
+	 this->_MPI_send_block_data((void *)(this->_serialized_forces), sizeof( Serialized_particle_force_torque)*this->_N, master_id);
 	 int retval = this->_MPI_send_block_data((void *)&einfo,sizeof(einfo),master_id);
 
 	 return retval;
@@ -488,8 +482,8 @@ template<typename number> int MD_MPIBackend<number>::_MPI_send_serialized_forces
 
 //---------------------------------------------------------------------------------------------------
 
-template<typename number>
-void MD_MPIBackend<number>::_MPI_compute_forces() {
+
+void MD_MPIBackend::_MPI_compute_forces() {
  if(this->_myid == 0)
  {
 	 this->_MPI_master_send_interactions();
@@ -509,8 +503,8 @@ void MD_MPIBackend<number>::_MPI_compute_forces() {
 }
 /*
 //-------------------------------------------------------------------
-template<typename number>
-void MDBackend<number>::print_conf(llint curr_step, bool reduced, bool only_last) {
+
+void MDBackend::print_conf(llint curr_step, bool reduced, bool only_last) {
 	if(this->_myid == 0) {
 	 if(reduced == false) this->_IO->print_conf(*this, curr_step, only_last);
 	 else this->_IO->print_reduced_conf(*this, curr_step);
@@ -518,22 +512,20 @@ void MDBackend<number>::print_conf(llint curr_step, bool reduced, bool only_last
 }
 */
 //-----------------------------------------------------------------
-template<typename number>
-//void MD_MPIBackend<number>::init(ifstream &conf_input) {
-void MD_MPIBackend<number>::init() {
-//	MD_CPUBackend<number>::init(conf_input);
-	MD_CPUBackend<number>::init();
-	this->_serialized_particles = new Serialized_particle_position<number>[this->_N];
-	this->_serialized_forces = new Serialized_particle_force_torque<number>[this->_N];
+
+//void MD_MPIBackend::init(ifstream &conf_input) {
+void MD_MPIBackend::init() {
+//	MD_CPUBackend::init(conf_input);
+	MD_CPUBackend::init();
+	this->_serialized_particles = new Serialized_particle_position[this->_N];
+	this->_serialized_forces = new Serialized_particle_force_torque[this->_N];
 	//cout << "INIT finished, this->N is " << this->_N << endl;
 
 }
 //---------------------------------------------------------------------------
-template<typename number>
-void MD_MPIBackend<number>::print_conf(llint curr_step, bool reduced, bool only_last) {
-	if(this->_myid == 0) SimBackend<number>::print_conf(curr_step, reduced, only_last);
+
+void MD_MPIBackend::print_conf(bool reduced, bool only_last) {
+	if(this->_myid == 0) SimBackend::print_conf(reduced, only_last);
 }
 //--------------------------------------------------------------------------
 //----------------------------------------------------------------------
-template class MD_MPIBackend<float>;
-template class MD_MPIBackend<double>;

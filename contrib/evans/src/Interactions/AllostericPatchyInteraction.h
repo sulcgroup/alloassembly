@@ -30,10 +30,9 @@
 //there are two types of modulation
 #define PLEXCL_NARROW_N 2
 
-#include "../../../../src/Interactions/BaseInteraction.h"
+#include "LegacyBaseInteraction.h"
 #include "../Particles/AllostericPatchyParticle.h"
 #include "../../../../src/Observables/BaseObservable.h"
-#include "../../../romano/src/Interactions/PatchyShapeInteraction.h"
 
 /**
  * @brief Manages the interaction between simple patchy particles, each can have multiple patches of different colors and rigid body of different shapes (
@@ -77,11 +76,7 @@ particle_type_id1 particle_type_id2  patch_1  patch_2
 @endverbatim
  */
 
-
-
-
-template <typename number>
-class AllostericPatchyInteraction: public BaseInteraction<number, AllostericPatchyInteraction<number> > {
+class AllostericPatchyInteraction : public Legacy::BaseInteraction {
 protected:
 	/// Number of patches per particle
 
@@ -119,8 +114,8 @@ protected:
 
     number _lock_cutoff;
 
-	AllostericPatch<number> *_patch_types;
-    AllostericPatchyParticle<number> *_particle_types;
+	AllostericPatch *_patch_types;
+    AllostericPatchyParticle *_particle_types;
 
 	number _sphere_radius;
 
@@ -140,47 +135,48 @@ protected:
 
 
 public:
-	virtual bool _bonding_allowed(AllostericPatchyParticle<number>  *p, AllostericPatchyParticle<number>  *q, int pi, int pj );
-	bool _patches_compatible(AllostericPatchyParticle<number>  *p, AllostericPatchyParticle<number>  *q, int pi, int pj );
+	virtual bool _bonding_allowed(AllostericPatchyParticle  *p, AllostericPatchyParticle  *q, int pi, int pj );
+	bool _patches_compatible(AllostericPatchyParticle  *p, AllostericPatchyParticle  *q, int pi, int pj );
 
 
 	number _V_mod(int type, number cosr1);
 	number _V_modD(int type, number cosr1);
 	number _V_modDsin(int type, number cosr1);
-	number _exc_vol_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
+	number _exc_vol_interaction(BaseParticle *p, BaseParticle *q, LR_vector *r, bool update_forces);
 
-	number _repulsive_lj(const LR_vector<number> &r, LR_vector<number> &force, number sigma, number rstar, number b, number rc, bool update_forces);
-	number _repulsive_lj_n(const LR_vector<number> &r, LR_vector<number> &force, number sigma, number rstar, number b, number rc,int n,bool update_forces);
+	number _repulsive_lj(const LR_vector &r, LR_vector &force, number sigma, number rstar, number b, number rc, bool update_forces);
+	number _repulsive_lj_n(const LR_vector &r, LR_vector &force, number sigma, number rstar, number b, number rc,int n,bool update_forces);
 
-	number _exc_LJ_vol_interaction_sphere(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
-	number  _exc_vol_hard_icosahedron(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r,bool update_forces);
-	//inline number _exc_quadratic_vol_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
+	number _exc_LJ_vol_interaction_sphere(BaseParticle *p, BaseParticle *q, LR_vector *r, bool update_forces);
+	number  _exc_vol_hard_icosahedron(BaseParticle *p, BaseParticle *q, LR_vector *r,bool update_forces);
+	//inline number _exc_quadratic_vol_interaction(BaseParticle *p, BaseParticle *q, LR_vector *r, bool update_forces);
 
 
-	inline number _patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
+	inline number _patchy_interaction(BaseParticle *p, BaseParticle *q, LR_vector *r, bool update_forces);
 
 	virtual bool multipatch_allowed(void) {return  ! this->_no_multipatch;}
 
 	//true if particles of of this type can interact
-    bool can_interact(BaseParticle<number> *p, BaseParticle<number> *q) {return (bool) this->_interaction_table_types[p->type*_N_particle_types + q->type]; }
+    bool can_interact(BaseParticle *p, BaseParticle *q) {return (bool) this->_interaction_table_types[p->type*_N_particle_types + q->type]; }
 
-	//virtual int check_valence(ConfigInfo<number> &conf_info) {return 0;} //scans all interacting particles if one patch is bond to more particles, it breaks all bonds but 1;
-	virtual number just_two_patch_interaction(AllostericPatchyParticle<number> *p, AllostericPatchyParticle<number> *q, int pi,int  qi,LR_vector<number> *r);
+	//virtual int check_valence(ConfigInfo &conf_info) {return 0;} //scans all interacting particles if one patch is bond to more particles, it breaks all bonds but 1;
+	virtual number just_two_patch_interaction(AllostericPatchyParticle *p, AllostericPatchyParticle *q, int pi,int  qi,LR_vector *r);
 
 	number get_patch_cutoff_energy() {return this->_lock_cutoff;}
 
-    AllostericPatch<number> _process_patch_type(std::string input_string); //this function processes patch type from the input file
-    AllostericPatchyParticle<number> _process_particle_type(std::string input_string);
+    AllostericPatch _process_patch_type(std::string input_string); //this function processes patch type from the input file
+    AllostericPatchyParticle _process_particle_type(std::string input_string);
 
     void _load_patchy_particle_files(std::string& patchy_file, std::string& particle_file);
 
     void _load_interaction_tensor(std::string &tensor_file); //only used if tensor file provided
 
     void _init_icosahedron(void);
+    number _pair_interaction_term_wrapper(BaseInteraction *that, int name, BaseParticle *p, BaseParticle *q, LR_vector *r, bool update_forces);
 
-    void _init_patchy_locks(ConfigInfo<number> *_Info = NULL);
+    void _init_patchy_locks(shared_ptr<ConfigInfo> _Info = NULL);
 
-    void check_patchy_locks(ConfigInfo<number> *_Info = NULL);
+    void check_patchy_locks(shared_ptr<ConfigInfo> _Info = NULL);
 
 public:
 	enum {
@@ -205,24 +201,24 @@ public:
 
 	void check_loaded_particles(void); //needed for debugging
 
-	virtual void allocate_particles(BaseParticle<number> **particles, int N);
+	virtual void allocate_particles(BaseParticle **particles, int N);
 
-	virtual number pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
+	virtual number pair_interaction(BaseParticle *p, BaseParticle *q, LR_vector *r=NULL, bool update_forces=false);
 	// Returns bond energy of strongly-bonded particles (for modeling covalent bonds), and updates forces if update_forces=true
-	virtual number pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
+	virtual number pair_interaction_bonded(BaseParticle *p, BaseParticle *q, LR_vector *r=NULL, bool update_forces=false);
 	// Returns bond energy of weakly-bonded particles (for modeling H bonds), and updates forces if update_forces=true
-	virtual number pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
+	virtual number pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, LR_vector *r=NULL, bool update_forces=false);
 	// Gets energy for interaction between surfaces of particles
 	// name = type of interaction (PATCHY or EXVOL)
-	virtual number pair_interaction_term(int name, BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false) {
+	virtual number pair_interaction_term(int name, BaseParticle *p, BaseParticle *q, LR_vector *r=NULL, bool update_forces=false) {
 		return this->_pair_interaction_term_wrapper(this, name, p, q, r, update_forces);
 	}
 
 	// reads topology from topology file
-	virtual void read_topology(int N, int *N_strands, BaseParticle<number> **particles);
-	virtual void check_input_sanity(BaseParticle<number> **particles, int N);
+	virtual void read_topology(int N, int *N_strands, BaseParticle **particles);
+	virtual void check_input_sanity(BaseParticle **particles, int N);
 
-	//virtual void generate_random_configuration(BaseParticle<number> **particles, int N, number box_side);
+	//virtual void generate_random_configuration(BaseParticle **particles, int N, number box_side);
 };
 //
 //#ifndef MCMOVE_CUSTOM

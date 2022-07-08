@@ -7,9 +7,10 @@
 
 #include "LJInteraction.h"
 
-template<typename number>
-LJInteraction<number>::LJInteraction() : BaseInteraction<number, LJInteraction<number> >() {
-	this->_int_map[LENNARD_JONES] = &LJInteraction<number>::_lennard_jones;
+LJInteraction::LJInteraction() :
+				BaseInteraction() {
+	ADD_INTERACTION_TO_MAP(LENNARD_JONES, pair_interaction_nonbonded);
+
 	_is_ka_mixture = false;
 	_sigma[0] = _sigma[1] = _sigma[2] = 1.;
 	_epsilon[0] = _epsilon[1] = _epsilon[2] = 1.;
@@ -17,14 +18,12 @@ LJInteraction<number>::LJInteraction() : BaseInteraction<number, LJInteraction<n
 	_N_A = _N_B = 0;
 }
 
-template<typename number>
-LJInteraction<number>::~LJInteraction() {
+LJInteraction::~LJInteraction() {
 
 }
 
-template<typename number>
-void LJInteraction<number>::get_settings(input_file &inp) {
-	IBaseInteraction<number>::get_settings(inp);
+void LJInteraction::get_settings(input_file &inp) {
+	BaseInteraction::get_settings(inp);
 
 	getInputInt(&inp, "LJ_n", _n, 0);
 	_n[1] = _n[2] = _n[0];
@@ -36,16 +35,15 @@ void LJInteraction<number>::get_settings(input_file &inp) {
 	double sigma;
 	if(getInputDouble(&inp, "LJ_sigma[2]", &sigma, 0) == KEY_FOUND) {
 		_sigma[2] = sigma;
-		_sigma[1] = 0.5*(1. + _sigma[2]);
+		_sigma[1] = 0.5 * (1. + _sigma[2]);
 	}
 
 	float rcut = 2.5f;
 	getInputFloat(&inp, "LJ_rcut", &rcut, 0);
-	this->_rcut = (number) rcut;
+	_rcut = (number) rcut;
 }
 
-template<typename number>
-void LJInteraction<number>::init() {
+void LJInteraction::init() {
 	if(_is_ka_mixture) {
 		_sigma[1] = 0.8;
 		_sigma[2] = 0.88;
@@ -54,65 +52,57 @@ void LJInteraction<number>::init() {
 	}
 
 	for(int i = 0; i < 3; i++) {
-		number rcut = this->_rcut * _sigma[i];
+		number rcut = _rcut * _sigma[i];
 		_sqr_LJ_rcut[i] = SQR(rcut);
-		_E_cut[i] = 4. * _epsilon[i] * (pow(_sigma[i]/rcut, (number)2*_n[i]) - pow(_sigma[i]/rcut, (number)_n[i]));
+		_E_cut[i] = 4. * _epsilon[i] * (pow(_sigma[i] / rcut, (number) 2 * _n[i]) - pow(_sigma[i] / rcut, (number) _n[i]));
 		_sqr_sigma[i] = SQR(_sigma[i]);
 	}
 
-	if(_sigma[2] > _sigma[0]) this->_rcut *= _sigma[2];
-	this->_sqr_rcut = SQR(this->_rcut);
+	if(_sigma[2] > _sigma[0]) _rcut *= _sigma[2];
+	_sqr_rcut = SQR(_rcut);
 }
 
-template<typename number>
-void LJInteraction<number>::allocate_particles(BaseParticle<number> **particles, int N) {
-	for(int i = 0; i < N; i++) particles[i] = new BaseParticle<number>();
+void LJInteraction::allocate_particles(std::vector<BaseParticle *> &particles) {
+	for(uint i = 0; i < particles.size(); i++) {
+		particles[i] = new BaseParticle();
+	}
 }
 
-template<typename number>
-void LJInteraction<number>::read_topology(int N, int *N_strands, BaseParticle<number> **particles) {
+void LJInteraction::read_topology(int *N_strands, std::vector<BaseParticle *> &particles) {
+	int N = particles.size();
 	*N_strands = N;
 
-	std::ifstream topology(this->_topology_filename, ios::in);
-	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
+	std::ifstream topology(_topology_filename, std::ios::in);
+	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", _topology_filename);
 	char line[512];
 	topology.getline(line, 512);
 	topology.close();
 	sscanf(line, "%*d %d\n", &_N_B);
 	_N_A = N - _N_B;
 
-	allocate_particles(particles, N);
-	for (int i = 0; i < N; i ++) {
-	   particles[i]->index = particles[i]->strand_id = i;
-	   particles[i]->type = particles[i]->btype = (i < _N_A) ? P_A : P_B;
+	allocate_particles(particles);
+	for(int i = 0; i < N; i++) {
+		particles[i]->index = particles[i]->strand_id = i;
+		particles[i]->type = particles[i]->btype = (i < _N_A) ? P_A : P_B;
 	}
 }
 
-template<typename number>
-number LJInteraction<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	return pair_interaction_nonbonded(p, q, r, update_forces);
+number LJInteraction::pair_interaction(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	return pair_interaction_nonbonded(p, q, compute_r, update_forces);
 }
 
-template<typename number>
-number LJInteraction<number>::pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number LJInteraction::pair_interaction_bonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	return (number) 0.f;
 }
 
-template<typename number>
-number LJInteraction<number>::pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	LR_vector<number> computed_r(0, 0, 0);
-	if(r == NULL) {
-		computed_r = this->_box->min_image(p->pos, q->pos);
-		r = &computed_r;
+number LJInteraction::pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	if(compute_r) {
+		_computed_r = _box->min_image(p->pos, q->pos);
 	}
 
-	return _lennard_jones(p, q, r, update_forces);
+	return _lennard_jones(p, q, update_forces);
 }
 
-template<typename number>
-void LJInteraction<number>::check_input_sanity(BaseParticle<number> **particles, int N) {
+void LJInteraction::check_input_sanity(std::vector<BaseParticle *> &particles) {
 
 }
-
-template class LJInteraction<float>;
-template class LJInteraction<double>;

@@ -7,21 +7,15 @@
 
 #include "NoThermostat.h"
 
-template<typename number>
-NoThermostat<number>::NoThermostat () : BaseThermostat<number>(){
+NoThermostat::NoThermostat() :
+				BaseThermostat() {
 }
 
-template<typename number>
-NoThermostat<number>::~NoThermostat () {
+NoThermostat::~NoThermostat() {
 
 }
 
-
-template<typename number>
-void NoThermostat<number>::apply (BaseParticle<number> **particles, llint curr_step) {
+void NoThermostat::apply(std::vector<BaseParticle*> &particles, llint curr_step) {
 	return;
 }
-
-template class NoThermostat<float>;
-template class NoThermostat<double>;
 

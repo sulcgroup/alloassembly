@@ -21,7 +21,7 @@ HardIcoInteraction<number>::~HardIcoInteraction() {
 
 template<typename number>
 void HardIcoInteraction<number>::get_settings(input_file &inp) {
-	IBaseInteraction<number>::get_settings(inp);
+	BaseInteraction<number>::get_settings(inp);
 	char tmps[512];
 	getInputString (&inp, "sim_type", (char *)tmps, 1);
 	if (strncmp(tmps, "MC", 512) && strncmp(tmps, "MC2", 512)) throw oxDNAException ("Cannot run Hard Icos with MD");
@@ -102,7 +102,7 @@ void HardIcoInteraction<number>::allocate_particles(BaseParticle<number> **parti
 
 template<typename number>
 number HardIcoInteraction<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	return pair_interaction_nonbonded(p, q, r, update_forces);
+	return pair_interaction_nonbonded(p, q, compute_r, update_forces);
 }
 
 template<typename number>
@@ -118,7 +118,7 @@ number HardIcoInteraction<number>::pair_interaction_nonbonded(BaseParticle<numbe
 		r = &computed_r;
 	}
 	
-	return _hi_pot (p, q, r, update_forces);
+	return _hi_pot (p, q, compute_r, update_forces);
 }
 
 template<typename number>

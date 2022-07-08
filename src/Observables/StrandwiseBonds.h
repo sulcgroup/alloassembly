@@ -16,9 +16,7 @@
 #include "../Interactions/DNAInteraction.h"
 #include "../Utilities/OrderParameters.h"
 
-template<typename number>
-class StrandwiseBonds  : public BaseObservable<number>  {
-	char _order_parameters_file[512];
+class StrandwiseBonds: public BaseObservable {
 
 public:
 	StrandwiseBonds();

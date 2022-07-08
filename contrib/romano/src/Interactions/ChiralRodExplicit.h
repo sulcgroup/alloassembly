@@ -88,16 +88,16 @@ public:
 	virtual number pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
 	virtual number pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
 	virtual number pair_interaction_term(int name, BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false) {
-		return this->_pair_interaction_term_wrapper(this, name, p, q, r, update_forces);
+		return this->_pair_interaction_term_wrapper(this, name, p, q, compute_r, update_forces);
 	}
 
-	virtual void read_topology(int N, int *N_strands, BaseParticle<number> **particles);
+	virtual void read_topology(int *N_strands, BaseParticle<number> **particles);
 	virtual void check_input_sanity(BaseParticle<number> **particles, int N);
 
 	bool generate_random_configuration_overlap (BaseParticle<number> * p, BaseParticle<number> *q);
 };
 
-extern "C" IBaseInteraction<float> * make_float() { return new ChiralRodExplicit<float> (); }
-extern "C" IBaseInteraction<double> * make_double() { return new ChiralRodExplicit<double> (); }
+extern "C" BaseInteraction<float> * make_float() { return new ChiralRodExplicit<float> (); }
+extern "C" BaseInteraction<double> * make_double() { return new ChiralRodExplicit<double> (); }
 
 #endif /* CHIRALRODEXPLICIT_H_ */

@@ -14,34 +14,37 @@
  * @brief Prints a configuration in the FS format.
  *
  * @verbatim
-[in_box = <bool> (if true all the positions are brought back between -L/2 and L/2. Defaults to false)]
-@endverbatim
+ [in_box = <bool> (if true all the positions are brought back between -L/2 and L/2. Defaults to false)]
+ @endverbatim
  */
-template<typename number>
-class FSConf: public Configuration<number>  {
+class FSConf: public Configuration {
 protected:
-	int _N, _N_A, _N_B;
-	bool _in_box;
-	bool _also_patch;
-	bool _print_bonds;
-	number _bond_threshold;
+	int _N = -1;
+	int _N_A = -1;
+	int _N_B = -1;
+	bool _in_box = false;
+	bool _also_patch = false;
+	bool _print_bonds = false;
+	int _energy_term_id = -1;
+	number _bond_threshold = -0.2;
 
 	std::vector<std::map<int, int> > _bonds;
 
 	virtual std::string _headers(llint step);
-	virtual std::string _particle(BaseParticle<number> *p);
+	virtual std::string _particle(BaseParticle *p);
 
 public:
 	FSConf();
 	virtual ~FSConf();
 
 	void get_settings(input_file &my_inp, input_file &sim_inp);
-	void init(ConfigInfo<number> &config_info);
+	void init();
 
 	std::string _configuration(llint step);
 };
 
-extern "C" BaseObservable<float> *make_float() { return new FSConf<float>(); }
-extern "C" BaseObservable<double> *make_double() { return new FSConf<double>(); }
+extern "C" BaseObservable *make_FSConf() {
+	return new FSConf();
+}
 
 #endif /* FSCONF_H_ */

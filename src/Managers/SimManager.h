@@ -12,12 +12,9 @@
 #include <cstring>
 #include <ctime>
 
-extern "C" {
-#include "../Utilities/time_scales/time_scales.h"
-}
-
 #include "../defs.h"
 #include "../Backends/SimBackend.h"
+#include "../Utilities/time_scales/time_scales.h"
 
 struct double4;
 struct float4;
@@ -41,25 +38,20 @@ print_conf_ppc = <int> (mandatory only if time_scale == log_line. This is the nu
  */
 class SimManager {
 protected:
-	ISimBackend *_backend;
+	std::shared_ptr<SimBackend> _backend;
 	input_file _input;
 	time_scale _time_scale_manager;
 	int _time_scale;
 	llint _steps, _equilibration_steps;
-	llint _cur_step;
-	llint _start_step;
-	llint _max_steps;
+	llint _steps_run;
 	int _seed;
 	int _print_energy_every;
 	int _pid;
 	int _print_input;
 	int _fix_diffusion_every;
 
-	char _conf_file[256];
-	virtual void _get_options();
-
 public:
-	SimManager(int argc, char *argv[]);
+	SimManager(input_file input);
 	virtual ~SimManager();
 
 	static bool stop;

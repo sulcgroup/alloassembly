@@ -10,7 +10,9 @@
 template<typename number> FreeVolume<number>::FreeVolume() {
     _restrict_to_type = -1;
     _sigma = 0.5f;
+	_length = 10.0f;
     _ntries = 0;
+	_max_ntries = 1e7;
 }
 
 template<typename number>
@@ -21,17 +23,16 @@ FreeVolume<number>::~FreeVolume() {
 template<typename number>
 void FreeVolume<number>::init(ConfigInfo<number> &config_info) {
     BaseObservable<number>::init(config_info);
-    if (_ntries < 0) {
-        _ntries = -_ntries * int(this->_config_info.box->V());
-    }
-    OX_LOG (Logger::LOG_INFO, "(FreeVolume.cpp) Using sigma=%g, ntries=%d (%g per unit volume) and restrict_to_type=%d", _sigma, _ntries, _ntries / this->_config_info.box->V(), _restrict_to_type);
+    OX_LOG (Logger::LOG_INFO, "(FreeVolume.cpp) Using sigma=%g, ntries=%d, max_ntries=%d, and restrict_to_type=%d", _sigma, _ntries, _max_ntries, _restrict_to_type);
 }
 
 template<typename number>
 void FreeVolume<number>::get_settings(input_file &my_inp, input_file &sim_inp) {
     getInputNumber (&my_inp, "sigma", &_sigma, 0);
+    getInputNumber (&my_inp, "length", &_length, 0);
     getInputInt(&my_inp, "restrict_to_type", &_restrict_to_type, 0);
     getInputInt (&my_inp, "ntries", &_ntries, 1);
+    getInputInt (&my_inp, "max_ntries", &_max_ntries, 0);
 }
 
 template<typename number>
@@ -42,6 +43,18 @@ std::string FreeVolume<number>::get_output_string(llint curr_step) {
     LR_vector<number> box_sides = this->_config_info.box->box_sides();
 
     BaseParticle<number> * p;
+    
+	int myntries;
+	if (_ntries > 0) {
+		myntries = _ntries;
+	}
+	else {
+		myntries = - (int) (_ntries *  this->_config_info.box->V());
+ 	}
+	if (myntries > _max_ntries) {
+		OX_LOG(Logger::LOG_INFO, "(FreeVolume.cpp) setting myntries to max_ntries=%e (was %e)", (double)_max_ntries, (double) myntries);
+		myntries = _max_ntries;
+	}
 
     int N = *this->_config_info.N;
     int N_of_type = 0;
@@ -81,11 +94,11 @@ std::string FreeVolume<number>::get_output_string(llint curr_step) {
     p = particles[N_of_type];
     int real_N_of_type = N_of_type + 1;
     Cells<number> * cells = new Cells<number>(real_N_of_type, this->_config_info.box);
-    cells->init(particles, 10 + 2.01 * _sigma);
+    cells->init(particles, _length + 2. *(0.5 + _sigma));
 
     int ntries = 0;
     int nfull = 0;
-    while (ntries < _ntries) {
+    while (ntries < myntries) {
         p->pos.x = box_sides[0] * drand48();
         p->pos.y = box_sides[1] * drand48();
         p->pos.z = box_sides[2] * drand48();
@@ -95,7 +108,7 @@ std::string FreeVolume<number>::get_output_string(llint curr_step) {
         bool found = false;
         for (it = neighs.begin(); it != neighs.end() && found == false; it ++) {
             if (_restrict_to_type >= 0 && (*it)->type != _restrict_to_type) {
-                //throw oxDNAException("fsf");
+                throw oxDNAException("fsf");
                 continue;
             }
             //if (p->type != 1) throw oxDNAException("gg");
@@ -111,10 +124,13 @@ std::string FreeVolume<number>::get_output_string(llint curr_step) {
         ntries ++;
     }
 
-    int nempty = _ntries - nfull;
-    number free_volume = (nempty / (double) _ntries) * this->_config_info.box->V();
 
-    ret += Utils::sformat("%g %g", free_volume, (nempty / (double) _ntries));
+    int nempty = myntries - nfull;
+	//printf ("%d %d %d\n", myntries, nfull, nempty);
+	number volume = this->_config_info.box->V();
+    number free_volume = (nempty / (double) myntries) * volume;
+
+    ret += Utils::sformat("%13.6lf  %13.6lf  %7.5lf", (double) (volume - free_volume) / N_of_type, (double) free_volume, nempty/(double) myntries);
 
     for (int i = 0; i <= N_of_type; i ++) delete particles[i];
     delete[] particles;

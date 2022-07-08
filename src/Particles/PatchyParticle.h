@@ -10,18 +10,34 @@
 
 #include "BaseParticle.h"
 
-/**
- * @brief Incapsulates a patchy particle with 2, 3, or 4 spherical patches. Used by PatchyInteraction.
- */
-template<typename number>
-class PatchyParticle : public BaseParticle<number> {
-protected:
-	LR_vector<number> *_base_patches;
-	number _sigma;
+struct PatchyBond {
+	BaseParticle *other;
+	number r_p;
+	int p_patch, q_patch;
+	number energy;
+	LR_vector force;
+	LR_vector p_torque, q_torque;
 
-	void _set_base_patches();
+	PatchyBond(BaseParticle *o, number my_r_p, int pp, int qp, number e) :
+					other(o),
+					r_p(my_r_p),
+					p_patch(pp),
+					q_patch(qp),
+					energy(e) {
+	}
+};
+
+/**
+ * @brief Incapsulates a patchy particle.
+ */
+
+class PatchyParticle : public BaseParticle {
+protected:
+	number _sigma;
+	std::vector<LR_vector> _base_patches;
 
 public:
+	PatchyParticle(std::vector<LR_vector> base_patches, int nt, number sigma);
 	PatchyParticle(int N_patches, int nt, number sigma);
 	virtual ~PatchyParticle();
 
@@ -30,6 +46,12 @@ public:
 	virtual bool is_rigid_body() {
 		return true;
 	}
+
+	std::vector<LR_vector> base_patches() {
+		return _base_patches;
+	}
+
+	std::vector<PatchyBond> bonds;
 };
 
 #endif /* PATCHYPARTICLE_H_ */

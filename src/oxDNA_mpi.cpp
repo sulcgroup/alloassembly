@@ -30,7 +30,7 @@
 using namespace std;
 
 void print_version() {
-	fprintf(stdout, "oxDNA %d.%d.%d by Lorenzo Rovigatti, Flavio Romano, Petr Sulc and Benedict Snodin (c) 2013\n", VERSION_MAJOR, VERSION_MINOR, VERSION_STAGE);
+	fprintf(stdout, "oxDNA %s by Lorenzo Rovigatti, Flavio Romano, Petr Sulc and Benedict Snodin (c) 2013\n", RELEASE);
 	exit(-1);
 }
 
@@ -53,7 +53,10 @@ int main(int argc, char *argv[]) {
 		if(argc < 2) throw oxDNAException("Usage is '%s input_file'", argv[0]);
 		if(!strcmp(argv[1], "-v")) print_version();
 
-		ParallelManager mysim(argc, argv);
+		input_file input(true);
+		input.init_from_command_line_args(argc, argv);
+
+		ParallelManager mysim(input);
 		mysim.load_options();
 		MPI_Barrier(MPI_COMM_WORLD);
 
@@ -61,7 +64,8 @@ int main(int argc, char *argv[]) {
 		mysim.init();
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		OX_LOG(Logger::LOG_INFO, "SVN CODE VERSION: %s", SVN_VERSION);
+		OX_LOG(Logger::LOG_INFO, "RELEASE: %s", RELEASE);
+		OX_LOG(Logger::LOG_INFO, "GIT COMMIT: %s", GIT_COMMIT);
 		OX_LOG(Logger::LOG_INFO, "COMPILED ON: %s", BUILD_TIME);
 
 		OX_DEBUG("Running");
@@ -74,12 +78,11 @@ int main(int argc, char *argv[]) {
 		OX_LOG(Logger::LOG_INFO, "END OF THE SIMULATION, everything went OK!");
 	}
 	catch (oxDNAException &e) {
-		OX_LOG(Logger::LOG_ERROR, "%s", e.error());
+		OX_LOG(Logger::LOG_ERROR, "%s", e.what());
 		return 1;
 	}
 
 	TimingManager::clear();
-	Logger::clear();
 
 	return 0;
 }

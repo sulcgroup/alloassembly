@@ -9,13 +9,13 @@
 #define BASEBOX_H_
 
 #include "../defs.h"
-#include "../Particles/BaseParticle.h"
 #include "../Utilities/parse_input/parse_input.h"
+
+class BaseParticle;
 
 /**
  * @brief Abstract class defining a generic simulation box.
  */
-template<typename number>
 class BaseBox {
 public:
 	BaseBox();
@@ -31,7 +31,7 @@ public:
 	 * @param v2
 	 * @return
 	 */
-	virtual LR_vector<number> min_image(const LR_vector<number> &v1, const LR_vector<number> &v2) const = 0;
+	virtual LR_vector min_image(const LR_vector &v1, const LR_vector &v2) const = 0;
 	/**
 	 * @brief Returns the minimum image distance between the two given particles.
 	 *
@@ -39,9 +39,7 @@ public:
 	 * @param q
 	 * @return
 	 */
-	virtual LR_vector<number> min_image(const BaseParticle<number> &p, const BaseParticle<number> &q) {
-		return min_image(p.pos, q.pos);
-	}
+	virtual LR_vector min_image(const BaseParticle &p, const BaseParticle &q);
 	/**
 	 * @brief Returns the minimum image distance between the two given particles.
 	 *
@@ -49,9 +47,7 @@ public:
 	 * @param q
 	 * @return
 	 */
-	virtual LR_vector<number> min_image(const BaseParticle<number> *p, const BaseParticle<number> *q) {
-		return min_image(p->pos, q->pos);
-	}
+	virtual LR_vector min_image(const BaseParticle *p, const BaseParticle *q);
 
 	/**
 	 * @brief Returns the square of the minimum image distance between the two given vectors.
@@ -60,7 +56,7 @@ public:
 	 * @param v2
 	 * @return
 	 */
-	virtual number sqr_min_image_distance(const LR_vector<number> &v1, const LR_vector<number> &v2) const = 0;
+	virtual number sqr_min_image_distance(const LR_vector &v1, const LR_vector &v2) const = 0;
 	/**
 	 * @brief Returns the square of the minimum image distance between the two given particles.
 	 *
@@ -68,9 +64,8 @@ public:
 	 * @param v2
 	 * @return
 	 */
-	virtual number sqr_min_image_distance(const BaseParticle<number> &p, const BaseParticle<number> &q) {
-		return sqr_min_image_distance(p.pos, q.pos);
-	}
+	virtual number sqr_min_image_distance(const BaseParticle &p, const BaseParticle &q);
+
 	/**
 	 * @brief Returns the square of the minimum image distance between the two given particles.
 	 *
@@ -78,9 +73,7 @@ public:
 	 * @param v2
 	 * @return
 	 */
-	virtual number sqr_min_image_distance(const BaseParticle<number> *p, const BaseParticle<number> *q) {
-		return sqr_min_image_distance(p->pos, q->pos);
-	}
+	virtual number sqr_min_image_distance(const BaseParticle *p, const BaseParticle *q);
 
 	/**
 	 * @brief Brings back v in the box and returns its normalised components.
@@ -88,14 +81,14 @@ public:
 	 * @param v
 	 * @return
 	 */
-	virtual LR_vector<number> normalised_in_box(const LR_vector<number> &v) = 0;
+	virtual LR_vector normalised_in_box(const LR_vector &v) = 0;
 
 	/**
 	 * @brief Returns the length of the box sides.
 	 *
 	 * @return
 	 */
-	virtual LR_vector<number> &box_sides() = 0;
+	virtual LR_vector box_sides() const = 0;
 
 	/**
 	 * @brief Returns the box's total volume.
@@ -105,27 +98,24 @@ public:
 	virtual number V() = 0;
 
 	/**
-	 * @brief Currently not implemented.
-	 *
-	 * @param particles
-	 * @param N
-	 */
-	virtual void apply_boundary_conditions(BaseParticle<number> **particles, int N) = 0;
-
-	/**
 	 * @brief Returns the "absolute" position of a particle
 	 *
 	 * @param p pointer to the particle object
 	 */
-	virtual LR_vector<number> get_abs_pos(BaseParticle<number> * p) = 0; 
-	
+	virtual LR_vector get_abs_pos(BaseParticle *p) = 0;
+
 	/**
 	 * @brief Shifts the particle's position and stores internally the shift. Used in the fix_diffusion procedure
 	 *
 	 * @param p particle 
 	 * @param amount displacement 
 	 */
-	virtual void shift_particle (BaseParticle<number> * p, LR_vector<number> &amount) = 0;
+	virtual void shift_particle(BaseParticle *p, LR_vector &amount) = 0;
+
+	const std::string INIT_EVENT = "box_initialised";
+	const std::string UPDATE_EVENT = "box_updated";
 };
+
+using BoxPtr = std::shared_ptr<BaseBox>;
 
 #endif /* BASEBOX_H_ */

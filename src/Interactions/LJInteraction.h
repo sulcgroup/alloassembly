@@ -26,8 +26,7 @@ LJ_rcut = <float> (interaction cutoff)
 [LJ_n = <int> (Generalised LJ exponent. Defaults to 6, which is the classic LJ value.)]
 @endverbatim
  */
-template <typename number>
-class LJInteraction: public BaseInteraction<number, LJInteraction<number> > {
+class LJInteraction: public BaseInteraction {
 protected:
 	number _E_cut[3];
 	bool _is_ka_mixture;
@@ -38,7 +37,7 @@ protected:
 	number _epsilon[3];
 	number _sqr_LJ_rcut[3];
 
-	inline number _lennard_jones(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
+	inline number _lennard_jones(BaseParticle *p, BaseParticle *q, bool update_forces);
 
 public:
 	enum {
@@ -51,33 +50,29 @@ public:
 	virtual void get_settings(input_file &inp);
 	virtual void init();
 
-	virtual void allocate_particles(BaseParticle<number> **particles, int N);
-	virtual void read_topology(int N, int *N_strands, BaseParticle<number> **particles);
+	virtual void allocate_particles(std::vector<BaseParticle *> &particles);
+	virtual void read_topology(int *N_strands, std::vector<BaseParticle *> &particles);
 
-	virtual number pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
-	virtual number pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
-	virtual number pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
-	virtual number pair_interaction_term(int name, BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false) {
-		return this->_pair_interaction_term_wrapper(this, name, p, q, r, update_forces);
-	}
+	virtual number pair_interaction(BaseParticle *p, BaseParticle *q, bool compute_r = true, bool update_forces=false);
+	virtual number pair_interaction_bonded(BaseParticle *p, BaseParticle *q, bool compute_r = true, bool update_forces=false);
+	virtual number pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r = true, bool update_forces=false);
 
-	virtual void check_input_sanity(BaseParticle<number> **particles, int N);
+	virtual void check_input_sanity(std::vector<BaseParticle *> &particles);
 };
 
-template<typename number>
-number LJInteraction<number>::_lennard_jones(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	number rnorm = r->norm();
+number LJInteraction::_lennard_jones(BaseParticle *p, BaseParticle *q, bool update_forces) {
+	number rnorm = _computed_r.norm();
 	number energy = 0;
 
 	int type = p->type + q->type;
 	if(rnorm < _sqr_LJ_rcut[type]) {
-		number tmp = this->_sqr_sigma[type] / rnorm;
+		number tmp = _sqr_sigma[type] / rnorm;
 		number lj_part = 1;
 		for(int i = 0; i < _n[type]/2; i++) lj_part *= tmp;
 		energy = 4 * _epsilon[type] * (SQR(lj_part) - lj_part) - _E_cut[type];
 
 		if(update_forces) {
-			LR_vector<number> force = *r * (-4 *_n[type] * _epsilon[type] * (lj_part - 2*SQR(lj_part)) / rnorm);
+			LR_vector force = _computed_r * (-4 *_n[type] * _epsilon[type] * (lj_part - 2*SQR(lj_part)) / rnorm);
 			p->force -= force;
 			q->force += force;
 		}

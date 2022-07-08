@@ -7,7 +7,6 @@
 
 #include "ForceFactory.h"
 
-// forces to include
 #include "COMForce.h"
 #include "ConstantRateForce.h"
 #include "SawtoothForce.h"
@@ -25,147 +24,170 @@
 #include "AlignmentField.h"
 #include "GenericCentralForce.h"
 #include "LJCone.h"
+#include "RepulsiveEllipsoid.h"
+
+// metadynamics-related forces
+#include "Metadynamics/LT2DCOMTrap.h"
+#include "Metadynamics/LTAtanCOMTrap.h"
+#include "Metadynamics/LTCOMAngleTrap.h"
+#include "Metadynamics/LTCOMTrap.h"
+
 #include <fstream>
 #include <sstream>
-#include "LJCone.h"
 
 using namespace std;
 
-template <typename number>
-ForceFactory<number> * ForceFactory<number>::_ForceFactoryPtr = NULL;
+std::shared_ptr<ForceFactory> ForceFactory::_ForceFactoryPtr = nullptr;
 
-template <typename number>
-ForceFactory<number>::ForceFactory() {
+ForceFactory::ForceFactory() {
 
 }
 
-template <typename number>
-ForceFactory<number>::~ForceFactory() {
-	for (unsigned int i =0; i < _forces.size(); i ++) delete _forces[i];
+ForceFactory::~ForceFactory() {
+
 }
 
-template <typename number>
-ForceFactory<number> * ForceFactory<number>::instance() {
-	if (_ForceFactoryPtr == NULL) _ForceFactoryPtr = new ForceFactory();
+std::shared_ptr<ForceFactory> ForceFactory::instance() {
+	// we can't use std::make_shared because ForceFactory's constructor is private
+	if(_ForceFactoryPtr == nullptr) {
+		_ForceFactoryPtr = std::shared_ptr<ForceFactory>(new ForceFactory());
+	}
 
 	return _ForceFactoryPtr;
 }
 
-template<typename number>
-void ForceFactory<number>::add_force(input_file &inp, BaseParticle<number> **particles, int N, bool is_CUDA, BaseBox<number> * box_ptr) {
-
+void ForceFactory::add_force(input_file &inp, std::vector<BaseParticle *> &particles, BaseBox * box_ptr) {
 	string type_str;
-	getInputString (&inp, "type", type_str, 1);
+	getInputString(&inp, "type", type_str, 1);
 
-	BaseForce<number> * extF;
-	
-	if (type_str.compare("string") == 0) extF = new ConstantRateForce<number>();
-	else if (type_str.compare("sawtooth") == 0) extF = new SawtoothForce<number>();
-	else if (type_str.compare("twist") == 0) extF = new ConstantRateTorque<number>();
-	else if (type_str.compare("trap") == 0) extF = new MovingTrap<number>();
-	else if (type_str.compare("repulsion_plane") == 0) extF = new RepulsionPlane<number>();
-	else if (type_str.compare("repulsion_plane_moving") == 0) extF = new RepulsionPlaneMoving<number>();
-	else if (type_str.compare("mutual_trap") == 0) extF = new MutualTrap<number>();
-	else if (type_str.compare("lowdim_trap") == 0) extF = new LowdimMovingTrap<number>();
-	else if (type_str.compare("constant_trap") == 0) extF = new ConstantTrap<number>();
-	else if (type_str.compare("sphere") == 0) extF = new RepulsiveSphere<number>();
-	else if (type_str.compare("sphere_smooth") == 0) extF = new RepulsiveSphereSmooth<number>();
-	else if (type_str.compare("com") == 0) extF = new COMForce<number>();
-	else if (type_str.compare("LJ_wall") == 0) extF = new LJWall<number>();
-	else if (type_str.compare("hard_wall") == 0) extF = new HardWall<number>();
-	else if (type_str.compare("alignment_field") == 0) extF = new AlignmentField<number>();
-	else if (type_str.compare("generic_central_force") == 0) extF = new GenericCentralForce<number>();
-	else if (type_str.compare("LJ_cone") == 0) extF = new LJCone<number>();
-	else throw oxDNAException ("Invalid force type `%s\'", type_str.c_str());
+	ForcePtr extF;
+
+	if(type_str.compare("string") == 0) extF = std::make_shared<ConstantRateForce>();
+	else if(type_str.compare("sawtooth") == 0) extF = std::make_shared<SawtoothForce>();
+	else if(type_str.compare("twist") == 0) extF = std::make_shared<ConstantRateTorque>();
+	else if(type_str.compare("trap") == 0) extF = std::make_shared<MovingTrap>();
+	else if(type_str.compare("repulsion_plane") == 0) extF = std::make_shared<RepulsionPlane>();
+	else if(type_str.compare("repulsion_plane_moving") == 0) extF = std::make_shared<RepulsionPlaneMoving>();
+	else if(type_str.compare("mutual_trap") == 0) extF = std::make_shared<MutualTrap>();
+	else if(type_str.compare("lowdim_trap") == 0) extF = std::make_shared<LowdimMovingTrap>();
+	else if(type_str.compare("constant_trap") == 0) extF = std::make_shared<ConstantTrap>();
+	else if(type_str.compare("sphere") == 0) extF = std::make_shared<RepulsiveSphere>();
+	else if(type_str.compare("sphere_smooth") == 0) extF = std::make_shared<RepulsiveSphereSmooth>();
+	else if(type_str.compare("com") == 0) extF = std::make_shared<COMForce>();
+	else if(type_str.compare("LJ_wall") == 0) extF = std::make_shared<LJWall>();
+	else if(type_str.compare("hard_wall") == 0) extF = std::make_shared<HardWall>();
+	else if(type_str.compare("alignment_field") == 0) extF = std::make_shared<AlignmentField>();
+	else if(type_str.compare("generic_central_force") == 0) extF = std::make_shared<GenericCentralForce>();
+	else if(type_str.compare("LJ_cone") == 0) extF = std::make_shared<LJCone>();
+	else if(type_str.compare("ellipsoid") == 0) extF = std::make_shared<RepulsiveEllipsoid>();
+	else if (type_str.compare("meta_com_trap") == 0) extF = std::make_shared<LTCOMTrap>();
+	else if (type_str.compare("meta_2D_com_trap") == 0) extF = std::make_shared<LT2DCOMTrap>();
+	else if (type_str.compare("meta_atan_com_trap") == 0) extF = std::make_shared<LTAtanCOMTrap>();
+	else if (type_str.compare("meta_com_angle_trap") == 0) extF = std::make_shared<LTCOMAngleTrap>();
+	else throw oxDNAException("Invalid force type `%s\'", type_str.c_str());
 
 	string group = string("default");
 	getInputString(&inp, "group_name", group, 0);
-	
-	extF->get_settings(inp);
-	extF->init(particles, N, box_ptr); // here the force is added to the particle
 	extF->set_group_name(group);
 
-	_forces.push_back(extF);
+	std::vector<int> particle_ids;
+	std::string description;
+	std::tie(particle_ids, description) = extF->init(inp);
+
+	CONFIG_INFO->add_force_to_particles(extF, particle_ids, description);
 }
 
-template<typename number>
-void ForceFactory<number>::read_external_forces(std::string external_filename, BaseParticle<number> ** particles, int N, bool is_CUDA,BaseBox<number> * box) {
-	OX_LOG(Logger::LOG_INFO, "Parsing Force file %s", external_filename.c_str());
+void ForceFactory::make_forces(std::vector<BaseParticle *> &particles, BaseBox *box) {
+	bool external_forces = false;
+	getInputBool(CONFIG_INFO->sim_input, "external_forces", &external_forces, 0);
 
-	//char line[512], typestr[512];
-	int open, justopen, a;
-	ifstream external(external_filename.c_str());
+	if(external_forces) {
+		std::string external_filename;
+		getInputString(CONFIG_INFO->sim_input, "external_forces_file", external_filename, 1);
 
-	if(!external.good ()) throw oxDNAException ("Can't read external_forces_file '%s'", external_filename.c_str());
-
-	justopen = open = 0;
-	a = external.get();
-	bool is_commented = false;
-	stringstream external_string;
-	while(external.good()) {
-		justopen = 0;
-		switch(a) {
-		case '#':
-			is_commented = true;
-			break;
-		case '\n':
-			is_commented = false;
-			break;
-		case '{':
-			if(!is_commented) {
-				open++;
-				justopen = 1;
-			}
-			break;
-		case '}':
-			if(!is_commented) {
-				if(justopen) throw oxDNAException ("Syntax error in '%s': nothing between parentheses", external_filename.c_str());
-				open--;
-			}
-			break;
-		default:
-			break;
+		ifstream external(external_filename.c_str());
+		if(!external.good ()) {
+			throw oxDNAException ("Can't read external_forces_file '%s'", external_filename.c_str());
 		}
 
-		if(!is_commented) external_string << (char)a;
-		if(open > 1 || open < 0) throw oxDNAException ("Syntax error in '%s': parentheses do not match", external_filename.c_str());
-		a = external.get();
-	}
-	external.close();
+		bool is_json = false;
+		getInputBool(CONFIG_INFO->sim_input, "external_forces_as_JSON", &is_json, 0);
 
-	external_string.clear();
-	external_string.seekg(0, ios::beg);
-	a = external_string.get();
-	while(external_string.good()) {
-		while (a != '{' && external_string.good()) a = external_string.get();
-		if(!external_string.good()) break;
-		// this function create a temporary file which is destroyed upon calling fclose
-		// the temporary file is opened with "wb+" flags
-		FILE *temp = tmpfile();
-		OX_LOG(Logger::LOG_INFO, "   Using temporary file");
-		a = external_string.get();
-		while (a != '}' && external_string.good()) {
-			fprintf (temp, "%c", a);
+		if(is_json) {
+			OX_LOG(Logger::LOG_INFO, "Parsing JSON force file %s", external_filename.c_str());
+
+			nlohmann::json my_json = nlohmann::json::parse(external);
+
+			for(auto &force_json : my_json) {
+				input_file force_input;
+				force_input.init_from_json(force_json);
+				ForceFactory::instance()->add_force(force_input, particles, box);
+			}
+		}
+		else {
+			OX_LOG(Logger::LOG_INFO, "Parsing force file %s", external_filename.c_str());
+
+			//char line[512], typestr[512];
+			int open, justopen, a;
+
+			justopen = open = 0;
+			a = external.get();
+			bool is_commented = false;
+			stringstream external_string;
+			while(external.good()) {
+				justopen = 0;
+				switch(a) {
+					case '#':
+					is_commented = true;
+					break;
+					case '\n':
+					is_commented = false;
+					break;
+					case '{':
+					if(!is_commented) {
+						open++;
+						justopen = 1;
+					}
+					break;
+					case '}':
+					if(!is_commented) {
+						if(justopen) throw oxDNAException ("Syntax error in '%s': nothing between parentheses", external_filename.c_str());
+						open--;
+					}
+					break;
+					default:
+					break;
+				}
+
+				if(!is_commented) external_string << (char)a;
+				if(open > 1 || open < 0) throw oxDNAException ("Syntax error in '%s': parentheses do not match", external_filename.c_str());
+				a = external.get();
+			}
+			external_string.clear();
+			external_string.seekg(0, ios::beg);
 			a = external_string.get();
+			while(external_string.good()) {
+				while (a != '{' && external_string.good()) {
+					a = external_string.get();
+				}
+				if(!external_string.good()) {
+					break;
+				}
+
+				a = external_string.get();
+				std::string input_string("");
+				while (a != '}' && external_string.good()) {
+					input_string += a;
+					a = external_string.get();
+				}
+				input_file input;
+				input.init_from_string(input_string);
+
+				ForceFactory::instance()->add_force(input, particles, box);
+			}
 		}
-		rewind(temp);
-		input_file input;
-		loadInput(&input, temp);
 
-		ForceFactory<number>::instance()->add_force(input, particles, N, is_CUDA, box);
-
-		cleanInputFile (&input);
-		fclose (temp);
+		external.close();
+		OX_LOG(Logger::LOG_INFO, "   Force file parsed");
 	}
-	OX_LOG(Logger::LOG_INFO, "   Force file parsed", external_filename.c_str());
 }
-
-template<typename number>
-void ForceFactory<number>::clear () {
-	if (_ForceFactoryPtr != NULL) delete _ForceFactoryPtr; // this if is to make oxDNA not segfault if an exception is thrown in the code
-
-	return;
-}
-
-template class ForceFactory<float>;
-template class ForceFactory<double>;

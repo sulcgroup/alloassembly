@@ -13,11 +13,10 @@
 
 using namespace std;
 
-template<typename number>
-StarrInteraction<number>::StarrInteraction() :
-				BaseInteraction<number, StarrInteraction<number> >() {
-	this->_int_map[BONDED] = &StarrInteraction<number>::pair_interaction_bonded;
-	this->_int_map[NONBONDED] = &StarrInteraction<number>::pair_interaction_nonbonded;
+StarrInteraction::StarrInteraction() :
+				BaseInteraction() {
+	ADD_INTERACTION_TO_MAP(BONDED, pair_interaction_bonded);
+	ADD_INTERACTION_TO_MAP(NONBONDED, pair_interaction_nonbonded);
 
 	_N_strands = _N_per_strand = _N_tetramers = _N_dimers = 0;
 	_N_dimer_spacers = 2;
@@ -25,14 +24,12 @@ StarrInteraction<number>::StarrInteraction() :
 	_mode = STRANDS;
 }
 
-template<typename number>
-StarrInteraction<number>::~StarrInteraction() {
+StarrInteraction::~StarrInteraction() {
 
 }
 
-template<typename number>
-void StarrInteraction<number>::get_settings(input_file &inp) {
-	IBaseInteraction<number>::get_settings(inp);
+void StarrInteraction::get_settings(input_file &inp) {
+	BaseInteraction::get_settings(inp);
 
 	getInputBool(&inp, "FS_starr_model", &_starr_model, 0);
 	getInputInt(&inp, "FS_N_dimer_spacers", &_N_dimer_spacers, 0);
@@ -48,8 +45,7 @@ void StarrInteraction<number>::get_settings(input_file &inp) {
 	if(_starr_model && _mode == STRANDS) throw oxDNAException("FS_mode = strands and FS_starr_model = true are incompatible");
 }
 
-template<typename number>
-void StarrInteraction<number>::init() {
+void StarrInteraction::init() {
 	_fene_K = 30.;
 	_fene_sqr_r0 = 2.25;
 	_lin_k = 5.;
@@ -72,23 +68,22 @@ void StarrInteraction<number>::init() {
 		_der_LJ_E_cut[i] = 24. * (pow(_LJ_sqr_sigma[i] / _LJ_sqr_rcut[i], 3.) - 2. * pow(_LJ_sqr_sigma[i] / _LJ_sqr_rcut[i], 6.)) / _LJ_rcut[i];
 	}
 
-	if(_LJ_rcut[0] > _LJ_rcut[2]) this->_rcut = _LJ_rcut[0];
-	else this->_rcut = _LJ_rcut[2];
+	if(_LJ_rcut[0] > _LJ_rcut[2]) _rcut = _LJ_rcut[0];
+	else _rcut = _LJ_rcut[2];
 
-	this->_sqr_rcut = SQR(this->_rcut);
+	_sqr_rcut = SQR(_rcut);
 }
 
-template<typename number>
-void StarrInteraction<number>::allocate_particles(BaseParticle<number> **particles, int N) {
-	for(int i = 0; i < N; i++) {
-		particles[i] = new CustomParticle<number>();
+void StarrInteraction::allocate_particles(std::vector<BaseParticle *> &particles) {
+	for(uint i = 0; i < particles.size(); i++) {
+		particles[i] = new CustomParticle();
 	}
 }
 
-template<typename number>
-void StarrInteraction<number>::_read_strand_topology(int N, int *N_strands, BaseParticle<number> **particles) {
-	std::ifstream topology(this->_topology_filename, ios::in);
-	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
+void StarrInteraction::_read_strand_topology(int *N_strands, std::vector<BaseParticle *> &particles) {
+	int N = particles.size();
+	std::ifstream topology(_topology_filename, ios::in);
+	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", _topology_filename);
 	char line[2048];
 	topology.getline(line, 2048);
 	sscanf(line, "%*d %d\n", &_N_strands);
@@ -100,21 +95,21 @@ void StarrInteraction<number>::_read_strand_topology(int N, int *N_strands, Base
 	while(!done) {
 		topology.getline(line, 2048);
 		if(!topology.fail()) {
-			for(uint np = 0; np < strlen(line); np++) {
-				CustomParticle<number> *back = static_cast<CustomParticle<number> *>(particles[N_particles]);
+			for(uint32_t np = 0; np < strlen(line); np++) {
+				CustomParticle *back = static_cast<CustomParticle *>(particles[N_particles]);
 				back->index = N_particles;
 				back->type = P_A;
 				back->btype = N_DUMMY;
 				back->n3 = back->n5 = P_VIRTUAL;
 				if(np != 0) {
-					CustomParticle<number> *n3 = static_cast<CustomParticle<number> *>(particles[N_particles - 2]);
+					CustomParticle *n3 = static_cast<CustomParticle *>(particles[N_particles - 2]);
 					back->add_bonded_neigh(n3);
 					back->n3 = n3;
 					n3->n5 = back;
 				}
 				N_particles++;
 
-				CustomParticle<number> *base = static_cast<CustomParticle<number> *>(particles[N_particles]);
+				CustomParticle *base = static_cast<CustomParticle *>(particles[N_particles]);
 				base->index = N_particles;
 				base->type = P_B;
 				base->btype = Utils::decode_base(line[np]);
@@ -134,8 +129,8 @@ void StarrInteraction<number>::_read_strand_topology(int N, int *N_strands, Base
 	topology.close();
 }
 
-template<typename number>
-void StarrInteraction<number>::_read_tetramer_topology(int N, int *N_strands, BaseParticle<number> **particles) {
+void StarrInteraction::_read_tetramer_topology(int *N_strands, std::vector<BaseParticle *> &particles) {
+	int N = particles.size();
 	_N_per_strand = 17;
 	*N_strands = N / _N_per_strand;
 	int N_per_tetramer = 4 * _N_per_strand;
@@ -146,7 +141,7 @@ void StarrInteraction<number>::_read_tetramer_topology(int N, int *N_strands, Ba
 	string sequence("ACGTACGT");
 
 	for(int i = 0; i < N; i++) {
-		CustomParticle<number> *p = static_cast<CustomParticle<number> *>(particles[i]);
+		CustomParticle *p = static_cast<CustomParticle *>(particles[i]);
 		p->index = i;
 		p->strand_id = i / _N_per_strand;
 		p->n3 = p->n5 = P_VIRTUAL;
@@ -163,7 +158,7 @@ void StarrInteraction<number>::_read_tetramer_topology(int N, int *N_strands, Ba
 			p->btype = P_HUB;
 			while(idx >= 0) {
 				int idx_neigh = tetramer_base_idx + idx;
-				CustomParticle<number> *q = static_cast<CustomParticle<number> *>(particles[idx_neigh]);
+				CustomParticle *q = static_cast<CustomParticle *>(particles[idx_neigh]);
 				p->add_bonded_neigh(q);
 				idx -= _N_per_strand;
 			}
@@ -174,12 +169,12 @@ void StarrInteraction<number>::_read_tetramer_topology(int N, int *N_strands, Ba
 				int idx_base = idx_in_arm / 2 - 1;
 				p->type = P_B;
 				p->btype = Utils::decode_base(sequence[idx_base]);
-				p->add_bonded_neigh(static_cast<CustomParticle<number> *>(particles[i - 1]));
+				p->add_bonded_neigh(static_cast<CustomParticle *>(particles[i - 1]));
 			}
 			// backbone
 			else {
 				int idx_prev = (idx_in_arm == 1) ? i - 1 : i - 2;
-				CustomParticle<number> *q = static_cast<CustomParticle<number> *>(particles[idx_prev]);
+				CustomParticle *q = static_cast<CustomParticle *>(particles[idx_prev]);
 				p->add_bonded_neigh(q);
 				p->n3 = q;
 				q->n5 = p;
@@ -188,10 +183,10 @@ void StarrInteraction<number>::_read_tetramer_topology(int N, int *N_strands, Ba
 	}
 }
 
-template<typename number>
-void StarrInteraction<number>::_read_vitrimer_topology(int N, int *N_strands, BaseParticle<number> **particles) {
-	std::ifstream topology(this->_topology_filename, ios::in);
-	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
+void StarrInteraction::_read_vitrimer_topology(int *N_strands, std::vector<BaseParticle *> &particles) {
+	int N = particles.size();
+	std::ifstream topology(_topology_filename, ios::in);
+	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", _topology_filename);
 	char line[2048];
 	topology.getline(line, 2048);
 	sscanf(line, "%*d %d %d\n", &_N_tetramers, &_N_dimers);
@@ -220,7 +215,7 @@ void StarrInteraction<number>::_read_vitrimer_topology(int N, int *N_strands, Ba
 		int N_per_construct = (i < N_in_tetramers) ? N_per_tetramer : N_per_dimer;
 		int N_spacers_per_strand = (i < N_in_tetramers) ? 1 : _N_dimer_spacers / 2;
 
-		CustomParticle<number> *p = static_cast<CustomParticle<number> *>(particles[i]);
+		CustomParticle *p = static_cast<CustomParticle *>(particles[i]);
 		p->index = i;
 		p->strand_id = base_idx / N_per_strand;
 		p->n3 = p->n5 = P_VIRTUAL;
@@ -243,7 +238,7 @@ void StarrInteraction<number>::_read_vitrimer_topology(int N, int *N_strands, Ba
 				int idx = idx_in_construct - N_per_strand;
 				while(idx >= 0) {
 					int idx_neigh = construct_base_idx + idx;
-					CustomParticle<number> *q = static_cast<CustomParticle<number> *>(particles[idx_neigh]);
+					CustomParticle *q = static_cast<CustomParticle *>(particles[idx_neigh]);
 					p->add_bonded_neigh(q);
 					idx -= N_per_strand;
 				}
@@ -252,7 +247,7 @@ void StarrInteraction<number>::_read_vitrimer_topology(int N, int *N_strands, Ba
 				// the first hub particle in the strand is connected to the first hub particle of the other strand
 				if(idx_in_arm == 0) {
 					if(idx_in_construct > 0) {
-						CustomParticle<number> *q = static_cast<CustomParticle<number> *>(particles[i - N_per_strand]);
+						CustomParticle *q = static_cast<CustomParticle *>(particles[i - N_per_strand]);
 						p->add_bonded_neigh(q);
 						p->n3 = q;
 						q->n5 = p;
@@ -260,7 +255,7 @@ void StarrInteraction<number>::_read_vitrimer_topology(int N, int *N_strands, Ba
 				}
 				// the other hub particles are connected to the previous particle on the same strand
 				else {
-					CustomParticle<number> *q = static_cast<CustomParticle<number> *>(particles[i - 1]);
+					CustomParticle *q = static_cast<CustomParticle *>(particles[i - 1]);
 					p->add_bonded_neigh(q);
 					p->n3 = q;
 					q->n5 = p;
@@ -273,12 +268,12 @@ void StarrInteraction<number>::_read_vitrimer_topology(int N, int *N_strands, Ba
 				int idx_base = (idx_without_spacers - 1) / 2;
 				p->type = P_B;
 				p->btype = Utils::decode_base(sequence[idx_base]);
-				p->add_bonded_neigh(static_cast<CustomParticle<number> *>(particles[i - 1]));
+				p->add_bonded_neigh(static_cast<CustomParticle *>(particles[i - 1]));
 			}
 			// backbone
 			else {
 				int idx_prev = (idx_without_spacers == 0) ? i - 1 : i - 2;
-				CustomParticle<number> *q = static_cast<CustomParticle<number> *>(particles[idx_prev]);
+				CustomParticle *q = static_cast<CustomParticle *>(particles[idx_prev]);
 				p->add_bonded_neigh(q);
 				p->n3 = q;
 				q->n5 = p;
@@ -287,29 +282,27 @@ void StarrInteraction<number>::_read_vitrimer_topology(int N, int *N_strands, Ba
 	}
 }
 
-template<typename number>
-void StarrInteraction<number>::read_topology(int N, int *N_strands, BaseParticle<number> **particles) {
-	allocate_particles(particles, N);
+void StarrInteraction::read_topology(int *N_strands, std::vector<BaseParticle *> &particles) {
+	allocate_particles(particles);
 
 	switch(_mode) {
 	case TETRAMERS:
 		OX_LOG(Logger::LOG_INFO, "StarrInteraction: tetramers mode");
-		_read_tetramer_topology(N, N_strands, particles);
+		_read_tetramer_topology(N_strands, particles);
 		break;
 		case VITRIMERS:
 		OX_LOG(Logger::LOG_INFO, "StarrInteraction: vitrimers mode, using %d dimer spacers", _N_dimer_spacers);
-		_read_vitrimer_topology(N, N_strands, particles);
+		_read_vitrimer_topology(N_strands, particles);
 		break;
 		default:
 		OX_LOG(Logger::LOG_INFO, "StarrInteraction: strands mode");
-		_read_strand_topology(N, N_strands, particles);
+		_read_strand_topology(N_strands, particles);
 		break;
 	}
 }
 
-template<typename number>
-number StarrInteraction<number>::_fene(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	number sqr_r = r->norm();
+number StarrInteraction::_fene(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	number sqr_r = _computed_r.norm();
 
 	if(sqr_r > _fene_sqr_r0) {
 		if(update_forces) throw oxDNAException("The distance between particles %d and %d (%lf) exceeds the FENE distance (%lf)\n", p->index, q->index, sqrt(sqr_r), sqrt(_fene_sqr_r0));
@@ -322,40 +315,42 @@ number StarrInteraction<number>::_fene(BaseParticle<number> *p, BaseParticle<num
 		// this number is the module of the force over r, so we don't have to divide the distance
 		// vector by its module
 		number force_mod = -_fene_K * _fene_sqr_r0 / (_fene_sqr_r0 - sqr_r);
-		p->force -= *r * force_mod;
-		q->force += *r * force_mod;
+		p->force -= _computed_r * force_mod;
+		q->force += _computed_r * force_mod;
 	}
 
 	return energy;
 }
 
-template<typename number>
-number StarrInteraction<number>::_two_body(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number StarrInteraction::_two_body(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	int int_type = p->type + q->type;
 	int int_btype = p->btype + q->btype;
 	if(int_type == 2 && (int_btype != 3 || (p->strand_id == q->strand_id && abs(p->index - q->index) == 2))) int_type = 1;
 
-	number sqr_r = r->norm();
-	if(sqr_r > _LJ_sqr_rcut[int_type]) return (number) 0.;
+	number sqr_r = _computed_r.norm();
+	if(sqr_r > _LJ_sqr_rcut[int_type]) {
+		return (number) 0.;
+	}
 	number mod_r = sqrt(sqr_r);
 
 	number part = pow(_LJ_sqr_sigma[int_type] / sqr_r, 3.);
 	number energy = 4 * part * (part - 1.) - _LJ_E_cut[int_type] - (mod_r - _LJ_rcut[int_type]) * _der_LJ_E_cut[int_type];
 	if(update_forces) {
 		number force_mod = 24 * part * (2 * part - 1) / sqr_r + _der_LJ_E_cut[int_type] / mod_r;
-		p->force -= *r * force_mod;
-		q->force += *r * force_mod;
+		p->force -= _computed_r * force_mod;
+		q->force += _computed_r * force_mod;
 	}
 
 	return energy;
 }
 
-template<typename number>
-number StarrInteraction<number>::_three_body(BaseParticle<number> *p, BaseParticle<number> *n3, BaseParticle<number> *n5, bool update_forces) {
-	if(n3 == P_VIRTUAL || n5 == P_VIRTUAL) return 0.;
+number StarrInteraction::_three_body(BaseParticle *p, BaseParticle *n3, BaseParticle *n5, bool update_forces) {
+	if(n3 == P_VIRTUAL || n5 == P_VIRTUAL) {
+		return 0.;
+	}
 
-	LR_vector<number> dist_pn3 = this->_box->min_image(p->pos, n3->pos);
-	LR_vector<number> dist_pn5 = this->_box->min_image(n5->pos, p->pos);
+	LR_vector dist_pn3 = _box->min_image(p->pos, n3->pos);
+	LR_vector dist_pn5 = _box->min_image(n5->pos, p->pos);
 
 	number sqr_dist_pn3 = dist_pn3.norm();
 	number sqr_dist_pn5 = dist_pn5.norm();
@@ -376,83 +371,77 @@ number StarrInteraction<number>::_three_body(BaseParticle<number> *p, BasePartic
 	return _lin_k * (1. - cost);
 }
 
-template<typename number>
-number StarrInteraction<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	number energy = pair_interaction_bonded(p, q, r, update_forces);
-	energy += pair_interaction_nonbonded(p, q, r, update_forces);
+number StarrInteraction::pair_interaction(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	if(compute_r) {
+		_computed_r = _box->min_image(p->pos, q->pos);
+	}
+
+	number energy = pair_interaction_bonded(p, q, false, update_forces);
+	energy += pair_interaction_nonbonded(p, q, false, update_forces);
 	return energy;
 }
 
-template<typename number>
-number StarrInteraction<number>::pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number StarrInteraction::pair_interaction_bonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	number energy = 0.;
 	if(!p->is_bonded(q) || p->index > q->index) return energy;
 
 	if(q == p->n5) {
 		energy += _three_body(p, p->n3, q, update_forces);
 		if(_starr_model && p->btype == P_HUB) {
-			CustomParticle<number> *cp = static_cast<CustomParticle<number> *>(p);
-			for(typename set<CustomParticle<number> *>::iterator it = cp->bonded_neighs.begin(); it != cp->bonded_neighs.end(); it++) {
-				CustomParticle<number> *other_neigh = *it;
+			CustomParticle *cp = static_cast<CustomParticle *>(p);
+			for(typename set<CustomParticle *>::iterator it = cp->bonded_neighs.begin(); it != cp->bonded_neighs.end(); it++) {
+				CustomParticle *other_neigh = *it;
 				if(other_neigh->btype == P_HUB && other_neigh != p->n3) energy += _three_body(p, other_neigh, q, update_forces);
 			}
 		}
 	}
 
-	LR_vector<number> computed_r(0, 0, 0);
-	if(r == NULL) {
-		computed_r = q->pos - p->pos;
-		r = &computed_r;
+	if(compute_r) {
+		_computed_r = q->pos - p->pos;
 	}
 
-	energy += _fene(p, q, r, update_forces);
-	energy += _two_body(p, q, r, update_forces);
+	energy += _fene(p, q, false, update_forces);
+	energy += _two_body(p, q, false, update_forces);
 
 	return energy;
 }
 
-template<typename number>
-number StarrInteraction<number>::pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number StarrInteraction::pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	if(p->is_bonded(q)) return 0.f;
 
-	LR_vector<number> computed_r(0, 0, 0);
-	if(r == NULL) {
-		computed_r = this->_box->min_image(p->pos, q->pos);
-		r = &computed_r;
+	if(compute_r) {
+		_computed_r = _box->min_image(p->pos, q->pos);
 	}
 
-	return _two_body(p, q, r, update_forces);
+	return _two_body(p, q, false, update_forces);
 }
 
-template<typename number>
-void StarrInteraction<number>::check_input_sanity(BaseParticle<number> **particles, int N) {
+void StarrInteraction::check_input_sanity(std::vector<BaseParticle *> &particles) {
 
 }
 
-template<typename number>
-void StarrInteraction<number>::_generate_strands(BaseParticle<number> **particles, int N, Cells<number> &c) {
-	BaseInteraction<number, StarrInteraction<number> >::generate_random_configuration(particles, N);
+void StarrInteraction::_generate_strands(std::vector<BaseParticle *> &particles, Cells &c) {
+	BaseInteraction::generate_random_configuration(particles);
 }
 
-template<typename number>
-void StarrInteraction<number>::_generate_tetramers(BaseParticle<number> **particles, int N, Cells<number> &c) {
+void StarrInteraction::_generate_tetramers(std::vector<BaseParticle *> &particles, Cells &c) {
 	_N_per_strand = 17;
 	int N_per_tetramer = 4 * _N_per_strand;
-	int N_tetramers = N / N_per_tetramer;
+	int N_tetramers = particles.size() / N_per_tetramer;
 
 	// we begin by generating a single tetramer
-	BaseInteraction<number, StarrInteraction<number> >::generate_random_configuration(particles, N_per_tetramer);
+	BaseInteraction::generate_random_configuration(particles);
 	// and then we correct all the coordinates so that the tetramer is not split by the pbc
-	LR_vector<number> com;
+	LR_vector com;
 	for(int i = 0; i < N_per_tetramer; i++) {
-		BaseParticle<number> *p = particles[i];
+		BaseParticle *p = particles[i];
 		com += p->pos;
-		CustomParticle<number> *cp = static_cast<CustomParticle<number> *>(p);
-		for(typename set<CustomParticle<number> *>::iterator it = cp->bonded_neighs.begin(); it != cp->bonded_neighs.end(); it++) {
-			CustomParticle<number> *cq = *it;
+		CustomParticle *cp = static_cast<CustomParticle *>(p);
+		for(typename set<CustomParticle *>::iterator it = cp->bonded_neighs.begin(); it != cp->bonded_neighs.end(); it++) {
+			CustomParticle *cq = *it;
 			if(cq->index > cp->index) {
-				LR_vector<number> dist = cq->pos - cp->pos;
-				LR_vector<number> min_dist = this->_box->min_image(cp->pos, cq->pos);
+				LR_vector dist = cq->pos - cp->pos;
+				LR_vector min_dist = _box->min_image(cp->pos, cq->pos);
 				cq->pos += min_dist - dist;
 			}
 		}
@@ -461,8 +450,8 @@ void StarrInteraction<number>::_generate_tetramers(BaseParticle<number> **partic
 	// and now we put the tetramer in the centre of the box, so that we are sure that there are no problems with the boundaries
 	com /= N_per_tetramer;
 	for(int i = 0; i < N_per_tetramer; i++) {
-		BaseParticle<number> *p = particles[i];
-		p->pos += this->_box->box_sides() * 0.5 - com;
+		BaseParticle *p = particles[i];
+		p->pos += _box->box_sides() * 0.5 - com;
 	}
 
 	int N_inserted = 1;
@@ -471,84 +460,76 @@ void StarrInteraction<number>::_generate_tetramers(BaseParticle<number> **partic
 		int N_base = N_per_tetramer * N_inserted;
 
 		// now we take the first tetramer's positions and we assign them to the new tetramer after shifting them
-		LR_vector<number> shift = Utils::get_random_vector<number>();
-		shift.x *= this->_box->box_sides().x;
-		shift.y *= this->_box->box_sides().y;
-		shift.z *= this->_box->box_sides().z;
+		LR_vector shift = Utils::get_random_vector();
+		shift.x *= _box->box_sides().x;
+		shift.y *= _box->box_sides().y;
+		shift.z *= _box->box_sides().z;
 
 		bool inserted = true;
-		com = LR_vector<number>(0., 0., 0.);
+		com = LR_vector(0., 0., 0.);
 		for(int i = 0; i < N_per_tetramer && inserted; i++) {
-			BaseParticle<number> *base = particles[i];
-			BaseParticle<number> *new_p = particles[N_base + i];
+			BaseParticle *base = particles[i];
+			BaseParticle *new_p = particles[N_base + i];
 			new_p->pos = base->pos + shift;
 			com += new_p->pos;
 			new_p->orientation = base->orientation;
 			c.single_update(new_p);
 
 			// here we take into account the non-bonded interactions
-			vector<BaseParticle<number> *> neighs = c.get_complete_neigh_list(new_p);
+			vector<BaseParticle *> neighs = c.get_complete_neigh_list(new_p);
 			for(unsigned int n = 0; n < neighs.size(); n++) {
-				BaseParticle<number> *q = neighs[n];
+				BaseParticle *q = neighs[n];
 				// particles with an index larger than p->index have not been inserted yet
-				if(q->index < new_p->index && this->generate_random_configuration_overlap(new_p, q)) inserted = false;
+				if(q->index < new_p->index && generate_random_configuration_overlap(new_p, q)) inserted = false;
 			}
 		}
 
 		// and now we bring the tetramer back in the box
 		com /= N_per_tetramer;
-		LR_vector<number> box_sides = this->_box->box_sides();
-		LR_vector<number> com_shift(floor(com.x / box_sides.x) * box_sides.x + 0.5 * box_sides.x, floor(com.y / box_sides.y) * box_sides.y + 0.5 * box_sides.y, floor(com.z / box_sides.z) * box_sides.z + 0.5 * box_sides.z);
-		com_shift -= this->_box->box_sides() * 0.5;
+		LR_vector box_sides = _box->box_sides();
+		LR_vector com_shift(floor(com.x / box_sides.x) * box_sides.x + 0.5 * box_sides.x, floor(com.y / box_sides.y) * box_sides.y + 0.5 * box_sides.y, floor(com.z / box_sides.z) * box_sides.z + 0.5 * box_sides.z);
+		com_shift -= _box->box_sides() * 0.5;
 		for(int i = 0; i < N_per_tetramer && inserted; i++) {
-			BaseParticle<number> *p = particles[N_base + i];
+			BaseParticle *p = particles[N_base + i];
 			p->pos -= com_shift;
 		}
 
-		if(inserted) N_inserted++;
+		if(inserted) {
+			N_inserted++;
+		}
 		tries++;
 
 		if(tries > 1e6) throw oxDNAException("I tried 10^6 times but I couldn't manage to insert the %d-th tetramer", N_inserted + 1);
 	}
 }
 
-template<typename number>
-void StarrInteraction<number>::_generate_vitrimers(BaseParticle<number> **particles, int N, Cells<number> &c) {
+void StarrInteraction::_generate_vitrimers(std::vector<BaseParticle *> &particles, Cells &c) {
 
 }
 
-template<typename number>
-void StarrInteraction<number>::generate_random_configuration(BaseParticle<number> **particles, int N) {
-	Cells<number> c(N, this->_box);
-	c.init(particles, this->_rcut);
+void StarrInteraction::generate_random_configuration(std::vector<BaseParticle *> &particles) {
+	Cells c(particles, _box);
+	c.init(_rcut);
 
-	for(int i = 0; i < N; i++) {
-		BaseParticle<number> *p = particles[i];
-		p->pos = LR_vector<number>(0., 0., 0.);
+	for(auto p: particles) {
+		p->pos = LR_vector(0., 0., 0.);
 	}
 
 	c.global_update();
 
 	switch(_mode) {
 	case TETRAMERS:
-		_generate_tetramers(particles, N, c);
+		_generate_tetramers(particles, c);
 		break;
 	case VITRIMERS:
-//		_generate_vitrimers(particles, N, c);
+//		_generate_vitrimers(particles, c);
 //		break;
 	default:
-		_generate_strands(particles, N, c);
+		_generate_strands(particles, c);
 		break;
 	}
 }
 
-extern "C" StarrInteraction<float> *make_StarrInteraction_float() {
-	return new StarrInteraction<float>();
+extern "C" StarrInteraction *make_StarrInteraction() {
+	return new StarrInteraction();
 }
-
-extern "C" StarrInteraction<double> *make_StarrInteraction_double() {
-	return new StarrInteraction<double>();
-}
-
-template class StarrInteraction<float> ;
-template class StarrInteraction<double> ;

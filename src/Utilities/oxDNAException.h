@@ -18,7 +18,7 @@ class oxDNAException : public std::exception {
 private:
 	std::string _error;
 public:
-	oxDNAException(const std::string &ss, ...);
+	oxDNAException(std::string ss, ...);
 	// I'm not sure why, but the throw() bit is needed to avoid a 'looser throw specifier' error
 	virtual ~oxDNAException() throw() {};
 
@@ -27,7 +27,7 @@ public:
 	 *
 	 * @return error message associated to the exception
 	 */
-	virtual const char* error() const throw();
+	virtual const char* what() const throw();
 };
 
 #endif /* OXDNAEXCEPTION_H_ */

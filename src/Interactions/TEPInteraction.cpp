@@ -1,18 +1,18 @@
-#include <fstream>
-#include <sstream>
-
 #include "TEPInteraction.h"
 
-template<typename number>
-TEPInteraction<number>::TEPInteraction() :
-		BaseInteraction<number, TEPInteraction<number> >() {
-	this->_int_map[SPRING] = &TEPInteraction<number>::_spring;
-	this->_int_map[BONDED_BENDING] = &TEPInteraction<number>::_bonded_bending;
-	this->_int_map[BONDED_TWIST] = &TEPInteraction<number>::_bonded_twist;
-	this->_int_map[BONDED_ALIGNMENT] = &TEPInteraction<number>::_bonded_alignment;
-	this->_int_map[NONBONDED_EXCLUDED_VOLUME] = &TEPInteraction<number>::_nonbonded_excluded_volume;
-	this->_int_map[BONDED_DEBYE_HUCKEL] = &TEPInteraction<number>::_bonded_debye_huckel;
-	this->_int_map[NONBONDED_DEBYE_HUCKEL] = &TEPInteraction<number>::_nonbonded_debye_huckel;
+#include <fstream>
+#include <sstream>
+#include <cfloat>
+
+TEPInteraction::TEPInteraction() :
+				BaseInteraction() {
+	ADD_INTERACTION_TO_MAP(SPRING, _spring);
+	ADD_INTERACTION_TO_MAP(BONDED_BENDING, _bonded_bending);
+	ADD_INTERACTION_TO_MAP(BONDED_TWIST, _bonded_twist);
+	ADD_INTERACTION_TO_MAP(BONDED_ALIGNMENT, _bonded_alignment);
+	ADD_INTERACTION_TO_MAP(NONBONDED_EXCLUDED_VOLUME, _nonbonded_excluded_volume);
+	ADD_INTERACTION_TO_MAP(BONDED_DEBYE_HUCKEL, _bonded_debye_huckel);
+	ADD_INTERACTION_TO_MAP(NONBONDED_DEBYE_HUCKEL, _nonbonded_debye_huckel);
 
 	_allow_broken_fene = false;
 	_prefer_harmonic_over_fene = false;
@@ -67,12 +67,11 @@ TEPInteraction<number>::TEPInteraction() :
 
 	this->_generate_consider_bonded_interactions = true;
 	this->_generate_bonded_cutoff = _TEP_FENE_DELTA;
-	
+
 	_is_on_cuda = false;
 }
 
-template<typename number>
-TEPInteraction<number>::~TEPInteraction() {
+TEPInteraction::~TEPInteraction() {
 	delete[] _kt_pref;
 	delete[] _kb1_pref;
 	delete[] _kb2_pref;
@@ -82,9 +81,8 @@ TEPInteraction<number>::~TEPInteraction() {
 	delete[] _th_b_0;
 }
 
-template<typename number>
-void TEPInteraction<number>::get_settings(input_file &inp) {
-	IBaseInteraction<number>::get_settings(inp);
+void TEPInteraction::get_settings(input_file &inp) {
+	BaseInteraction::get_settings(inp);
 
 	// TEP model parameters
 	setNonNegativeNumber(&inp, "TEP_kb", &_kb, 0, "rod bending energy prefactor");
@@ -149,28 +147,29 @@ void TEPInteraction<number>::get_settings(input_file &inp) {
 	if(_twist_boundary_stiff > 0) {
 		OX_LOG(Logger::LOG_INFO," twisting extremal particles.");
 		//read the starting w1 and w2 vectors to which the vectors f try to align
-		getInputDirection(&inp,"TEP_w1",&_w1,1);
-		getInputDirection(&inp,"TEP_w2",&_w2,1);
+		getInputDirection(&inp, "TEP_w1", &_w1, 1);
+		getInputDirection(&inp, "TEP_w2", &_w2, 1);
 		//read the direction around which w1 and w2 will spin in time
-		getInputDirection(&inp,"TEP_o1",&_o1,1);
-		getInputDirection(&inp,"TEP_o2",&_o2,1);
+		getInputDirection(&inp, "TEP_o1", &_o1, 1);
+		getInputDirection(&inp, "TEP_o2", &_o2, 1);
 		//read the angular speed of w1 and w2
-		setNumber(&inp,"TEP_w1_period",&_o1_modulus,1,"rotation period of w1 in time steps");
+		setNumber(&inp, "TEP_w1_period", &_o1_modulus, 1, "rotation period of w1 in time steps");
 		// The user chooses a period, but the program stores an angular speed. If period is 0, then it's infinite.
-		if (_o1_modulus != 0) {
-			_o1_modulus = 2*PI/double(_o1_modulus);
+		if(_o1_modulus != 0) {
+			_o1_modulus = 2 * PI / double(_o1_modulus);
 		}
-		setNumber(&inp,"TEP_w2_period",&_o2_modulus,1,"rotation period of w2 in time steps");
-		if (_o2_modulus != 0) {
-			_o2_modulus = 2*PI/double(_o2_modulus);
+		setNumber(&inp, "TEP_w2_period", &_o2_modulus, 1, "rotation period of w2 in time steps");
+		if(_o2_modulus != 0) {
+			_o2_modulus = 2 * PI / double(_o2_modulus);
 		}
 		// Only one of the twisting times can be non-zero
-		setNonNegativeLLInt(&inp,"TEP_max_twisting_time",&_max_twisting_time,0,"maximum twisting time");
-		setNonNegativeLLInt(&inp,"TEP_choose_direction_time",&_choose_direction_time,0,"choose direction time");
-		if ((_max_twisting_time != 0 && _choose_direction_time != 0) ) throw oxDNAException("if TEP_twist_boundary_stiff is non-zero, TEP_max_twisting_time and TEP_choose_direction_time can't be both non-zero.");
+		setNonNegativeLLInt(&inp, "TEP_max_twisting_time", &_max_twisting_time, 0, "maximum twisting time");
+		setNonNegativeLLInt(&inp, "TEP_choose_direction_time", &_choose_direction_time, 0, "choose direction time");
+		if((_max_twisting_time != 0 && _choose_direction_time != 0))
+			throw oxDNAException("if TEP_twist_boundary_stiff is non-zero, TEP_max_twisting_time and TEP_choose_direction_time can't be both non-zero.");
 
 		//delete the contents of the files that measure the torques and the twisting behaviour (if you have to)
-		setPositiveLLInt(&inp,"TEP_print_torques_every",&_print_torques_every,0,"frequency between two measures of the external torques");
+		setPositiveLLInt(&inp, "TEP_print_torques_every", &_print_torques_every, 0, "frequency between two measures of the external torques");
 
 	}
 
@@ -227,24 +226,24 @@ void TEPInteraction<number>::get_settings(input_file &inp) {
 	// equilibrium bending angle
 	// check whether it's on CUDA, so that if unimplemented features are used oxDNA dies swollen
 	std::string backend;
-	getInputString(&inp, "backend",backend,1);
-	if (backend == "CUDA") _is_on_cuda = true;
-	if( setNonNegativeNumber(&inp, "TEP_th_b_0_default", &_th_b_0_default, 0, "_th_b_0_default - default value for the equilibrium bending angle") && backend == "CUDA"){
+	getInputString(&inp, "backend", backend, 1);
+	if(backend == "CUDA")
+		_is_on_cuda = true;
+	if(setNonNegativeNumber(&inp, "TEP_th_b_0_default", &_th_b_0_default, 0, "_th_b_0_default - default value for the equilibrium bending angle") && backend == "CUDA") {
 		throw oxDNAException("can't set TEP_th_b_0_default when on CUDA - non-zero equilibrium bending angle not implemented on CUDA.");
 	}
-	if( setNonNegativeNumber(&inp, "TEP_beta_0_default", &_beta_0_default, 0, "_beta_0_default - default value for the equilibrium bending direction") && backend == "CUDA"){
+	if(setNonNegativeNumber(&inp, "TEP_beta_0_default", &_beta_0_default, 0, "_beta_0_default - default value for the equilibrium bending direction") && backend == "CUDA") {
 		throw oxDNAException("can't set TEP_beta_0_default when on CUDA - non-zero equilibrium bending angle not implemented on CUDA.");
 	}
 
 	// Other parameters
 	char T[256];
 	getInputString(&inp, "T", T, 1);
-	_T = Utils::get_temperature<number>(T);
+	_T = Utils::get_temperature(T);
 
 }
 
-template<typename number>
-void TEPInteraction<number>::init() {
+void TEPInteraction::init() {
 	//OX_LOG(Logger::LOG_INFO,"FENE_R0 = %f",FENE_R0);
 	// we choose rcut as the max of the range interaction of excluded
 	// volume between backbones and hydrogen bonding
@@ -254,62 +253,17 @@ void TEPInteraction<number>::init() {
 
 	//TODO: was it here that I should put the function that chooses a starting configuration?
 }
-/*
- * Old version of the spring potential - kept here for sentimental reasons.
- template<typename number>
- number TEPInteraction<number>::_spring(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 
- number energy;
- //printf("---\n");
- //printf("p = %p, q = %p\n",p,q);
- //printf("p-> n3 = %p, p->n5 = %p, q->n3 = %p, q->n5 = %p\n",p->n3,p->n5,q->n3,q->n5);
- if(!_are_bonded(p, q)) {
- return (number) 0.f;
- }
-
- number rmod = r->module();
- number r0 = rmod -_TEP_FENE_R0;
- // FENE energy - if uncommented, remember to uncomment the
- // check for R within range
- if (_prefer_harmonic_over_fene){
- energy = 0.5*_TEP_FENE_EPS * r0*r0; // Harmonic energy
- }
- else{
- energy = -_TEP_FENE_EPS * 0.5 * log(1 - SQR(r0) / _TEP_FENE_DELTA2);
- // we check whether we ended up OUTSIDE of the FENE range
- if (fabs(r0) > _TEP_FENE_DELTA - DBL_EPSILON) {
- if (update_forces && !_allow_broken_fene) {
- throw oxDNAException("(DNAInteraction.cpp) During the simulation, the distance between bonded neighbors %d and %d exceeded acceptable values (d = %lf)", p->index, q->index, fabs(r0));
- }
- return (number) (1.e12);
- }
- if(update_forces) {
- LR_vector<number> force = *r *(-(_TEP_FENE_EPS * r0 / (_TEP_FENE_DELTA2 - r0*r0))/rmod);
- p->force -= force;
- q->force += force;
- }
- }
-
- return energy;
- }
- */
-
-template<typename number>
-number TEPInteraction<number>::_spring(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-
+number TEPInteraction::_spring(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	number energy;
-	/*printf("---\n");
-	 printf("p = %p, q = %p\n",p,q);
-	 printf("p-> n3 = %p, p->n5 = %p, q->n3 = %p, q->n5 = %p\n",p->n3,p->n5,q->n3,q->n5);
-	 */
 	if(!_are_bonded(p, q)) {
 		return (number) 0.f;
 	}
 	if(q == P_VIRTUAL) {
 		throw oxDNAException("(TEPInteraction.cpp) _spring called with q = P_VIRTUAL");
 	}
-	LR_vector<number> force(0., 0., 0.);
-	number rmod = r->module();
+	LR_vector force(0., 0., 0.);
+	number rmod = _computed_r.module();
 	number r0 = rmod - _TEP_FENE_R0;
 	// FENE energy - if uncommented, remember to uncomment the
 	// check for R within range
@@ -325,9 +279,9 @@ number TEPInteraction<number>::_spring(BaseParticle<number> *p, BaseParticle<num
 			}
 			return (number) (1.e12);
 		}
-		energy += _repulsive_lj2(_TEP_EXCL_EPS_BONDED, *r, force, _TEP_EXCL_S2, _TEP_EXCL_R2, _TEP_EXCL_B2, _TEP_EXCL_RC2, update_forces) + _TEP_spring_offset;
+		energy += _repulsive_lj2(_TEP_EXCL_EPS_BONDED, _computed_r, force, _TEP_EXCL_S2, _TEP_EXCL_R2, _TEP_EXCL_B2, _TEP_EXCL_RC2, update_forces) + _TEP_spring_offset;
 		if(update_forces) {
-			force += *r * (-(_TEP_FENE_EPS * r0 / (_TEP_FENE_DELTA2 - r0 * r0)) / rmod);
+			force += _computed_r * (-(_TEP_FENE_EPS * r0 / (_TEP_FENE_DELTA2 - r0 * r0)) / rmod);
 			p->force -= force;
 			q->force += force;
 		}
@@ -336,22 +290,13 @@ number TEPInteraction<number>::_spring(BaseParticle<number> *p, BaseParticle<num
 	return energy;
 }
 
-template<typename number>
-number TEPInteraction<number>::_bonded_excluded_volume(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number TEPInteraction::_bonded_excluded_volume(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	if(!_are_bonded(p, q))
 		throw oxDNAException(" bonded_excluded_volume called with unbound particles.");
 
-	LR_vector<number> force(0, 0, 0);
-	//LR_vector<number> myv(0.,0.,0.);
+	LR_vector force(0, 0, 0);
 
-	number energy = _repulsive_lj2(_TEP_EXCL_EPS_BONDED, *r, force, _TEP_EXCL_S2, _TEP_EXCL_R2, _TEP_EXCL_B2, _TEP_EXCL_RC2, update_forces);
-	// this snippet prints the interaction on a file to make sure we got it right.
-	/*FILE * fp=fopen("myoutput.txt","w");
-	 for (double x = 0.2;x<=2;x+=0.01){
-	 myv.x = x;
-	 fprintf(fp,"%lf %lf %lf\n",myv.x,_repulsive_lj2(_TEP_EXCL_EPS_BONDED, myv,force, _TEP_EXCL_S2, _TEP_EXCL_R2, _TEP_EXCL_B2, _TEP_EXCL_RC2, update_forces),_spring);
-	 }
-	 abort();*/
+	number energy = _repulsive_lj2(_TEP_EXCL_EPS_BONDED, _computed_r, force, _TEP_EXCL_S2, _TEP_EXCL_R2, _TEP_EXCL_B2, _TEP_EXCL_RC2, update_forces);
 
 	if(update_forces) {
 		p->force -= force;
@@ -361,38 +306,22 @@ number TEPInteraction<number>::_bonded_excluded_volume(BaseParticle<number> *p, 
 	return energy;
 }
 
-template<typename number>
-number TEPInteraction<number>::_bonded_debye_huckel(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number TEPInteraction::_bonded_debye_huckel(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	if(!_are_bonded(p, q)) {
 		return (number) 0.f;
 	}
 	return 0.;
 }
 
-template<typename number>
-number TEPInteraction<number>::_nonbonded_debye_huckel(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number TEPInteraction::_nonbonded_debye_huckel(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	if(_are_bonded(p, q)) {
 		return (number) 0.f;
 	}
 	return 0.;
 }
 
-/* //previous version - replaced because probably 3-body (badly handled by MC)
- template<typename number>
- number TEPInteraction<number>::_bonded_bending(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces){
-
- if (p->n5 == P_VIRTUAL || q->n5 == P_VIRTUAL ) return 0.;
-
- LR_vector<number> tp = p->n5->pos - p->pos;
- LR_vector<number> tq = q->n5->pos - q->pos;
-
- return _kb*(1 - (tp*tq)/(tp.module()*tq.module()));
-
- }
- */
-template<typename number>
-number TEPInteraction<number>::_bonded_bending(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	LR_vector<number> torque(0., 0., 0.);
+number TEPInteraction::_bonded_bending(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	LR_vector torque(0., 0., 0.);
 	if(!_are_bonded(p, q)) {
 		return (number) 0.f;
 	}
@@ -401,8 +330,8 @@ number TEPInteraction<number>::_bonded_bending(BaseParticle<number> *p, BasePart
 	if(p->n5 == P_VIRTUAL)
 		return 0.;
 
-	LR_vector<number> & up = p->orientationT.v1;
-	LR_vector<number> & uq = q->orientationT.v1;
+	LR_vector &up = p->orientationT.v1;
+	LR_vector &uq = q->orientationT.v1;
 	if(update_forces) {
 		torque = -_kb * _kb1_pref[p->index] * (up.cross(uq));
 		p->torque -= p->orientationT * torque;
@@ -414,60 +343,29 @@ number TEPInteraction<number>::_bonded_bending(BaseParticle<number> *p, BasePart
 	return energy;
 
 }
+
 /////////// double-harmonic bending potential / currently under development
-template<typename number>
-number TEPInteraction<number>::_bonded_double_bending(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number TEPInteraction::_bonded_double_bending(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	number energy = 0;
-	LR_vector<number> torque(0., 0., 0.);
+	LR_vector torque(0., 0., 0.);
 	if(!_are_bonded(p, q)) {
 		return (number) 0.f;
 	}
 	if(p->n5 == P_VIRTUAL || q->n5 == P_VIRTUAL)
 		return 0.;
 
-//begin of added block
-	/*
-
-	 int regime;
-	 int i = p->index;
-	 fflush(stdout);
-	 // The following are few orientation matrices for particles  with v1 in a given direction.
-	 LR_matrix<number> face_right( 1.,0.,0.,  0.,1. ,0.,  0.,0.,1.); //face right
-	 char buffer [50];
-	 sprintf(buffer,"mybend.dat");
-	 FILE *ffp = fopen(buffer,"w");
-	 p->orientationT = face_right;
-	 q->orientationT = face_right;
-
-	 p->orientation = p->orientationT.get_transpose();
-	 q->orientation = q->orientationT.get_transpose();
-	 printf("p: vector v1 : %g %g %g\n",p->orientationT.v1.x,p->orientationT.v1.y,p->orientationT.v1.z);
-
-	 printf("q: vector v1 : %g %g %g\n",q->orientationT.v1.x,q->orientationT.v1.y,q->orientationT.v1.z);
-
-
-	 p->pos = LR_vector<number>(0.,0.,0.) ;
-	 q->pos = LR_vector<number>(1,0.,0.) ;
-
-	 //for (double rr = -acos(-_twist_b)+0.001; rr <= acos(-_twist_b)-0.001; rr+=0.001){
-	 for (double rr = -3.1415+0.001; rr <= 3.1415-0.001; rr+=0.001){
-	 //q->orientationT = LR_matrix<number>( 1.,0.,0.,  0.,cos(rr),-sin(rr),  0.,sin(rr),cos(rr));
-	 q->orientationT = LR_matrix<number>( cos(rr),0.,-sin(rr),  0.,1.,0., sin(rr),0.,cos(rr));
-	 q->orientation = q->orientationT.get_transpose();
-	 //*/
-	// end of added block
-	LR_vector<number> & up = p->orientationT.v1;
-	LR_vector<number> & uq = q->orientationT.v1;
-	LR_vector<number> & vq = q->orientationT.v2;
-	number & th_b_0 = _th_b_0[p->index];
-	number & beta_0 = _beta_0[p->index];
+	LR_vector &up = p->orientationT.v1;
+	LR_vector &uq = q->orientationT.v1;
+	LR_vector &vq = q->orientationT.v2;
+	number &th_b_0 = _th_b_0[p->index];
+	number &beta_0 = _beta_0[p->index];
 	// the particle behind sees the particle ahead as if it were slightly tilted,
 	// and tries to align with the tilted particle
-	LR_vector<number> uqq = rotateVectorAroundVersor(uq, vq, th_b_0);
+	LR_vector uqq = rotateVectorAroundVersor(uq, vq, th_b_0);
 	uqq = rotateVectorAroundVersor(uqq, uq, beta_0);
 	number cosine = up * uqq;
-	
-	LR_vector<number> sin_vector = up.cross(uqq);
+
+	LR_vector sin_vector = up.cross(uqq);
 
 	energy = (number) 0.f;
 
@@ -488,35 +386,8 @@ number TEPInteraction<number>::_bonded_double_bending(BaseParticle<number> *p, B
 	number g_ = A * SQR(angle) / 2. + angle * (B - tu * A);
 	number g = g_ + C;
 
-	/*
-	 printf("index %d\n",i);
-	 printf("A %lf\nB %lf \nC %lf\nD %lf\n",_get_A_smooth(i),_get_B_smooth(i),_get_C_smooth(i),_get_D_smooth(i));
-	 printf("gu %lf\ngk %lf\nkb2 %lf\n",cos(_xu_bending[i]),cos(_xk_bending[i]),_kb2_pref[i]);
-	 abort();*/
 	// unkinked bending regime
 	if(acos(cosine) < _xu_bending[p->index]) {
-		/*
-		 def f(x): return kb1*(1-np.cos(x))
-		 def f1(x): return kb1*np.sin(x)
-		 def g1(x): return (x-xu)*A+B
-		 def g_(x): return A*x**2/2.+x*(B-xu*A)
-		 C = f(xu) - g_(xu)
-		 def g(x): return g_(x) + C
-		 def h1(x): return kb2*np.sin(x)
-		 D = np.cos(xk) + g(xk)/kb2
-		 def h(x): return kb2*(D-np.cos(x))
-		 def double_bending_3(x):
-		 if x < xu:
-		 return f(x)
-		 elif x < xk:
-		 return g(x)
-		 else:
-		 return h(x)
-		 def double_bending_3_force(x):
-		 if x < xu: return f1(x)
-		 if x < xk: return g1(x)
-		 else:      return h1(x)
-		 */
 		if(update_forces) {
 			torque = -_kb * _kb1_pref[p->index] * sin_vector;
 			p->torque -= p->orientationT * torque;
@@ -534,8 +405,6 @@ number TEPInteraction<number>::_bonded_double_bending(BaseParticle<number> *p, B
 			p->torque -= p->orientationT * torque;
 			q->torque += q->orientationT * torque;
 		}
-		//energy = _kb*(A*(-cosine*SQR(cosine)+gu*SQR(gu))+B*( -SQR(cosine)+SQR(gu))+C*(-cosine + gu) + D);
-		//energy = _kb*(0.5* (kb1 + kb2)*(gu-cosine) + A*(acos(cosine) - _xu_bending[p->index])+B;
 		energy = _kb * g;
 	}		// kinked bending regime - same as unkinked, but with an additive term to the energy and with a different bending.
 	else {
@@ -550,52 +419,11 @@ number TEPInteraction<number>::_bonded_double_bending(BaseParticle<number> *p, B
 		energy = _kb * (D - cosine) * kb2;
 
 	}
-//begin of added block
-	/*
-	 fprintf(ffp,"%14.14lf %14.14lf %14.14lf %14.14lf %d\n",rr,cos(rr),energy,torque.module(),regime);
-	 }
-	 abort();
-	 //*/
-//end of added block	
 	return energy;
 
 }
-/* //Old _bonded_twist function. Kept here for safety reasons
- template<typename number>
- number TEPInteraction<number>::_bonded_twist(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces){
- if(!_are_bonded(p, q)) {
- return (number) 0.f;
- }
- //throw oxDNAException("into bonded_twist.\n");
- //	return the twist part of the interaction energy.
- LR_vector<number> & up = p->orientationT.v1;
- LR_vector<number> & uq = q->orientationT.v1;
- LR_vector<number> & fp = p->orientationT.v2;
- LR_vector<number> & fq = q->orientationT.v2;
- LR_vector<number> & vp = p->orientationT.v3;
- LR_vector<number> & vq = q->orientationT.v3;
 
- number M = fp*fq + vp*vq;
- number L = 1 + up*uq;
- number cos_alpha_plus_gamma = M/L;
- //make sure that cos_alpha_plus_gamma is never too law, except for the last bead that behaves in a silly way.
- if ( cos_alpha_plus_gamma < -0.85 && p->n5 != P_VIRTUAL && q->n5 != P_VIRTUAL){
- throw oxDNAException("the bond between the bead %d and the bead %d is too twisted! cos_alpha_plus_gamma = %g, average superhelical density = %g/N,_my_time = %lld",p->get_index(),q->get_index(),cos_alpha_plus_gamma,_my_time*(_o1_modulus/(2*PI)-_o2_modulus/(2*PI)),_my_time);
- }
-
- if ( update_forces ){
- LR_vector<number> torque = -(_kt/L) * (fp.cross(fq) + vp.cross(vq) - cos_alpha_plus_gamma * up.cross(uq) );
-
- p->torque -= p->orientationT*torque;
- q->torque += q->orientationT*torque;
- // forces are not updated since this term of the potential only introduces a torque,
- // as it only depends on r.
- }
- return _kt*(1 - cos_alpha_plus_gamma);
- }*/
-
-template<typename number>
-number TEPInteraction<number>::_bonded_twist(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number TEPInteraction::_bonded_twist(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	if(!_are_bonded(p, q)) {
 		return (number) 0.f;
 	}
@@ -603,44 +431,15 @@ number TEPInteraction<number>::_bonded_twist(BaseParticle<number> *p, BasePartic
 	if(_kt == 0 || _kt_pref[p->index] == 0)
 		return 0;
 //	return the twist part of the interaction energy.
-	LR_vector<number> & up = p->orientationT.v1;
-	LR_vector<number> & uq = q->orientationT.v1;
-	LR_vector<number> & fp = p->orientationT.v2;
-	LR_vector<number> & fq = q->orientationT.v2;
-	LR_vector<number> & vp = p->orientationT.v3;
-	LR_vector<number> & vq = q->orientationT.v3;
+	LR_vector &up = p->orientationT.v1;
+	LR_vector &uq = q->orientationT.v1;
+	LR_vector &fp = p->orientationT.v2;
+	LR_vector &fq = q->orientationT.v2;
+	LR_vector &vp = p->orientationT.v3;
+	LR_vector &vq = q->orientationT.v3;
 
-	LR_vector<number> torque(0., 0., 0.);
+	LR_vector torque(0., 0., 0.);
 	number energy = 0;
-//begin of added block
-	/*
-
-	 fflush(stdout);
-	 // The following are few orientation matrices for particles  with v1 in a given direction.
-	 LR_matrix<number> face_right( 1.,0.,0.,  0.,1. ,0.,  0.,0.,1.); //face right
-	 char buffer [50];
-	 sprintf(buffer,"mytwist.dat");
-	 FILE *ffp = fopen(buffer,"w");
-	 p->orientationT = face_right;
-	 q->orientationT = face_right;
-
-	 p->orientation = p->orientationT.get_transpose();
-	 q->orientation = q->orientationT.get_transpose();
-	 printf("p: vector v1 : %g %g %g\n",p->orientationT.v1.x,p->orientationT.v1.y,p->orientationT.v1.z);
-
-	 printf("q: vector v1 : %g %g %g\n",q->orientationT.v1.x,q->orientationT.v1.y,q->orientationT.v1.z);
-
-
-	 p->pos = LR_vector<number>(0.,0.,0.) ;
-	 q->pos = LR_vector<number>(1,0.,0.) ;
-
-	 for (double rr = -acos(-_twist_b)+0.001; rr <= acos(-_twist_b)-0.001; rr+=0.001){
-	 //for (double rr = -3.1415+0.001; rr <= 3.1415-0.001; rr+=0.001){
-	 q->orientationT = LR_matrix<number>( 1.,0.,0.,  0.,cos(rr),-sin(rr),  0.,sin(rr),cos(rr));
-	 q->orientation = q->orientationT.get_transpose();
-	 energy = (number) 0.f;
-	 */
-	// end of added block
 	number M = fp * fq + vp * vq;
 	number L = 1 + up * uq;
 	number cos_alpha_plus_gamma = M / L;
@@ -659,17 +458,17 @@ number TEPInteraction<number>::_bonded_twist(BaseParticle<number> *p, BasePartic
 	}
 	else {
 		// if it gets here, the angle is in the normal region
-		if ( -cos_alpha_plus_gamma <= _twist_a) {
-			if ( update_forces ) {
+		if(-cos_alpha_plus_gamma <= _twist_a) {
+			if(update_forces) {
 
-				torque = -(_kt/L) * (fp.cross(fq) + vp.cross(vq) - cos_alpha_plus_gamma * up.cross(uq) ) * _kt_pref[p->index];
+				torque = -(_kt / L) * (fp.cross(fq) + vp.cross(vq) - cos_alpha_plus_gamma * up.cross(uq)) * _kt_pref[p->index];
 
-				p->torque -= p->orientationT*torque;
-				q->torque += q->orientationT*torque;
+				p->torque -= p->orientationT * torque;
+				q->torque += q->orientationT * torque;
 				// forces are not updated since this term of the potential only introduces a torque,
 				// as it only depends on r.
 			}
-			energy = _kt*(1 - cos_alpha_plus_gamma);
+			energy = _kt * (1 - cos_alpha_plus_gamma);
 		}
 		// if it gets here, the angle is in the intermediate region, where the behaviour is lorentzian
 		else {
@@ -677,43 +476,37 @@ number TEPInteraction<number>::_bonded_twist(BaseParticle<number> *p, BasePartic
 			//number A = ( _twist_b - _twist_a)*( _twist_b - _twist_a)*( _twist_b - _twist_a )*0.5;	//A = (b - a)^3/2
 			//number C = 0.5*(_twist_a - _twist_b) + _twist_a;// C = (a - b)/2 + a
 
-			number A = ( _twist_b - _twist_a)*( _twist_b - _twist_a)*( _twist_b - _twist_a)*( _twist_b - _twist_a)*( _twist_b - _twist_a )*0.25;//A = (b - a)^5/4
-			number C = 0.25*(_twist_a - _twist_b) + _twist_a;// C = (a - b)/4 + a
+			number A = (_twist_b - _twist_a) * (_twist_b - _twist_a) * (_twist_b - _twist_a) * (_twist_b - _twist_a) * (_twist_b - _twist_a) * 0.25;			//A = (b - a)^5/4
+			number C = 0.25 * (_twist_a - _twist_b) + _twist_a;			// C = (a - b)/4 + a
 
-			if ( update_forces ) {
+			if(update_forces) {
 				// the torque is made steeper by multiplication of the derivative of the potential. It should work.
 				//torque.normalize();
-				torque = -(_kt/L) * (fp.cross(fq) + vp.cross(vq) - cos_alpha_plus_gamma * up.cross(uq) ) * _kt_pref[p->index];//this torque is the same as above
+				torque = -(_kt / L) * (fp.cross(fq) + vp.cross(vq) - cos_alpha_plus_gamma * up.cross(uq)) * _kt_pref[p->index];				//this torque is the same as above
 				// quadratic prefactor - here for sentimental reasons
 				//torque *= 2*A/( (SQR(_twist_b+cos_alpha_plus_gamma))*(_twist_b+cos_alpha_plus_gamma) );
-				torque *= 4*A/( (SQR(_twist_b+cos_alpha_plus_gamma))*(SQR(_twist_b+cos_alpha_plus_gamma))*(_twist_b+cos_alpha_plus_gamma) );
+				torque *= 4 * A / ((SQR(_twist_b + cos_alpha_plus_gamma)) * (SQR(_twist_b + cos_alpha_plus_gamma)) * (_twist_b + cos_alpha_plus_gamma));
 
-				p->torque -= p->orientationT*torque;
-				q->torque += q->orientationT*torque;
+				p->torque -= p->orientationT * torque;
+				q->torque += q->orientationT * torque;
 			}
-			energy = _kt*(1. + A/(SQR( -cos_alpha_plus_gamma - _twist_b)*SQR( -cos_alpha_plus_gamma - _twist_b)) + C);
+			energy = _kt * (1. + A / (SQR( -cos_alpha_plus_gamma - _twist_b) * SQR(-cos_alpha_plus_gamma - _twist_b)) + C);
 		}
 	}
-//begin of added block
-	/*
-	 fprintf(ffp,"%14.14lf %14.14lf %14.14lf %14.14lf\n",rr,cos(rr),energy,torque.module());
-	 }
-	 abort();
-	 */
-//end of added block	
+
 	energy *= _kt_pref[p->index];
 	return energy;
 }
-template<typename number>
-number TEPInteraction<number>::_bonded_alignment(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+
+number TEPInteraction::_bonded_alignment(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 //	return the alignment term of the interaction energy.
 	if(!_are_bonded(p, q)) {
 		return (number) 0.f;
 	}
 
-	LR_vector<number> up, tp;
+	LR_vector up, tp;
 	// these particles are initialised to P_VIRTUAL to prevent gcc from complaining
-	BaseParticle<number> *backp = P_VIRTUAL, *frontp = P_VIRTUAL;
+	BaseParticle *backp = P_VIRTUAL, *frontp = P_VIRTUAL;
 //	make sure the particle q follows p and not the contrary
 
 	if(q == p->n5) {
@@ -737,8 +530,8 @@ number TEPInteraction<number>::_bonded_alignment(BaseParticle<number> *p, BasePa
 		number tpm = tp.module();
 		if(update_forces) {
 			// prima che inizi e' 
-			// LR_vector<number> force = _ka*(up - tp*(up*tp)/SQR(tpm))/tpm;
-			LR_vector<number> force = -_ka * (up - tp * (up * tp) / SQR(tpm)) / tpm;
+			// LR_vector force = _ka*(up - tp*(up*tp)/SQR(tpm))/tpm;
+			LR_vector force = -_ka * (up - tp * (up * tp) / SQR(tpm)) / tpm;
 			backp->force -= force;
 			frontp->force += force;
 			//only the torque on p is updated, since this interaction term is basically a self-interaction
@@ -746,7 +539,7 @@ number TEPInteraction<number>::_bonded_alignment(BaseParticle<number> *p, BasePa
 			// prima che inizi e' 
 			//backp->torque -= backp->orientationT*((_ka*tp.cross(up))/tpm);
 			backp->torque -= backp->orientationT * ((_ka * tp.cross(up)) / tpm);
-			//LR_vector<number> temp=((_ka*tp.cross(up))/tp.module());
+			//LR_vector temp=((_ka*tp.cross(up))/tp.module());
 			//printf("%lf %lf %lf %lf %lf %lf\n",temp.x,temp.y,temp.z, tp.cross(force).x, tp.cross(force).y,tp.cross(force).z);
 		}
 		return _ka * (1 - (up * tp) / tpm);
@@ -757,32 +550,25 @@ number TEPInteraction<number>::_bonded_alignment(BaseParticle<number> *p, BasePa
 	}
 	number tpm = tp.module();
 	if(update_forces) {
-		// prima che inizi e' 
-		// LR_vector<number> force = _ka*(up - tp*(up*tp)/SQR(tpm))/tpm;
-		LR_vector<number> force = _ka * (up - tp * (up * tp) / SQR(tpm)) / tpm;
+		LR_vector force = _ka * (up - tp * (up * tp) / SQR(tpm)) / tpm;
 		backp->force -= force;
 		frontp->force += force;
 		//only the torque on p is updated, since this interaction term is basically a self-interaction
 		//that keeps a particle's u vector aligned with  its tangent vector.
-		// prima che inizi e' 
-		//backp->torque -= backp->orientationT*((_ka*tp.cross(up))/tpm);
 		backp->torque -= backp->orientationT * ((_ka * tp.cross(up)) / tpm);
-		//LR_vector<number> temp=((_ka*tp.cross(up))/tp.module());
-		//printf("%lf %lf %lf %lf %lf %lf\n",temp.x,temp.y,temp.z, tp.cross(force).x, tp.cross(force).y,tp.cross(force).z);
 	}
 
 	return _ka * (1 - (up * tp) / tpm);
 }
 
-template<typename number>
-number TEPInteraction<number>::_nonbonded_excluded_volume(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-
-	if(_are_bonded(p, q))
+number TEPInteraction::_nonbonded_excluded_volume(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	if(_are_bonded(p, q)) {
 		return (number) 0.f;
+	}
 
-	LR_vector<number> force(0, 0, 0);
+	LR_vector force(0, 0, 0);
 
-	number energy = _repulsive_lj2(_TEP_EXCL_EPS_NONBONDED, *r, force, _TEP_EXCL_S2, _TEP_EXCL_R2, _TEP_EXCL_B2, _TEP_EXCL_RC2, update_forces);
+	number energy = _repulsive_lj2(_TEP_EXCL_EPS_NONBONDED, _computed_r, force, _TEP_EXCL_S2, _TEP_EXCL_R2, _TEP_EXCL_B2, _TEP_EXCL_RC2, update_forces);
 
 	if(update_forces) {
 		p->force -= force;
@@ -792,11 +578,10 @@ number TEPInteraction<number>::_nonbonded_excluded_volume(BaseParticle<number> *
 	return energy;
 }
 
-template<typename number>
-number TEPInteraction<number>::_index_twist_boundary_particles(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+number TEPInteraction::_index_twist_boundary_particles(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
 	// make sure that q is always virtual
 	number energy = 0;
-	LR_vector<number> torque_wt, torque_o;
+	LR_vector torque_wt, torque_o;
 	if(q != P_VIRTUAL) {
 		throw oxDNAException("(TEPInteraction.cpp)index_twist_boundary_particles was called with non-virtual q.");
 	}
@@ -810,13 +595,13 @@ number TEPInteraction<number>::_index_twist_boundary_particles(BaseParticle<numb
 		// if the bead spins randomly, change the spinning direction once in a while
 		update_increment(_my_time1);
 
-		_my_time1 ++;
+		_my_time1++;
 		_time_var = update_time_variable(_time_var);
-		LR_vector<number> _w1t = rotateVectorAroundVersor(_w1, _o1, _time_var * _o1_modulus);
+		LR_vector _w1t = rotateVectorAroundVersor(_w1, _o1, _time_var * _o1_modulus);
 		if(_print_torques_every != 0) {
 			if(_my_time1 % _print_torques_every == 0) {
 				FILE *fp = fopen("w1t.txt", "a");
-				fprintf(fp, "%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lld\n ", _my_time1, _w1t * p->orientationT.v3, _w1t.x, _w1t.y, _w1t.z, p->orientationT.v3.x, p->orientationT.v3.y, p->orientationT.v3.z,_time_var);
+				fprintf(fp, "%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lld\n ", _my_time1, _w1t * p->orientationT.v3, _w1t.x, _w1t.y, _w1t.z, p->orientationT.v3.x, p->orientationT.v3.y, p->orientationT.v3.z, _time_var);
 				fclose(fp);
 			}
 		}
@@ -830,7 +615,7 @@ number TEPInteraction<number>::_index_twist_boundary_particles(BaseParticle<numb
 			p->torque += torque_o;
 			if(_print_torques_every != 0) {
 				if(_my_time1 % _print_torques_every == 0) {
-					FILE * fp;
+					FILE *fp;
 					fp = fopen("torques_n3.txt", "a");
 					fprintf(fp, "%lld\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t1\n", _my_time1, torque_wt.x, torque_wt.y, torque_wt.z, torque_o.x, torque_o.y, torque_o.z);
 					fclose(fp);
@@ -841,11 +626,11 @@ number TEPInteraction<number>::_index_twist_boundary_particles(BaseParticle<numb
 
 	if(p->n5->n5 == P_VIRTUAL) {
 		_my_time2++;
-		LR_vector<number> _w2t = rotateVectorAroundVersor(_w2, _o2, _time_var * _o2_modulus);
+		LR_vector _w2t = rotateVectorAroundVersor(_w2, _o2, _time_var * _o2_modulus);
 		if(_print_torques_every != 0) {
 			if(_my_time2 % _print_torques_every == 0) {
-				FILE * fp = fopen("w2t.txt", "a");
-				fprintf(fp, "%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lld\n", _my_time2, _w2t * p->orientationT.v3, _w2t.x, _w2t.y, _w2t.z, p->orientationT.v3.x, p->orientationT.v3.y, p->orientationT.v3.z,_time_var);
+				FILE *fp = fopen("w2t.txt", "a");
+				fprintf(fp, "%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lld\n", _my_time2, _w2t * p->orientationT.v3, _w2t.x, _w2t.y, _w2t.z, p->orientationT.v3.x, p->orientationT.v3.y, p->orientationT.v3.z, _time_var);
 				fclose(fp);
 			}
 		}
@@ -860,7 +645,7 @@ number TEPInteraction<number>::_index_twist_boundary_particles(BaseParticle<numb
 
 			if(_print_torques_every != 0) {
 				if(_my_time2 % _print_torques_every == 0) {
-					FILE * fp;
+					FILE *fp;
 					fp = fopen("torques_n5.txt", "a");
 					fprintf(fp, "%lld\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t1\n", _my_time2, torque_wt.x, torque_wt.y, torque_wt.z, torque_o.x, torque_o.y, torque_o.z);
 					fclose(fp);
@@ -871,268 +656,76 @@ number TEPInteraction<number>::_index_twist_boundary_particles(BaseParticle<numb
 	return energy;
 
 }
-/*
- template<typename number>
- number TEPInteraction<number>::_twist_boundary_particles(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces){
- LR_vector<number> torque(0.,0.,0.);
- number energy=0.;
 
- if(!_are_bonded(p, q)) {
- return (number) 0.f;
- }
- LR_vector<number> _w1t = rotateVectorAroundVersor(_w1,_o1,min(_my_time,_max_twisting_time)*_o1_modulus);
- LR_vector<number> _w2t = rotateVectorAroundVersor(_w2,_o2,min(_my_time,_max_twisting_time)*_o2_modulus);
- // If one of the particles is an extremal one, twist it accordingly.
- if (p->n3 == P_VIRTUAL){
- _my_time++;
- if(_my_time % print_torques_every == 0){
- FILE * fp=fopen("w1t.txt","a");
- //fprintf(fp,"%lld\t%lf\t%lf\t%lf\n",_my_time,_w1t.x,_w1t.y,_w1t.z);
- fprintf(fp,"%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",_my_time,_w1t*p->orientationT.v3,_w1t.x,_w1t.y,_w1t.z,p->orientationT.v3.x,p->orientationT.v3.y,p->orientationT.v3.z);
- fclose(fp);
- }
- energy += _twist_boundary_stiff * (1 - (p->orientationT.v3 * _w1t));
- energy += _twist_boundary_stiff * (1 - (p->orientationT.v1 * _o1));
- }
- if (p->n5 != P_VIRTUAL){
- if (p->n5->n5 == P_VIRTUAL){
- _my_time++;
-
- if(_my_time % print_torques_every == 0){
- FILE * fp=fopen("w2t.txt","a");
- //fprintf(fp,"%lld\t%lf\t%lf\t%lf\n",_my_time,_w2t.x,_w2t.y,_w2t.z);
- fprintf(fp,"%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",_my_time,_w2t*p->orientationT.v3,_w2t.x,_w2t.y,_w2t.z,p->orientationT.v3.x,p->orientationT.v3.y,p->orientationT.v3.z);
- fclose(fp);
- }
- energy += _twist_boundary_stiff * (1 - (p->orientationT.v3 * _w2t));
- energy += _twist_boundary_stiff * (1 - (p->orientationT.v1 * _o2));
- }
- }
- if (q != P_VIRTUAL){
- if (q->n3 == P_VIRTUAL){
- _my_time++;
- // FILE * fp=fopen("w1t.txt","a");
- //fprintf(fp,"%lld\t%lf\t%lf\t%lf\n",_my_time,_w1t.x,_w1t.y,_w1t.z);
- //fclose(fp);
- if(_my_time % print_torques_every == 0){
- FILE * fp=fopen("w1t.txt","a");
- //fprintf(fp,"%lld\t%lf\t%lf\t%lf\n",_my_time,_w1t.x,_w1t.y,_w1t.z);
- fprintf(fp,"%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",_my_time,_w1t*q->orientationT.v3,_w1t.x,_w1t.y,_w1t.z,q->orientationT.v3.x,q->orientationT.v3.y,q->orientationT.v3.z);
- fclose(fp);
- }
- energy += _twist_boundary_stiff * (1 - (q->orientationT.v3 * _w1t));
- energy += _twist_boundary_stiff * (1 - (q->orientationT.v1 * _o1));
- }
- //This has been commented to see if the program works now, but should later be removed
- if (q->n5 != P_VIRTUAL){
- if (q->n5->n5 == P_VIRTUAL){
- _my_time++;
- //FILE * fp=fopen("w2t.txt","a");
- //fprintf(fp,"%lld\t%lf\t%lf\t%lf\n",_my_time,_w2t.x,_w2t.y,_w2t.z);
- //fclose(fp);
- if(_my_time % print_torques_every == 0){
- FILE * fp=fopen("w2t.txt","a");
- //fprintf(fp,"%lld\t%lf\t%lf\t%lf\n",_my_time,_w2t.x,_w2t.y,_w2t.z);
- fprintf(fp,"%lld\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",_my_time,_w2t*q->orientationT.v3,_w2t.x,_w2t.y,_w2t.z,q->orientationT.v3.x,q->orientationT.v3.y,q->orientationT.v3.z);
- fclose(fp);
- }
- energy += _twist_boundary_stiff * (1 - (q->orientationT.v3 * _w2t));
- energy += _twist_boundary_stiff * (1 - (q->orientationT.v1 * _o2));
- }
- }
- // End of removed block
- }
-
- if ( update_forces ){
- FILE * fp = NULL;
- LR_vector<number> torque_o, torque_wt;
- if (p->n3 == P_VIRTUAL){
- torque_wt = p->orientationT*(_twist_boundary_stiff * ( p->orientationT.v3.cross(_w1t)));
- p->torque += torque_wt;
-
- torque_o  = p->orientationT*(_twist_boundary_stiff * ( p->orientationT.v1.cross(_o1)));
- p->torque += torque_o;
-
- if(_my_time % print_torques_every == 0){
- fp = fopen("torques_n3.txt","a");
- fprintf(fp,"%lld\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t1\n", _my_time, torque_wt.x,torque_wt.y,torque_wt.z, torque_o.x, torque_o.y, torque_o.z);
- fclose(fp);
- }
- }
- if (p->n5 != P_VIRTUAL){
- if (p->n5->n5 == P_VIRTUAL){
- torque_wt = p->orientationT*(_twist_boundary_stiff * ( p->orientationT.v3.cross(_w2t)));
- p->torque += torque_wt;
-
- torque_o  = p->orientationT*(_twist_boundary_stiff * ( p->orientationT.v1.cross(_o2)));
- p->torque += torque_o;
-
- if(_my_time % print_torques_every == 0){
- fp = fopen("torques_n5.txt","a");
- fprintf(fp,"%lld\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t1\n", _my_time, torque_wt.x,torque_wt.y,torque_wt.z, torque_o.x, torque_o.y, torque_o.z);
- fclose(fp);
- }
- }
- }
- if (q != P_VIRTUAL){
- if (q->n3 == P_VIRTUAL){
- torque_wt  = q->orientationT*(_twist_boundary_stiff * ( q->orientationT.v3.cross(_w1t)));
- q->torque += torque_wt;
-
- torque_o = q->orientationT*(_twist_boundary_stiff * ( q->orientationT.v1.cross(_o1)));
- q->torque += torque_o;
- if(_my_time % print_torques_every == 0){
- fp = fopen("torques_n3.txt","a");
- fprintf(fp,"%lld\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t2\n", _my_time, torque_wt.x,torque_wt.y,torque_wt.z, torque_o.x, torque_o.y, torque_o.z);
- fclose(fp);
- }
- }
- //This has been commented to see if the program works now, but should later be removed
- if (q->n5 != P_VIRTUAL){
- if (q->n5->n5 == P_VIRTUAL){
- torque_wt	 = q->orientationT*(_twist_boundary_stiff * ( q->orientationT.v3.cross(_w2t)));
- q->torque += torque_wt;
-
- torque_o = q->orientationT*(_twist_boundary_stiff * ( q->orientationT.v1.cross(_o2)));
- q->torque += torque_o;
-
- if(_my_time % print_torques_every == 0){
- fp = fopen("torques_n5.txt","a");
- fprintf(fp,"%lld\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t%14.14lf\t2\n", _my_time, torque_wt.x,torque_wt.y,torque_wt.z, torque_o.x, torque_o.y, torque_o.z);
- fclose(fp);
- }
- }
- }
- // end of removed block
- }
- // forces are not updated since this term of the potential only introduces a torque,
- // since it does not depend on r.
- }
- return energy;
- }
- */
-
-template<typename number>
-number TEPInteraction<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	if(p->is_bonded(q))
-		return pair_interaction_bonded(p, q, r, update_forces);
-	else return pair_interaction_nonbonded(p, q, r, update_forces);
+number TEPInteraction::pair_interaction(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	if(p->is_bonded(q)) {
+		return pair_interaction_bonded(p, q, compute_r, update_forces);
+	}
+	else {
+		return pair_interaction_nonbonded(p, q, compute_r, update_forces);
+	}
 }
 
-template<typename number>
-number TEPInteraction<number>::pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	if(!p->is_bonded(q))
+number TEPInteraction::pair_interaction_bonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	if(!p->is_bonded(q)) {
 		return 0.;
-	LR_vector<number> computed_r(0, 0, 0);
+	}
 	number energy = 0;
-	BaseParticle<number> *qq = q;
+	BaseParticle *qq = q;
 
-	if(p->n3 == P_VIRTUAL)
-		energy += _index_twist_boundary_particles(p, P_VIRTUAL, r, update_forces);
-	if(p->n5 != P_VIRTUAL && p->n5->n5 == P_VIRTUAL)
-		energy += _index_twist_boundary_particles(p, P_VIRTUAL, r, update_forces);
+	if(p->n3 == P_VIRTUAL) {
+		energy += _index_twist_boundary_particles(p, P_VIRTUAL, true, update_forces);
+	}
+	if(p->n5 != P_VIRTUAL && p->n5->n5 == P_VIRTUAL) {
+		energy += _index_twist_boundary_particles(p, P_VIRTUAL, true, update_forces);
+	}
 
-	if(r == NULL) {
+	if(compute_r) {
 		if(qq != P_VIRTUAL && p != P_VIRTUAL) {
-			computed_r = qq->pos - p->pos;
-			r = &computed_r;
+			_computed_r = qq->pos - p->pos;
 		}
 	}
 
-	energy += _spring(p, qq, r, update_forces);
-	energy += _bonded_twist(p, qq, r, update_forces);
-	//energy += _bonded_bending(p,qq,r,update_forces);
-	energy += _bonded_double_bending(p, qq, r, update_forces);
-	energy += _bonded_alignment(p, qq, r, update_forces);
+	energy += _spring(p, qq, false, update_forces);
+	energy += _bonded_twist(p, qq, false, update_forces);
+	energy += _bonded_double_bending(p, qq, false, update_forces);
+	energy += _bonded_alignment(p, qq, false, update_forces);
 	//usually the interactions are called in an ordered fashion, but if qq is actually the last particle then it has to be aligned as well
 	// To make the alignment term behave as usual, just comment the following three lines.
 	if(qq->n5 == P_VIRTUAL) {
-		energy += _bonded_alignment(qq, p, r, update_forces);
+		energy += _bonded_alignment(qq, p, false, update_forces);
 	}
-	// Commented and replaced by the line below //	energy += _twist_boundary_particles(p,qq,r,update_forces);
-	//energy += _bonded_excluded_volume(p,qq,r,update_forces);
-
-	//if (p->index == 0) printf ("%d %d %g %g %g %g\n", p->index, q->index, _spring(p,q,r,false), _bonded_twist (p, q, r, false), _bonded_bending (p, q, r, false), _bonded_alignment (p, q, r, false));
-
-	//TODO: add also debye - Huckel (make sure that,
-	// since the rods are neighbouring with each other, the terminal charges of the rods do not
-	// feel each other, just like in the oxDNA model, where charges on adjacent nucleotides do not
-	// feel each other.
-	//
-
-	/*
-	 double x =0.5;
-	 while ( x < 1.55) {
-	 LR_vector<number> myr (x, 0, 0);
-	 double e1 = _spring(p, q, &myr, update_forces);
-	 double e2 = _bonded_excluded_volume(p,q,&myr,update_forces);
-	 printf ("%g %g %g %g #FRFR\n", x, e1 + e2, e1, e2);
-	 x += 0.01;
-	 }*/
 	return energy;
 
 }
 
-template<typename number>
-number TEPInteraction<number>::pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	LR_vector<number> computed_r(0, 0, 0);
-	if(r == NULL) {
-		computed_r = this->_box->min_image(p->pos, q->pos);
-		r = &computed_r;
+number TEPInteraction::pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+	if(compute_r) {
+		_computed_r = this->_box->min_image(p->pos, q->pos);
 	}
 
-	if(r->norm() >= this->_sqr_rcut)
+	if(_computed_r.norm() >= this->_sqr_rcut) {
 		return (number) 0;
+	}
+
 	number energy = 0.;
-	energy += _nonbonded_excluded_volume(p, q, r, update_forces);
+	energy += _nonbonded_excluded_volume(p, q, false, update_forces);
 	return energy;
 }
 
-template<typename number>
-void TEPInteraction<number>::check_input_sanity(BaseParticle<number> **particles, int N) {
-	//TODO: implement this for the TEP model (sanity check of the topology file)
-	/*
-	 for(int i = 0; i < N; i++) {
-	 BaseParticle<number> *p = particles[i];
-	 if(p->n3 != P_VIRTUAL && p->n3->index >= N) throw oxDNAException("Wrong topology for particle %d (n3 neighbor is %d, should be < N = %d)", i, p->n3->index, N);
-	 if(p->n5 != P_VIRTUAL && p->n5->index >= N) throw oxDNAException("Wrong topology for particle %d (n5 neighbor is %d, should be < N = %d)", i, p->n5->index, N);
-	 */
-	// check that the distance between bonded neighbor doesn't exceed a reasonable threshold
-	// TODO: implement this for the TEP model
-	/*
-	 number mind = FENE_R0 - FENE_DELTA;
-	 number maxd = FENE_R0 + FENE_DELTA;
-	 if(p->n3 != P_VIRTUAL) {
-	 BaseParticle<number> *q = p->n3;
-	 q->set_positions();
-	 LR_vector<number> rv = p->pos + p->int_centers[DNANucleotide<number>::BACK] - (q->pos + q->int_centers[DNANucleotide<number>::BACK]);
-	 number r = sqrt(rv*rv);
-	 if(r > maxd || r < mind)
-	 throw oxDNAException("Distance between bonded neighbors %d and %d exceeds acceptable values (d = %lf)", i, p->n3->index, r);
-	 }
+void TEPInteraction::check_input_sanity(std::vector<BaseParticle*> &particles) {
 
-	 if(p->n5 != P_VIRTUAL) {
-	 BaseParticle<number> *q = p->n5;
-	 q->set_positions();
-	 LR_vector<number> rv = p->pos + p->int_centers[DNANucleotide<number>::BACK] - (q->pos + q->int_centers[DNANucleotide<number>::BACK]);
-	 number r = sqrt(rv*rv);
-	 if(r > maxd || r < mind)
-	 throw oxDNAException("Distance between bonded neighbors %d and %d exceeds acceptable values (d = %lf)", i, p->n5->index, r);
-	 }
-	 }
-	 */
 }
 
-template<typename number>
-void TEPInteraction<number>::allocate_particles(BaseParticle<number> **particles, int N) {
-//	OX_LOG(Logger::LOG_INFO,"allocating %d particles",N);
-	for(int i = 0; i < N; i++)
-		particles[i] = new TEPParticle<number>();
+void TEPInteraction::allocate_particles(std::vector<BaseParticle*> &particles) {
+	for(uint i = 0; i < particles.size(); i++) {
+		particles[i] = new TEPParticle();
+	}
 }
 
-template<typename number>
-void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, BaseParticle<number> **particles) {
-	IBaseInteraction<number>::read_topology(N_from_conf, N_strands, particles);
+void TEPInteraction::read_topology(int *N_strands, std::vector<BaseParticle*> &particles) {
+	int N_from_conf = particles.size();
+	BaseInteraction::read_topology(N_strands, particles);
 	int my_N, my_N_strands;
 	_kt_pref = new number[N_from_conf];
 	_kb1_pref = new number[N_from_conf];
@@ -1144,7 +737,7 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 
 	char line[512];
 	std::ifstream topology;
-	topology.open(this->_topology_filename, ios::in);
+	topology.open(this->_topology_filename, std::ios::in);
 
 	if(!topology.good())
 		throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
@@ -1155,7 +748,7 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 	//printf("N_from_conf = %d, my_N = %d",N_from_conf, my_N);
 	if(_twist_boundary_stiff > 0) {
 		OX_LOG(Logger::LOG_INFO," average superhelical density set at %g, since:",_max_twisting_time*(_o1_modulus/(2*PI)-_o2_modulus/(2*PI))/N_from_conf);		//TODO remove this when the whole twisting boundary particle is removed. Possibly replace it with something that performs the same function in a cleaner way.
-		OX_LOG(Logger::LOG_INFO," TEP_max_twisting_time =  %lld, TEP_o1_modulus = %lf, TEP_o2_modulus = %lf, N = %d",_max_twisting_time,_o1_modulus,_o2_modulus,N_from_conf);//TODO remove this when the whole twisting boundary particle is removed. Possibly replace it with something that performs the same function in a cleaner way.
+		OX_LOG(Logger::LOG_INFO," TEP_max_twisting_time =  %lld, TEP_o1_modulus = %lf, TEP_o2_modulus = %lf, N = %d",_max_twisting_time,_o1_modulus,_o2_modulus,N_from_conf);		//TODO remove this when the whole twisting boundary particle is removed. Possibly replace it with something that performs the same function in a cleaner way.
 	}
 	int strand = 0, added_particles = 0, strand_length, particles_in_previous_strands = 0;
 	while(topology.good()) {
@@ -1170,7 +763,7 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 		int max_n_fields = 8;
 		// if these many fields are given, specific beads are being edited
 		if(res >= 3 && res <= max_n_fields) {
-			std::vector<int> particle_indices_vector = Utils::getParticlesFromString(particles, added_particles, temp_string, "interaction TEP (TEPInteraction.cpp)");
+			std::vector<int> particle_indices_vector = Utils::get_particles_from_string(particles, temp_string, "interaction TEP (TEPInteraction.cpp)");
 			for(std::vector<int>::size_type i = 0; i < particle_indices_vector.size(); i++) {
 				int temp_index = particle_indices_vector[i];
 				OX_LOG(Logger::LOG_INFO, "Interaction modifiers for particle %d found", temp_index);
@@ -1194,15 +787,18 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 					if(res >= 7) {
 						_th_b_0[temp_index] = (number) th_b_0;
 						OX_LOG(Logger::LOG_INFO,"Setting _th_b_0[%d] = %lf radians",temp_index,(number)th_b_0);
-						if (_is_on_cuda) throw oxDNAException(" Setting th_b_0 in the topology file is not implemented on CUDA");
+						if(_is_on_cuda)
+							throw oxDNAException(" Setting th_b_0 in the topology file is not implemented on CUDA");
 					}
 					if(res >= 8) {
 						_beta_0[temp_index] = (number) beta_0;
 						OX_LOG(Logger::LOG_INFO,"Setting _beta_0[%d] = %lf radians",temp_index,(number)beta_0);
-						if (_is_on_cuda) throw oxDNAException(" Setting beta_0 in the topology file is not implemented on CUDA");
+						if(_is_on_cuda)
+							throw oxDNAException(" Setting beta_0 in the topology file is not implemented on CUDA");
 					}
 				}
-				else throw oxDNAException("In the topology file particle %d is assigned non-default kb/kt prefactors before its strand is declared, as only %d particles have yet been added to the box.", temp_index, added_particles);
+				else
+					throw oxDNAException("In the topology file particle %d is assigned non-default kb/kt prefactors before its strand is declared, as only %d particles have yet been added to the box.", temp_index, added_particles);
 			}
 		}
 		else if(res < 1 || res > max_n_fields)
@@ -1215,7 +811,8 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 				if(topology_char == 'c' || topology_char == 'C') {
 					closed_topology = true;
 				}
-				else throw oxDNAException("Only the character 'c' and 'C' are allowed as a topology qualifier on line (%c found).\n", topology_char);
+				else
+					throw oxDNAException("Only the character 'c' and 'C' are allowed as a topology qualifier on line (%c found).\n", topology_char);
 			}
 			for(int i = 0; i < strand_length; i++) {
 				_kb1_pref[i] = 1.;
@@ -1227,21 +824,25 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 				_th_b_0[i] = _th_b_0_default;
 				_beta_0[i] = _beta_0_default;
 
-				BaseParticle<number> *p = particles[i + particles_in_previous_strands];
+				BaseParticle *p = particles[i + particles_in_previous_strands];
 
 				if(i == 0) {
 					if(closed_topology)
 						p->n3 = particles[particles_in_previous_strands + strand_length - 1];
-					else p->n3 = P_VIRTUAL;
+					else
+						p->n3 = P_VIRTUAL;
 				}
-				else p->n3 = particles[particles_in_previous_strands + i - 1];
+				else
+					p->n3 = particles[particles_in_previous_strands + i - 1];
 
 				if(i == strand_length - 1) {
 					if(closed_topology)
 						p->n5 = particles[particles_in_previous_strands];
-					else p->n5 = P_VIRTUAL;
+					else
+						p->n5 = P_VIRTUAL;
 				}
-				else p->n5 = particles[particles_in_previous_strands + i + 1];
+				else
+					p->n5 = particles[particles_in_previous_strands + i + 1];
 				p->strand_id = strand;
 				added_particles++;
 				//TODO this check assumes that we read the coniguration from a file - that might not always
@@ -1251,15 +852,16 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 					throw oxDNAException("Too many particles found in the topology file (should be %d to match the configuration file). Aborting", N_from_conf);
 				// here we fill the affected vector
 				if(p->n3 != P_VIRTUAL)
-					p->affected.push_back(ParticlePair<number>(p->n3, p));
+					p->affected.push_back(ParticlePair(p->n3, p));
 				if(p->n5 != P_VIRTUAL)
-					p->affected.push_back(ParticlePair<number>(p, p->n5));
+					p->affected.push_back(ParticlePair(p, p->n5));
 
 			}
 			strand++;
 			particles_in_previous_strands += strand_length;
 		}
-		else throw oxDNAException("Unhandled exception in reading the topology file. Please contact a developer (probably Ferdinando Randisi).");
+		else
+			throw oxDNAException("Unhandled exception in reading the topology file. Please contact a developer (probably Ferdinando Randisi).");
 
 	}
 	if(added_particles < N_from_conf)
@@ -1270,11 +872,129 @@ void TEPInteraction<number>::read_topology(int N_from_conf, int *N_strands, Base
 
 	if(strand != my_N_strands)
 		throw oxDNAException("Number of strands in the topology file and\nnumber of strands as stated in the header of the topology file don't match. Aborting");
-
 }
 
-template class TEPInteraction<float> ;
-template class TEPInteraction<double> ;
+number TEPInteraction::_repulsive_lj2(number prefactor, const LR_vector &r, LR_vector &force, number sigma, number rstar, number b, number rc, bool update_forces) {
+	// this is a bit faster than calling r.norm()
+	number rnorm = SQR(r.x) + SQR(r.y) + SQR(r.z);
+	number energy = (number) 0;
+	if(rnorm < SQR(rc)) {
+		if(rnorm > SQR(rstar)) {
+			number rmod = sqrt(rnorm);
+			number rrc = rmod - rc;
+			energy = prefactor * b * SQR(rrc);
+			if(update_forces)
+				force = -r * (2 * prefactor * b * rrc / rmod);
+		}
+		else {
+			number tmp = SQR(sigma) / rnorm;
+			number lj_part = tmp * tmp * tmp;
+			// the additive term was added by me to mimick Davide's implementation
+			energy = 4 * prefactor * (SQR(lj_part) - lj_part) + prefactor;
+			if(update_forces)
+				force = -r * (24 * prefactor * (lj_part - 2 * SQR(lj_part)) / rnorm);
+		}
+	}
+
+	if(update_forces && energy == (number) 0)
+		force.x = force.y = force.z = (number) 0;
+
+	return energy;
+}
+
+int TEPInteraction::setNonNegativeNumber(input_file *inp, const char *skey, number *dest, int mandatory, const char *arg_description) {
+
+	int ret_value = getInputNumber(inp, skey, dest, mandatory) == KEY_FOUND;
+	if(ret_value) {
+		if(*dest < 0)
+			throw oxDNAException("read negative parameter %s (%s) for the TEP model. %s = %g. Aborting", skey, arg_description, skey, *dest);
+		OX_LOG(Logger::LOG_INFO,"%s manually set to %g",skey,*dest);
+	}
+	return ret_value;
+}
+
+int TEPInteraction::setPositiveNumber(input_file *inp, const char *skey, number *dest, int mandatory, const char *arg_description) {
+	int ret_value = getInputNumber(inp, skey, dest, mandatory) == KEY_FOUND;
+	if(ret_value) {
+		if(*dest <= 0)
+			throw oxDNAException("read non-positive parameter %s (%s) for the TEP model. %s = %g. Aborting", skey, arg_description, skey, *dest);
+		OX_LOG(Logger::LOG_INFO,"%s manually set to %g",skey,*dest);
+	}
+	return ret_value;
+}
+
+int TEPInteraction::setNumber(input_file *inp, const char *skey, number *dest, int mandatory, const char *arg_description) {
+	int ret_value = getInputNumber(inp, skey, dest, mandatory) == KEY_FOUND;
+	if(ret_value) {
+		OX_LOG(Logger::LOG_INFO,"%s manually set to %g",skey,*dest);
+	}
+	return ret_value;
+}
+
+int TEPInteraction::setPositiveLLInt(input_file *inp, const char *skey, llint *dest, int mandatory, const char *arg_description) {
+	int ret_value = getInputLLInt(inp, skey, dest, mandatory) == KEY_FOUND;
+	if(ret_value) {
+		if(*dest <= 0)
+			throw oxDNAException("read non-positive parameter %s (%s) for the TEP model. %s = %g. Aborting", skey, arg_description, skey, *dest);
+		OX_LOG(Logger::LOG_INFO,"%s manually set to %lld",skey,*dest);
+	}
+	return ret_value;
+}
+
+int TEPInteraction::setNonNegativeLLInt(input_file *inp, const char *skey, llint *dest, int mandatory, const char *arg_description) {
+	int ret_value = getInputLLInt(inp, skey, dest, mandatory) == KEY_FOUND;
+	if(ret_value) {
+		if(*dest < 0)
+			throw oxDNAException("read non-positive parameter %s (%s) for the TEP model. %s = %g. Aborting", skey, arg_description, skey, *dest);
+		OX_LOG(Logger::LOG_INFO,"%s manually set to %lld",skey,*dest);
+	}
+	return ret_value;
+}
+/*
+
+ int TEPInteraction::setNonNegativeInt(input_file *inp, const char * skey, int *dest, int mandatory, const char * arg_description){
+ int ret_value = getInputLLInt(inp, skey,dest, mandatory) == KEY_FOUND;
+ if( ret_value ){
+ if( *dest < 0 ) throw oxDNAException("read non-positive parameter %s (%s) for the TEP model. %s = %g. Aborting",skey,arg_description,skey,*dest);
+ OX_LOG(Logger::LOG_INFO,"%s manually set to %lld",skey,*dest);
+ }
+ return ret_value;
+ }
+ */
+// The following are all the functions used to implement the twisting of the extremal beads. Hopefully to be removed when torques are programmed properly.
+//
+// Read a direction from file (TODO: propose to add this to defs.h, since it might be needed elsewhere).
+int TEPInteraction::getInputDirection(input_file *inp, const char *skey, LR_vector *dest, int mandatory) {
+	std::string strdir;
+	int ret_value = getInputString(inp, skey, strdir, mandatory);
+	double x, y, z;
+	int tmpi = sscanf(strdir.c_str(), "%lf,%lf,%lf", &x, &y, &z);
+	if(tmpi != 3)
+		throw oxDNAException("could not parse direction %s in input file. Dying badly", skey);
+	*dest = LR_vector((number) x, (number) y, number(z));
+	if(x == 0 && y == 0 && z == 0) {
+		throw oxDNAException("direction %s in input file is the zero vector.", skey);
+	}
+	dest->normalize();
+	return ret_value;
+}
+
+// Rotate a vector around a versor (TODO: propose to add this to defs.h)
+LR_vector TEPInteraction::rotateVectorAroundVersor(const LR_vector vector, const LR_vector versor, const number angle) {
+	/* According to section 5.2 of this webpage http://inside.mines.edu/fs_home/gmurray/ArbitraryAxisRotation/ ,
+	 // the image of rotating a vector (x,y,z) around a versor (u,v,w) is given by
+	 //      / u(ux + vy + wz)(1 - cos th) + x cos th + (- wy + vz) sin th \
+//      | v(ux + vy + wz)(1 - cos th) + y cos th + (+ wx - uz) sin th |
+	 //      \ w(ux + vy + wz)(1 - cos th) + z cos th + (- vx + uy) sin th /
+	 //      Note that the first parenthesis in every component contains the scalar product of the vectors,
+	 //      and the last parenthesys in every component contains a component of the cross product versor ^ vector.
+	 //      The derivation that they show on the webpage seems sound, and I've checked it with Mathematica in about//			 1 hour of ininterrupting swearing. */
+	number costh = cos(angle);
+	number sinth = sin(angle);
+	number scalar = vector * versor;
+	LR_vector cross = versor.cross(vector);
+	return LR_vector(versor.x * scalar * (1. - costh) + vector.x * costh + cross.x * sinth, versor.y * scalar * (1. - costh) + vector.y * costh + cross.y * sinth, versor.z * scalar * (1. - costh) + vector.z * costh + cross.z * sinth);
+}
 
 /* OLD way of reading the arguments for file. To keep here in case the new one fails.
  number kb;

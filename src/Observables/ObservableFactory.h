@@ -10,6 +10,7 @@
 
 #include "BaseObservable.h"
 #include "../Utilities/parse_input/parse_input.h"
+#include "ObservableOutput.h"
 
 /**
  * @brief Static factory class. It produces observables.
@@ -17,13 +18,9 @@
  * This class can be used to produce BaseObservable instances.
  */
 class ObservableFactory {
-private:
-	/**
-	 * @brief The constructor is private because our factories have just one single static method
-	 */
-	ObservableFactory();
 public:
-	virtual ~ObservableFactory();
+	ObservableFactory() = delete;
+	virtual ~ObservableFactory() = delete;
 
 	/**
 	 * @brief Creates an observable given an input file containing its definition
@@ -34,8 +31,10 @@ public:
 	 * @param sim_inp simulation input file
 	 * @return pointer to the newly created observable
 	 */
-	template<typename number>
-	static BaseObservable<number> *make_observable(input_file &obs_inp, input_file &sim_inp);
+
+	static ObservablePtr make_observable(input_file &obs_inp);
+
+	static std::vector<ObservableOutputPtr> make_observables(std::string prefix="");
 };
 
 #endif /* OBSERVABLEFACTORY_H_ */

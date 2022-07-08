@@ -29,7 +29,7 @@ ChiralRodExplicit<number>::~ChiralRodExplicit() {
 
 template<typename number>
 void ChiralRodExplicit<number>::get_settings(input_file &inp) {
-	IBaseInteraction<number>::get_settings(inp);
+	BaseInteraction<number>::get_settings(inp);
 
 	std::string tmps;
 	getInputString (&inp, "sim_type", tmps, 1);
@@ -76,7 +76,7 @@ void ChiralRodExplicit<number>::allocate_particles(BaseParticle<number> **partic
 }
 
 template<typename number>
-void ChiralRodExplicit<number>::read_topology(int N, int *N_strands, BaseParticle<number> **particles) {
+void ChiralRodExplicit<number>::read_topology(int *N_strands, BaseParticle<number> **particles) {
 	*N_strands = N;
 	std::ifstream topology(this->_topology_filename, ios::in);
 	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
@@ -90,7 +90,7 @@ void ChiralRodExplicit<number>::read_topology(int N, int *N_strands, BaseParticl
 
 	if (my_N != my_N_rods + my_N_solv) throw oxDNAException ("Inconsistent topology file!");
 
-	allocate_particles(particles, N);
+	allocate_particles(particles);
 
 	for (int i = 0; i < N; i ++) {
 		SpheroCylinder<number> * p = static_cast<SpheroCylinder<number> *> (particles[i]);
@@ -111,7 +111,7 @@ void ChiralRodExplicit<number>::read_topology(int N, int *N_strands, BaseParticl
 
 template<typename number>
 number ChiralRodExplicit<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	return pair_interaction_nonbonded(p, q, r, update_forces);
+	return pair_interaction_nonbonded(p, q, compute_r, update_forces);
 }
 
 template<typename number>
@@ -181,9 +181,9 @@ inline number ChiralRodExplicit<number>::_solv_solv(BaseParticle<number> *p, Bas
 template <typename number>
 inline number ChiralRodExplicit<number>::_rod_solv(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 	// inside here, p is the cylinder and q the solvent, r goes from p to q;
-	number rdotu = ((*r) * p->orientation.v3);
+	number rdotu = (_computed_r * p->orientation.v3);
 	LR_vector<number> r_on_axis = rdotu * p->orientation.v3;
-	LR_vector<number> r_off_axis = (*r) - r_on_axis;
+	LR_vector<number> r_off_axis = _computed_r - r_on_axis;
 
 	if (fabs(rdotu) < (_length / (number)2.f + _sigma_solv)) {
 		if (r_off_axis.norm() < (((number) 0.5f + _sigma_solv)*((number) 0.5f + _sigma_solv)) ) {
@@ -199,7 +199,7 @@ template<typename number>
 number ChiralRodExplicit<number>::_chiral_pot(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
 	if (update_forces) throw oxDNAException ("No forces, figlio di ndrocchia");
 
-	number rnorm = (*r).norm();
+	number rnorm = _computed_r.norm();
 	if (rnorm > this->_sqr_rcut) return (number) 0.f;
 
 	LR_vector<number> my_r = *r;

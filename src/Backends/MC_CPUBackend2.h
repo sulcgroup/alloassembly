@@ -16,16 +16,15 @@
 /**
  * @brief Manages a MC simulation on CPU. It supports NVT and NPT simulations
  */
-template<typename number>
-class MC_CPUBackend2: public MCBackend<number> {
+
+class MC_CPUBackend2: public MCBackend {
 protected:
-	std::vector <BaseMove<number> *> _moves;
+	std::vector<MovePtr> _moves;
 	int _N_moves;
-	ConfigInfo<number> *_MC_Info;
+	std::shared_ptr<ConfigInfo> _config_info;
 	std::string _info_str;
 	void _compute_energy(); // to silence compiler, for now
 	number _accumulated_prob;
-	number _verlet_skin;
 
 public:
 	MC_CPUBackend2();
@@ -34,10 +33,10 @@ public:
 	virtual void get_settings(input_file &inp);
 	void init();
 
-	void sim_step(llint cur_step);
-	void add_move (std::string move_string, input_file &sim_inp);
+	void sim_step();
+	void add_move(std::string move_string, input_file &sim_inp);
 
-	void print_observables(llint curr_step);
+	void print_observables();
 
 	virtual void print_equilibration_info();
 };

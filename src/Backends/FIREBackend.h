@@ -14,11 +14,11 @@
 /**
  * @brief Manages the FIRE algorithm for potential energy minimization
  */
-template<typename number>
-class FIREBackend: public MDBackend<number> {
+
+class FIREBackend: public MDBackend {
 protected:
 	void _compute_forces();
-	void _first_step(llint);
+	void _first_step();
 	void _second_step();
 	void _evolve();
 
@@ -33,8 +33,8 @@ public:
 	virtual ~FIREBackend();
 
 	void init();
-	void get_settings (input_file &inp);
-	void sim_step(llint cur_step);
+	void get_settings(input_file &inp);
+	void sim_step();
 	void activate_thermostat();
 };
 

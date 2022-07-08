@@ -14,22 +14,21 @@
 #include "../Interactions/RNAInteraction.h"
 
 
-template<typename number>
+
 struct PT_serialized_particle_info {
-	LR_vector<number> pos;
-	LR_matrix<number> orientation;
+	LR_vector pos;
+	LR_matrix orientation;
 	// transpose (= inverse) orientational matrix
-	void read_from(BaseParticle<number> * par);
-	void write_to(BaseParticle<number> * par);
+	void read_from(BaseParticle * par);
+	void write_to(BaseParticle * par);
 };
 
-template <typename number>
+
 struct PT_energy_info {
-	number U, U_hydr, U_stack, U_ext, T, w;
+	number U, U_stack, U_ext, T, w;
 	int weight_index, replica_id;
-	PT_energy_info (number _U = 0, number _U_hydr = 0, number _U_stack = 0., number _T = 1.) {
+	PT_energy_info (number _U = 0, number _U_stack = 0., number _T = 1.) {
 		U = _U;
-		U_hydr = _U_hydr;
 		U_stack = _U_stack;
 		T = _T;
 		w = (number) 1.;
@@ -39,8 +38,8 @@ struct PT_energy_info {
 	}
 };
 
-template<typename number>
-class PT_VMMC_CPUBackend: public VMMC_CPUBackend<number> {
+
+class PT_VMMC_CPUBackend: public VMMC_CPUBackend {
 protected:
 	int _npttemps;
 	double * _pttemps;
@@ -72,8 +71,8 @@ protected:
 	void _send_exchange_conf (int other);
 	void _send_exchange_energy (int other);
 
-	PT_serialized_particle_info<number> * _exchange_conf;
-	PT_energy_info<number> _exchange_energy;
+	PT_serialized_particle_info * _exchange_conf;
+	PT_energy_info _exchange_energy;
 
 	bool _oxDNA2_stacking;
 	bool _oxRNA_stacking;
@@ -91,7 +90,7 @@ public:
 	char * get_replica_info_str ();
 	number get_pt_acc ();
 
-	void sim_step(llint cur_step);
+	void sim_step();
 };
 
 #endif /* PT_VMMC_CPUBACKEND_H_ */

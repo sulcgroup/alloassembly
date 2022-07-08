@@ -11,44 +11,51 @@
 #include "CUDABaseList.h"
 #include "../CUDAUtils.h"
 
+#include <thrust/host_vector.h>
+
 /**
  * @brief CUDA implementation of a {@link VerletList Verlet list}.
  */
-template<typename number, typename number4>
-class CUDASimpleVerletList: public CUDABaseList<number, number4> {
+
+class CUDASimpleVerletList: public CUDABaseList {
 protected:
-	int _max_neigh;
+	int _max_neigh = 0;
 	int _N_cells_side[3];
-	int _max_N_per_cell;
-	number _max_density_multiplier;
+	int _max_N_per_cell = 0;
+	size_t _vec_size = 0;
+	bool _auto_optimisation = true;
+	bool _print_problematic_ids = false;
+	c_number _max_density_multiplier = 3;
 	int _N_cells, _old_N_cells;
-	size_t _vec_size;
-	bool _auto_optimisation;
 
-	number _verlet_skin;
-	number _sqr_verlet_skin;
-	number _sqr_rverlet;
+	c_number _verlet_skin = 0.;
+	c_number _sqr_verlet_skin = 0.;
+	c_number _sqr_rverlet = 0.;
 
-	int *_d_cells;
-	int *_d_counters_cells;
-	int *_d_number_neighs_no_doubles;
-	bool *_d_cell_overflow;
+	int *_d_cells = nullptr;
+	int *_d_counters_cells = nullptr;
+	int *_d_number_neighs_no_doubles = nullptr;
+	bool *_d_cell_overflow = nullptr;
 
 	CUDA_kernel_cfg _cells_kernel_cfg;
 
+	std::vector<int> is_large(c_number4 *data);
+
+	void _compute_N_cells_side(int N_cells_side[3], number min_cell_size);
+	int _largest_N_in_cells(int N, c_number min_cell_size);
 	virtual void _init_cells();
 
 public:
-	int *_d_matrix_neighs;
-	int *_d_number_neighs;
-	edge_bond *_d_edge_list;
-	int _N_edges;
+	int *d_matrix_neighs = nullptr;
+	int *d_number_neighs = nullptr;
+	edge_bond *d_edge_list = nullptr;
+	int N_edges;
 
 	CUDASimpleVerletList();
 	virtual ~CUDASimpleVerletList();
 
-	void init(int N, number rcut, CUDABox<number, number4> *h_cuda_box, CUDABox<number, number4> *d_cuda_box);
-	void update(number4 *poss, number4 *list_poss, LR_bonds *bonds);
+	void init(int N, c_number rcut, CUDABox *h_cuda_box, CUDABox *d_cuda_box);
+	void update(c_number4 *poss, c_number4 *list_poss, LR_bonds *bonds);
 	void clean();
 
 	void get_settings(input_file &inp);

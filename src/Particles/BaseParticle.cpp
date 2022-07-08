@@ -7,8 +7,13 @@
 
 #include "BaseParticle.h"
 
-template<typename number>
-BaseParticle<number>::BaseParticle() : N_ext_forces(0), index(-1), type(P_INVALID), n3(P_VIRTUAL), n5(P_VIRTUAL) {
+#include "../Boxes/BaseBox.h"
+
+BaseParticle::BaseParticle() :
+				index(-1),
+				type(P_INVALID),
+				n3(P_VIRTUAL),
+				n5(P_VIRTUAL) {
 	en3 = (number) 0;
 	en5 = (number) 0;
 	esn3 = (number) 0;
@@ -16,18 +21,17 @@ BaseParticle<number>::BaseParticle() : N_ext_forces(0), index(-1), type(P_INVALI
 	inclust = false;
 	ext_potential = (number) 0.;
 	strand_id = -1;
-	N_int_centers = 0;
-	//_pos_shift = LR_vector<number>(0., 0., 0.);
-	_pos_shift[0] = 0; _pos_shift[1] = 0; _pos_shift[2] = 0;
-	force = LR_vector<number>(0., 0., 0.);
-	torque = LR_vector<number>(0., 0., 0.);
-	int_centers = NULL;
+	//_pos_shift = LR_vector(0., 0., 0.);
+	_pos_shift[0] = 0;
+	_pos_shift[1] = 0;
+	_pos_shift[2] = 0;
+	force = LR_vector(0., 0., 0.);
+	torque = LR_vector(0., 0., 0.);
 	btype = 0;
 	next_particle = P_INVALID;
 }
 
-template<typename number>
-void BaseParticle<number>::copy_from(const BaseParticle<number> &p) {
+void BaseParticle::copy_from(const BaseParticle &p) {
 	index = p.index;
 	type = p.type;
 	btype = p.btype;
@@ -35,7 +39,6 @@ void BaseParticle<number>::copy_from(const BaseParticle<number> &p) {
 	vel = p.vel;
 	orientation = p.orientation;
 	orientationT = p.orientationT;
-	pos_list = p.pos_list;
 	force = p.force;
 	en3 = p.en3;
 	en5 = p.en5;
@@ -44,40 +47,28 @@ void BaseParticle<number>::copy_from(const BaseParticle<number> &p) {
 	n3 = p.n3;
 	n5 = p.n5;
 
-	for(int i = 0; i < N_int_centers; i++) int_centers[i] = p.int_centers[i];
+	int_centers = p.int_centers;
 
 	ext_potential = p.ext_potential;
 }
 
-template<typename number>
-BaseParticle<number>::~BaseParticle() {
-	if(int_centers != NULL) delete[] int_centers;
+BaseParticle::~BaseParticle() {
+
 }
 
-template<typename number>
-bool BaseParticle<number>::add_ext_force(BaseForce<number> *f) {
-	if(N_ext_forces == MAX_EXT_FORCES) {
-		throw oxDNAException("Particle %d cannot have more than %d associated external forces. This hard limit can be increased by changing the value of the MAX_EXT_FORCES macro in src/defs.h", this->index, MAX_EXT_FORCES);
-	}
-
-	ext_forces[N_ext_forces] = f;
-	N_ext_forces++;
+bool BaseParticle::add_ext_force(BaseForce *f) {
+	ext_forces.push_back(f);
 
 	return true;
 }
 
-template<typename number>
-void BaseParticle<number>::init() {
-	force = LR_vector<number>(0., 0., 0.);
-	torque = LR_vector<number>(0., 0., 0.);
+void BaseParticle::init() {
+	force = LR_vector(0., 0., 0.);
+	torque = LR_vector(0., 0., 0.);
 	_check();
 }
 
-template<typename number>
-void BaseParticle<number>::_check() {
+void BaseParticle::_check() {
 	assert(index >= 0);
 	assert(type != P_INVALID);
 }
-
-template class BaseParticle<double>;
-template class BaseParticle<float>;

@@ -19,7 +19,7 @@ DirkInteraction2<number>::~DirkInteraction2() {
 
 template<typename number>
 void DirkInteraction2<number>::get_settings(input_file &inp) {
-	IBaseInteraction<number>::get_settings(inp);
+	BaseInteraction<number>::get_settings(inp);
 	
 	char tmps[512];
 	getInputString (&inp, "sim_type", (char *)tmps, 1);
@@ -68,7 +68,7 @@ void DirkInteraction2<number>::allocate_particles(BaseParticle<number> **particl
 
 template<typename number>
 number DirkInteraction2<number>::pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	return pair_interaction_nonbonded(p, q, r, update_forces);
+	return pair_interaction_nonbonded(p, q, compute_r, update_forces);
 }
 
 template<typename number>
@@ -84,7 +84,7 @@ number DirkInteraction2<number>::pair_interaction_nonbonded(BaseParticle<number>
 		r = &computed_r;
 	}
 	
-	return _dirk_pot (p, q, r, update_forces);
+	return _dirk_pot (p, q, compute_r, update_forces);
 }
 
 template<typename number>

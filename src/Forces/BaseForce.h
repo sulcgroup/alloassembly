@@ -12,10 +12,11 @@
 #include "../defs.h"
 #include "../Utilities/oxDNAException.h"
 #include "../Utilities/Utils.h"
+#include "../Utilities/ConfigInfo.h"
 
 // forward declarations of BaseParticle and BaseBox; needed to compile
-template <typename number> class BaseParticle;
-template <typename number> class BaseBox;
+class BaseParticle;
+class BaseBox;
 
 /**
  * @brief Base class for external forces. All external forces inherit from here.
@@ -25,7 +26,7 @@ template <typename number> class BaseBox;
  * require access to these members.
  *
  */
-template<typename number>
+
 class BaseForce {
 private:
 	/**
@@ -36,21 +37,9 @@ private:
 	 * with the observable ForceEnergy to print only the energy due to specific
 	 * groups of forces.
 	 */
-	std::string _group_name;
-
-protected:
-	/**
-	 * @brief Adds the current force to the particle(s) listed in particle_string
-	 *
-	 * This method internally uses Utils::getParticlesFromString to extract a list of particles from the particle_string parameter
-	 * and then use it to initialise all the particles contained therein.
-	 *
-	 * @param particles particle array
-	 * @param N number of particles
-	 * @param particle_string a list of particles
-	 * @param force_description an optional description (defaults to "generic force") that will be used in the logging messages
-	 */
-	void _add_self_to_particles(BaseParticle<number> **particles, int N, std::string particle_string, std::string force_description=std::string("force"));
+	std::string _group_name = "default";
+	std::string _id = "";
+	std::string _type = "type_unread";
 
 public:
 	/**
@@ -60,34 +49,44 @@ public:
 	 * we need access in order to copy these numbers
 	 * to the GPU memory
 	 */
-	number _rate;
-	number _F0;
-	LR_vector<number> _direction;
-	LR_vector<number> _pos0;
+	number _rate = 0.;
+	number _F0 = 0.;
+	LR_vector _direction = LR_vector(1., 0., 0.);
+	LR_vector _pos0 = LR_vector(0., 0., 0.);
 	number _stiff;
-	int _site;
-	BaseParticle<number> * _p_ptr;
+	BaseParticle *_p_ptr;
 
 	BaseForce();
 	virtual ~BaseForce();
 
-	/**
-	 * @brief get_settings function
-	 *
-	 * this function parses the input file
-	 */
-	virtual void get_settings(input_file &inp) = 0;
-
 	/** 
 	 * @brief init function
 	 *
-	 * This function initialises the force object and assignes 
-	 * it to the relevant particles.
+	 * @return the list of particles it will act on and the force description
+	 *
+	 * This function initialises the force object and returns the list of particles it will act on
 	 */
-	virtual void init(BaseParticle<number> **particles, int N, BaseBox<number> * box) = 0; 
+	virtual std::tuple<std::vector<int>, std::string> init(input_file &inp);
 
-	virtual void set_group_name(std::string &name) { _group_name = name; }
-	virtual std::string get_group_name() { return _group_name; }
+	void set_group_name(std::string &name) {
+		_group_name = name;
+	}
+
+	std::string get_group_name() {
+		return _group_name;
+	}
+
+	void set_id(std::string id) {
+		_id = id;
+	}
+
+	std::string get_id() {
+		return _id;
+	}
+
+	std::string get_type() {
+		return _type;
+	}
 
 	/**
 	 * @brief returns value of the force (a vector)
@@ -95,15 +94,17 @@ public:
 	 * @param step useful for forces that depend on time
 	 * @param pos position of the particle
 	 */
-	virtual LR_vector<number> value(llint step, LR_vector<number> &pos) = 0;
-	
+	virtual LR_vector value(llint step, LR_vector &pos) = 0;
+
 	/**
 	 * @brief returns value of the potential associated to the force (a number)
 	 *
 	 * @param step useful for forces that depend on time
 	 * @param pos position of the particle
 	 */
-	virtual number potential (llint step, LR_vector<number> &pos) = 0;
+	virtual number potential(llint step, LR_vector &pos) = 0;
 };
+
+using ForcePtr = std::shared_ptr<BaseForce>;
 
 #endif /* BASEFORCE_H_ */

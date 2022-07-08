@@ -1,8 +1,8 @@
 /*
- * StrandwiseBonds.h
+ * ConstructwiseBonds.h
  *
  *  Created on: Jun 11, 2013
- *      Author: Flavio Romano
+ *      Author: Lorenzo Rovigatti
  */
 
 #ifndef CONSTRUCTWISEBONDS_H_
@@ -15,13 +15,14 @@
 /**
  * @brief Prints four columns: construct_id_1, construct_id_2, base_pairs_between, minimum_image_distance
  */
-template<typename number>
-class ConstructwiseBonds : public BaseObservable<number>  {
+
+class ConstructwiseBonds: public BaseObservable {
 protected:
-	int _construct_strand_size;
-	int _construct_number;
-	std::vector<int> _construct_size;
-	std::vector<LR_vector<number> > _construct_coms;
+	int _construct_size = -1;
+	int _construct_number = 0;
+	std::vector<int> _construct_sizes;
+	std::vector<LR_vector> _construct_coms;
+	int _energy_term_id = -1;
 
 public:
 	ConstructwiseBonds();
@@ -30,10 +31,11 @@ public:
 	std::string get_output_string(llint curr_step);
 
 	virtual void get_settings(input_file &my_inp, input_file &sim_inp);
-	virtual void init(ConfigInfo<number> &config_info);
+	virtual void init();
 };
 
-extern "C" BaseObservable<float> *make_float() { return new ConstructwiseBonds<float>(); }
-extern "C" BaseObservable<double> *make_double() { return new ConstructwiseBonds<double>(); }
+extern "C" BaseObservable *make() {
+	return new ConstructwiseBonds();
+}
 
 #endif /* CONSTRUCTWISE_H_ */

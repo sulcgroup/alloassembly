@@ -11,6 +11,7 @@
 #define PATCHY_POWER 200
 
 #include "BaseInteraction.h"
+#include "../Particles/PatchyParticle.h"
 
 /**
  * @brief Manages the interaction between simple patchy particles (as described in http://jcp.aip.org/resource/1/jcpsa6/v131/i1/p014504_s1)
@@ -30,8 +31,7 @@ PATCHY_N = <int> (number of patches)
 [PATCHY_sigma_AB = <float> (diameter controlling the repulsive interaction between particles of different species)]
 @endverbatim
  */
-template <typename number>
-class PatchyInteraction: public BaseInteraction<number, PatchyInteraction<number> > {
+class PatchyInteraction: public BaseInteraction {
 protected:
 	/// Number of patches per particle
 	int _N_patches;
@@ -72,6 +72,8 @@ protected:
 	/// _patch_alpha^10
 	number _patch_pow_alpha;
 
+	number _bond_energy_threshold = -0.1;
+
 	/**
 	 * @brief Patchy interaction between two particles.
 	 *
@@ -81,7 +83,11 @@ protected:
 	 * @param update_forces
 	 * @return
 	 */
-	inline number _patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
+	number _patchy_interaction(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces);
+
+	inline std::vector<PatchyBond> &_particle_bonds(BaseParticle *p) {
+		return static_cast<PatchyParticle *>(p)->bonds;
+	}
 
 public:
 	enum {
@@ -91,72 +97,21 @@ public:
 	PatchyInteraction();
 	virtual ~PatchyInteraction();
 
-	virtual void get_settings(input_file &inp);
-	virtual void init();
+	void get_settings(input_file &inp) override;
+	void init() override;
 
 	number get_alpha() { return _patch_alpha; }
 
-	virtual void allocate_particles(BaseParticle<number> **particles, int N);
+	void allocate_particles(std::vector<BaseParticle *> &particles) override;
 
-	virtual number pair_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
-	virtual number pair_interaction_bonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
-	virtual number pair_interaction_nonbonded(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false);
-	virtual number pair_interaction_term(int name, BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r=NULL, bool update_forces=false) {
-		return this->_pair_interaction_term_wrapper(this, name, p, q, r, update_forces);
-	}
+	void begin_energy_computation() override;
 
-	virtual void read_topology(int N, int *N_strands, BaseParticle<number> **particles);
-	virtual void check_input_sanity(BaseParticle<number> **particles, int N);
+	number pair_interaction(BaseParticle *p, BaseParticle *q, bool compute_r = true, bool update_forces=false) override;
+	number pair_interaction_bonded(BaseParticle *p, BaseParticle *q, bool compute_r = true, bool update_forces=false) override;
+	number pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r = true, bool update_forces=false) override;
+
+	void read_topology(int *N_strands, std::vector<BaseParticle *> &particles) override;
+	void check_input_sanity(std::vector<BaseParticle *> &particles) override;
 };
-
-template<typename number>
-number PatchyInteraction<number>::_patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	number sqr_r = r->norm();
-	int type = p->type + q->type;
-	if(sqr_r > _sqr_tot_rcut[type]) return (number) 0.f;
-
-	number energy = (number) 0.f;
-
-	number part = powf(_sqr_sigma[type]/sqr_r, PATCHY_POWER*0.5f);
-	energy = part - _E_cut[type];
-
-	if(update_forces) {
-		LR_vector<number> force = *r * (PATCHY_POWER*part/sqr_r);
-		p->force -= force;
-		q->force += force;
-	}
-
-	int c = 0;
-	LR_vector<number> tmptorquep(0, 0, 0);
-	LR_vector<number> tmptorqueq(0, 0, 0);
-	for(int pi = 0; pi < p->N_int_centers; pi++) {
-		LR_vector<number> ppatch = p->int_centers[pi];
-		for(int pj = 0; pj < q->N_int_centers; pj++) {
-			LR_vector<number> qpatch = q->int_centers[pj];
-
-			LR_vector<number> patch_dist = *r + qpatch - ppatch;
-			number dist = patch_dist.norm();
-			if(dist < _sqr_patch_rcut) {
-				c++;
-				number r8b10 = dist*dist*dist*dist / _patch_pow_alpha;
-				number exp_part = -1.001f*_epsilon[type]*exp(-(number)0.5f*r8b10*dist);
-
-				energy += exp_part - _patch_E_cut[type];
-
-				if(update_forces) {
-					LR_vector<number> tmp_force = patch_dist * (5*exp_part*r8b10);
-
-					p->torque -= p->orientationT*ppatch.cross(tmp_force);
-					q->torque += q->orientationT*qpatch.cross(tmp_force);
-
-					p->force -= tmp_force;
-					q->force += tmp_force;
-				}
-			}
-		}
-	}
-
-	return energy;
-}
 
 #endif /* PATCHYINTERACTION_H_ */

@@ -1,0 +1,154 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "/home/josh/git/alloassembly/contrib/evans/AllostericPatchyParticle.so"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"add_library_no_prefix",
+			"include_directories",
+			"INCLUDE_DIRECTORIES"
+		],
+		"files" : 
+		[
+			"contrib/evans/CMakeLists.txt",
+			"CMakeLists.txt",
+			"contrib/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 25,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 20,
+				"parent" : 1
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 84,
+				"parent" : 3
+			},
+			{
+				"file" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 2,
+				"line" : 1,
+				"parent" : 5
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 6,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -D_FORCE_INLINES -O3 -DNDEBUG -fPIC   -Wall -Wshadow -Wextra -Wno-unused-parameter -ffast-math -march=native -D'RELEASE=\"\"' -D'GIT_COMMIT=\"2031901\"' -D'BUILD_TIME=\"08/07/22\"'"
+				},
+				{
+					"fragment" : "-std=gnu++14"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "AllostericPatchyParticle_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 4,
+					"path" : "/home/josh/git/alloassembly/src/extern"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/josh/git/alloassembly/src"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "/home/josh/git/alloassembly/contrib/evans/../../src"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					2
+				],
+				"standard" : "14"
+			},
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"id" : "AllostericPatchyParticle::@2d304e29ca8bc3d02bb6",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "",
+				"role" : "flags"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "AllostericPatchyParticle",
+	"nameOnDisk" : "AllostericPatchyParticle.so",
+	"paths" : 
+	{
+		"build" : "contrib/evans",
+		"source" : "contrib/evans"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "contrib/evans/src/Particles/AllostericPatchyParticle.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "MODULE_LIBRARY"
+}

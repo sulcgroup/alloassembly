@@ -52,26 +52,26 @@
 //
 
 typedef struct qh_vertex {
-    union {
-        float v[3];
-        struct {
-            float x;
-            float y;
-            float z;
-        };
-    };
+	union {
+		float v[3];
+		struct {
+			float x;
+			float y;
+			float z;
+		};
+	};
 } qh_vertex_t;
 
 typedef qh_vertex_t qh_vec3_t;
 
 typedef struct qh_mesh {
-    qh_vertex_t* vertices;
-    qh_vec3_t* normals;
-    unsigned int* indices;
-    unsigned int* normalindices;
-    unsigned int nindices;
-    unsigned int nvertices;
-    unsigned int nnormals;
+	qh_vertex_t* vertices;
+	qh_vec3_t* normals;
+	unsigned int* indices;
+	unsigned int* normalindices;
+	unsigned int nindices;
+	unsigned int nvertices;
+	unsigned int nnormals;
 } qh_mesh_t;
 
 qh_mesh_t qh_quickhull3d(qh_vertex_t const* vertices, unsigned int nvertices);
@@ -185,7 +185,7 @@ void qh__find_6eps(qh_vertex_t* vertices, unsigned int nvertices, qh_index_t* ep
     float maxxz = -QH_FLT_MAX;
     float maxyz = -QH_FLT_MAX;
 
-    uint i = 0;
+    uint32_t i = 0;
     for (i = 0; i < 6; ++i) {
         eps[i] = 0;
     }
