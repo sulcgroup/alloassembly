@@ -3,10 +3,11 @@
 
 
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(../rovigatti)
 INCLUDE_DIRECTORIES(../../src)
 
 # Probably going to be more of these
-ADD_CUSTOM_TARGET(evans DEPENDS AllostericPatchyInteraction AllostericPatchyParticle)
+ADD_CUSTOM_TARGET(evans DEPENDS AllostericPatchyInteraction AllostericPatchyParticle AllostericPatch)
 
 # without this bit clang-based compilation fails with some "undefined symbols" errors during the linking stage
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -23,6 +24,7 @@ endfunction()
 
 add_library_no_prefix(AllostericPatchyInteraction src/Interactions/AllostericPatchyInteraction.cpp)
 add_library_no_prefix(AllostericPatchyParticle src/Particles/AllostericPatchyParticle.cpp)
+add_library_no_prefix(AllostericPatch src/Particles/AllostericPatch.cpp)
 
 if (CUDA)
     SET(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} -rdynamic")

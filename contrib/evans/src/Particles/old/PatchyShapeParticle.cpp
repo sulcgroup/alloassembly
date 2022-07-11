@@ -6,7 +6,7 @@
  */
 
 #include "PatchyShapeParticle.h"
-#include "../../../../src/Utilities/oxDNAException.h"
+#include "Utilities/oxDNAException.h"
 
 #define HALF_ISQRT3 0.28867513459481292f
 

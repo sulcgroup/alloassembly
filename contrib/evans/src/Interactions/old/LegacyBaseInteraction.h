@@ -16,15 +16,15 @@
 #include <set>
 #include <vector>
 
-#include "../defs.h"
-#include "../Particles/BaseParticle.h"
-#include "../Boxes/BaseBox.h"
-#include "../Lists/BaseList.h"
-#include "../Utilities/Utils.h"
-#include "../Utilities/oxDNAException.h"
-#include "../../src/Interactions/Mesh.h"
+#include "defs.h"
+#include "Particles/BaseParticle.h"
+#include "Boxes/BaseBox.h"
+#include "Lists/BaseList.h"
+#include "Utilities/Utils.h"
+#include "Utilities/oxDNAException.h"
+#include "Interactions/Mesh.h"
 
-#include "../Lists/Cells.h"
+#include "Lists/Cells.h"
 
 using namespace std;
 
@@ -413,8 +413,8 @@ namespace Legacy {
     private:
 
     protected:
-        using energy_function = std::function<number(BaseParticle *, BaseParticle *, bool, bool)>;
-        using interaction_map = std::map<int, energy_function>;
+        using energy_function = std::function<number(BaseParticle *, BaseParticle *, LR_vector*, bool)>;
+        using interaction_map = std::map<int, energy_function*>;
         /**
          * Map of function pointers of individual terms of the particle-particle interaction. Note that
          * these pointers are of type child::* (i.e. methods defined within the child class).

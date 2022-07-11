@@ -8,7 +8,7 @@
 #ifndef PATCHYSPARTICLE_H_
 #define PATCHYSPARTICLE_H_
 
-#include "../../../../src/Particles/BaseParticle.h"
+#include "Particles/BaseParticle.h"
 
 /// A structure describing the patch; Each particle can have multiple patches, positioned at different places; The patches are directional and each
 /// patch interacts only with its specific complementary patch;
@@ -29,7 +29,7 @@ struct Patch {
  number a2_x, a2_y, a2_z;
 
 
- Patch() {active = false; id = 0; color = -1; strength = 1; a1_x = a1_y = a1_z = a2_x = a2_y = a2_z = 0; set_lock(-1,-1,0);}
+ Patch(); {active = false; id = 0; color = -1; strength = 1; a1_x = a1_y = a1_z = a2_x = a2_y = a2_z = 0; set_lock(-1,-1,0);}
 
  Patch(LR_vector _a1_xyz, LR_vector _a2_xyz, LR_vector _position, int _id,int _color, number _strength=1.0,  bool _active = true) :
 	 position(_position), id(_id), active(_active),   color(_color), strength(_strength)

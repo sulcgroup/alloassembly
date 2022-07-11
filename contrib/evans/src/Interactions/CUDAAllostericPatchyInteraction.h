@@ -5,12 +5,10 @@
 #ifndef OXDNA_CUDAALLOSTERICPATCHYINTERACTION_H
 #define OXDNA_CUDAALLOSTERICPATCHYINTERACTION_H
 
-#include "AllostericPatchyInteraction.h"
-#include "CUDA/Interactions/CUDABaseInteraction.h"
 
-template<typename number>
-class CUDAAllostericPatchyInteraction : public CUDABaseInteraction, public AllostericPatchyInteraction<number>{
+class CUDAAllostericPatchyInteraction {
 
 };
+
 
 #endif //OXDNA_CUDAALLOSTERICPATCHYINTERACTION_H
