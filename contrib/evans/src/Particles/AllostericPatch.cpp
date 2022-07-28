@@ -52,6 +52,10 @@ int AllostericPatch::get_color() const {
     return _color;
 }
 
+std::string AllostericPatch::get_allosteric_conditional() const {
+    return allostery_conditional;
+}
+
 //bool AllostericPatch::locked_to(int particle_id,int patch_id) const {
 //    return is_locked() && (particle_id == locked_to_particle && locked_to_patch == patch_id);
 //}

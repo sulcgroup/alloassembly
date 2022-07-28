@@ -135,7 +135,7 @@ public:
 		arg[2] = _pos_shift[2];
 	}
 
-	uint N_int_centers() {
+	uint N_int_centers() const {
 		return int_centers.size();
 	}
 

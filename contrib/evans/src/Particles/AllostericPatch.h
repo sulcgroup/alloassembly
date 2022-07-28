@@ -11,7 +11,7 @@
 /// patch interacts only with its specific complementary patch;
 // TODO: have this extend Patch if feasable
 // TODO: unclear if this even requires to inherit BaseParticle
-class AllostericPatch  : public BaseParticle {
+class AllostericPatch {
 protected:
     LR_vector _position; // the position of the patch with respect to the CM of the particle. initial.
     LR_vector _a1;  //vector that is to be compared against the vector connecting the patches r_pp, needs to be parallel
@@ -48,6 +48,7 @@ public:
 //    bool is_locked() const;
 
     int get_color() const;
+    std::string get_allosteric_conditional() const;
 
 //    bool locked_to(int particle_id,int patch_id) const;
 //    bool locked_to_particle_id(int particle_id) const;

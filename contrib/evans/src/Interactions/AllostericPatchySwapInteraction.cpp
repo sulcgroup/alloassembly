@@ -40,8 +40,18 @@ AllostericPatchySwapInteraction::~AllostericPatchySwapInteraction() {
 void AllostericPatchySwapInteraction::get_settings(input_file &inp) {
     BaseInteraction::get_settings(inp);
 
+    int i; // allocate placeholder int & reuse
+    // read number of patches
+    getInputInt(&inp, "patch_types_N", &i, 1);
+    _N_patch_types = i;
+    _base_patches.resize(_N_patch_types);
+
+    // read number of particles
+    getInputInt(&inp, "particle_types_N", &i, 1);
+    _N_per_species.resize(i, 0); // resize particle type count vector
+
     getInputNumber(&inp, "DPS_lambda", &_lambda, 0);
-    getInputString(&inp, "DPS_interaction_matrix_file", _interaction_matrix_file, 1);
+    getInputString(&inp, "DPS_interaction_matrix_file", _interaction_matrix_file, 0);
 
     getInputBool(&inp, "DPS_is_KF", &_is_KF, 0);
     if(_is_KF) {
@@ -503,6 +513,8 @@ void AllostericPatchySwapInteraction::_parse_interaction_matrix() {
     // parse the interaction matrix file
     input_file inter_matrix_file;
     inter_matrix_file.init_from_filename(_interaction_matrix_file);
+    _patchy_eps.resize(_N_patch_types * _N_patch_types, 0.);
+
     if(inter_matrix_file.state == ERROR) {
         OX_LOG(Logger::LOG_INFO, ("No interaction matrix file " + _interaction_matrix_file + " found. Using default bindings.").c_str());
         for (int i = 0; i < _N_patch_types; i++) {
@@ -517,7 +529,6 @@ void AllostericPatchySwapInteraction::_parse_interaction_matrix() {
     }
     else {
         OX_LOG(Logger::LOG_INFO, ("Loading interaction matrix from file " + _interaction_matrix_file + ".").c_str());
-        _patchy_eps.resize(_N_patch_types * _N_patch_types, 0.);
 
         for (int i = 0; i < _N_patch_types; i++) {
             for (int j = 0; j < _N_patch_types; j++) {
@@ -741,7 +752,7 @@ void AllostericPatchySwapInteraction::read_topology(int *N_strands, std::vector<
                                  _base_particle_types.size(),
                                  type);
         int i = total_count;
-        particles[i]->copy_from(this->_base_particle_types[type]);
+        particles[i] = new AllostericPatchyParticle(this->_base_particle_types[type]);
         _N_per_species[type]++;
 
         /*

@@ -7,7 +7,7 @@ INCLUDE_DIRECTORIES(../rovigatti)
 INCLUDE_DIRECTORIES(../../src)
 
 # Probably going to be more of these
-ADD_CUSTOM_TARGET(evans DEPENDS AllostericPatchyInteraction AllostericPatchyParticle AllostericPatch)
+ADD_CUSTOM_TARGET(evans DEPENDS AllostericPatchySwapInteraction)
 
 # without this bit clang-based compilation fails with some "undefined symbols" errors during the linking stage
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -22,9 +22,9 @@ function(add_library_no_prefix target source)
     set_target_properties(${target} PROPERTIES PREFIX "")
 endfunction()
 
-add_library_no_prefix(AllostericPatchyInteraction src/Interactions/AllostericPatchyInteraction.cpp)
-add_library_no_prefix(AllostericPatchyParticle src/Particles/AllostericPatchyParticle.cpp)
-add_library_no_prefix(AllostericPatch src/Particles/AllostericPatch.cpp)
+add_library_no_prefix(AllostericPatchySwapInteraction src/Interactions/AllostericPatchySwapInteraction.cpp src/Particles/AllostericPatchyParticle.cpp src/Particles/AllostericPatch.cpp)
+#add_library_no_prefix(AllostericPatchyParticle src/Particles/AllostericPatchyParticle.cpp)
+#add_library_no_prefix(AllostericPatch src/Particles/AllostericPatch.cpp)
 
 if (CUDA)
     SET(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} -rdynamic")

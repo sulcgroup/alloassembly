@@ -48,12 +48,13 @@ void AllostericPatchyParticle::copy_from(const BaseParticle &b)
     allostery_map = bb->allostery_map;
 }
 
-void AllostericPatchyParticle::add_patch(AllostericPatch &patch,int position) {
-    if(position < 0 || position >= N_int_centers())
+void AllostericPatchyParticle::add_patch(AllostericPatch &patch, int position) {
+    LR_vector int_center = patch.position();
+    if(position < 0 || std::find(int_centers.begin(), int_centers.end(), int_center) != int_centers.end())
     {
         throw oxDNAException ("Could process patch id, please check that the patches of id %d are correct. Aborting",position);
     }
-    patches[position] = patch;
+    patches.push_back(patch);
 }
 
 
@@ -208,6 +209,10 @@ void parse_boolean_statement(bool &status, bool operand, char &op){ //0/10 funct
         throw oxDNAException("Malformed logic.");
     }
     op = 0; //reset operation
+}
+
+bool AllostericPatchyParticle::patch_status(bool* binding_status, int patch_idx) const {
+    return patch_status(binding_status, patches[patch_idx].get_allosteric_conditional());
 }
 
 
