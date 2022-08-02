@@ -8,7 +8,7 @@
 // Minimally modified by Josh to remove template args, etc.
 
 #include "PLClusterTopology.h"
-#include "../../contrib/evans/src/Interactions/AllostericPatchyInteraction.h"
+#include "../../contrib/evans/src/Interactions/AllostericPatchySwapInteraction.h"
 //#include "../Particles/PatchyShapeParticle.h"
 
 #include <sstream>

@@ -3,8 +3,8 @@
 // Copied from Lorenzo Rovigatti's DetailedPatchySwapInteraction class
 //
 
-#ifndef OXDNA_ALLOSTERICPATCHYINTERACTION_H
-#define OXDNA_ALLOSTERICPATCHYINTERACTION_H
+#ifndef OXDNA_ALLOSTERICPATCHYSWAPINTERACTION_H
+#define OXDNA_ALLOSTERICPATCHYSWAPINTERACTION_H
 
 #include "../../../../src/Interactions/BaseInteraction.h"
 #include "../Particles/AllostericPatchyParticle.h"
@@ -119,4 +119,4 @@ public:
 extern "C" AllostericPatchySwapInteraction *make_AllostericPatchySwapInteraction();
 
 
-#endif //OXDNA_ALLOSTERICPATCHYINTERACTION_H
+#endif //OXDNA_ALLOSTERICPATCHYSWAPINTERACTION_H

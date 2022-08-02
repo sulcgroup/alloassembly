@@ -48,6 +48,7 @@ public:
 //    bool is_locked() const;
 
     int get_color() const;
+    int get_id() const;
     std::string get_allosteric_conditional() const;
 
 //    bool locked_to(int particle_id,int patch_id) const;

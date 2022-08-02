@@ -320,18 +320,23 @@ void AllostericPatchyParticle::update_active_patches(int toggle_idx){
     //		}
     //	}
     std::vector<int> updates = (*this->allostery_map)[change];
+    if (updates.size() == 0){
+        return;
+    }
 
     //#ifdef DEBUG
     std::string flips = "[";
     //#endif
+    bool state_changed = false;
     for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
     {
         bool a_before = this->patches[*it].is_active();
         bool a_after = this->patches[*it].toggle_active();
+        state_changed |= a_before != a_after;
         flips += std::to_string(*it) + ":" + (a_before ? "A" : "!A") + "->" + (a_after ? "A" : "NA") + ",Flp=" + std::to_string(this->patches[*it].flipped());
-
-
     }
+    if (!state_changed)
+        return;
     //#ifdef DEBUG
     flips += "]";
     std::string status_before_str = "[";

@@ -3,7 +3,7 @@
 // Copied from Lorenzo Rovigatti's DetailedPatchySwapInteraction class
 //
 
-#include "AllostericPatchyInteraction.h"
+#include "AllostericPatchySwapInteraction.h"
 #include "../../src/Utilities/parse_input/parse_input.h"
 
 using namespace std;
@@ -182,8 +182,8 @@ number AllostericPatchySwapInteraction::_patchy_two_body_point(BaseParticle *p, 
                 LR_vector patch_dist = _computed_r + q_patch_pos - p_patch_pos;
                 number dist = patch_dist.norm();
                 if (dist < _sqr_patch_rcut) {
-                    uint p_patch_type = abs(pp->get_patch_color(p_patch_idx));
-                    uint q_patch_type = abs(qq->get_patch_color(q_patch_idx));
+                    uint p_patch_type = p_patch->get_id();
+                    uint q_patch_type = q_patch->get_id();
                     //                uint p_patch_type = _base_patch_positions[p->type][p_patch_idx];
                     //                uint q_patch_type = _base_patch_positions[q->type][q_patch_idx];
                     number epsilon = _patchy_eps[p_patch_type + _N_patch_types * q_patch_type];
@@ -509,8 +509,10 @@ void AllostericPatchySwapInteraction::_parse_interaction_matrix() {
         OX_LOG(Logger::LOG_INFO, ("No interaction matrix file " + _interaction_matrix_file + " found. Using default bindings.").c_str());
         for (int i = 0; i < _N_patch_types; i++) {
             for (int j = 0; j < _N_patch_types; j++) {
-                if (_base_patch_types[i].color() == -_base_patch_types[j].color()) {
-                    _patchy_eps[i + _N_patch_types * j] = _patchy_eps[j + _N_patch_types * i] = 1.0;
+                AllostericPatch a = _base_patch_types[i];
+                AllostericPatch b = _base_patch_types[j];
+                if (a.color() == -b.color()) {
+                    _patchy_eps[a.get_id() + _N_patch_types * b.get_id()] = _patchy_eps[b.get_id() + _N_patch_types * a.get_id()] = 1.0;
                 }
             }
         }
@@ -616,9 +618,17 @@ AllostericPatch AllostericPatchySwapInteraction::_process_patch_type(std::string
     std::string allostery_conditional;
 
     // load id, color, strength
-    getInputInt(obs_input,"id",&id,1);
+    std::string id_str;
+    getInputString(obs_input, "id", id_str, 1);
+    try {
+        id = stoi(id_str.substr(id_str.find('_')+1));
+
+    }
+    catch (invalid_argument e) {
+        throw oxDNAException("Invalid patch ID %d", id_str.c_str());
+    }
     getInputInt(obs_input,"color",&color,1);
-    getInputFloat(obs_input,"strength",&strength,1);
+    getInputFloat(obs_input,"strength",&strength,1); // currently unused
 
     // load patch angles and position vector
     a1 = getVector(obs_input,"a1");

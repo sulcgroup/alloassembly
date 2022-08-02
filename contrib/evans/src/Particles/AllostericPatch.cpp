@@ -92,6 +92,10 @@ bool AllostericPatch::toggle_active()
     return this->active;
 }
 
+int AllostericPatch::get_id() const {
+    return id;
+}
+
 LR_vector AllostericPatch::a1() {
     return _a1;
 }
