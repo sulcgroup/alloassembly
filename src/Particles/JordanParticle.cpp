@@ -31,8 +31,8 @@ void JordanParticle::_set_base_patches(number phi) {
 	switch(N_int_centers()) {
 		/*
 		case 2: {
-			_base_patches[0] = LR_vector(0, 1, 0);
-			_base_patches[1] = LR_vector(0, -1, 0);
+			_base_patch_positions[0] = LR_vector(0, 1, 0);
+			_base_patch_positions[1] = LR_vector(0, -1, 0);
 			break;
 		}
 		*/

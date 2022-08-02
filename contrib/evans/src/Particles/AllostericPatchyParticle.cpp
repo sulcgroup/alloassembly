@@ -21,7 +21,8 @@ bool operator==(const LR_vector& v1, const LR_vector& v2) {
 AllostericPatchyParticle::AllostericPatchyParticle(int _N_patches, int _type) : BaseParticle() {
     this->type = _type;
 
-    this->patches = std::vector<AllostericPatch>(_N_patches);
+    this->patches.resize(_N_patches);
+    this->int_centers.resize(_N_patches);
     //_set_base_patches();
 }
 
@@ -45,16 +46,19 @@ void AllostericPatchyParticle::copy_from(const BaseParticle &b)
         // this->int_centers[i] = bb->int_centers[i];
         this->patches[i] = bb->patches[i];
     }
+    this->int_centers = b.int_centers;
     allostery_map = bb->allostery_map;
 }
 
 void AllostericPatchyParticle::add_patch(AllostericPatch &patch, int position) {
-    LR_vector int_center = patch.position();
-    if(position < 0 || std::find(int_centers.begin(), int_centers.end(), int_center) != int_centers.end())
+    LR_vector patch_int_center = patch.position();
+    // set interaction center to patch position
+    int_centers[position] = patch_int_center;
+    if(position < 0 || position > int_centers.size())
     {
-        throw oxDNAException ("Could process patch id, please check that the patches of id %d are correct. Aborting",position);
+        throw oxDNAException ("Could not process patch id, please check that the patches of id %d are correct. Aborting",position);
     }
-    patches.push_back(patch);
+    patches[position] = patch;
 }
 
 
@@ -307,7 +311,6 @@ bool* AllostericPatchyParticle::get_binding_state() const {
 void AllostericPatchyParticle::update_active_patches(int toggle_idx){
     bool* particle_status = this->get_binding_state();
     ParticleStateChange change(particle_status, this->n_patches(), toggle_idx);
-
     //DEBUGGING
     //	for (std::unordered_map<ParticleStateChange, std::vector<int>>::iterator it = this->allostery_map->begin(); it != this->allostery_map->end(); ++it)
     //	{

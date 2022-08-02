@@ -18,12 +18,16 @@ protected:
     /// Number of patches per particle
     std::vector<uint> _N_patches;
     /// Patch types
-    std::vector<AllostericPatch> _base_patches;
+    /// positions of each patch on each particle type, cached here so CUDA has access to them
+    std::vector<std::vector<LR_vector>> _base_patch_positions;
+    /// List of particle types
     std::vector<AllostericPatchyParticle> _base_particle_types;
+    /// List of patch types (objects)
+    std::vector<AllostericPatch> _base_patch_types;
 //    /// Patch type for each particle species
-//    std::vector<std::vector<int>> _base_patches;
+//    std::vector<std::vector<int>> _base_patch_positions;
 //    /// Base position of the patches for each particle species
-//    std::vector<std::vector<LR_vector>> _base_patches;
+//    std::vector<std::vector<LR_vector>> _base_patch_positions;
 
     std::string _interaction_matrix_file;
 
@@ -80,7 +84,7 @@ protected:
 
 
     inline std::vector<PatchyBond> &_particle_bonds(BaseParticle *p) {
-        return static_cast<PatchyParticle *>(p)->bonds;
+        return static_cast<AllostericPatchyParticle *>(p)->bonds;
     }
 
 public:

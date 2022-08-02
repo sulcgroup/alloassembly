@@ -20,7 +20,7 @@ protected:
     std::unordered_map<ParticleStateChange, std::vector<int>>* allostery_map;
 public:
     std::vector<PatchyBond> bonds;
-    //LR_vector *_base_patches;
+    //LR_vector *_base_patch_positions;
 
     // Each patch corresponds with a value in BaseParticle::int_centers
     std::vector<AllostericPatch> patches;
@@ -31,7 +31,7 @@ public:
 
 public:
     AllostericPatchyParticle(int N_patches, int type);
-    AllostericPatchyParticle(const AllostericPatchyParticle &b)
+    AllostericPatchyParticle(const AllostericPatchyParticle &b) : AllostericPatchyParticle(b.n_patches(), b.type)
     {
         this->copy_from(b);
     }

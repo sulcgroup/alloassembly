@@ -77,7 +77,7 @@ struct ExcVolCenter {
  */
 class PatchyShapeParticle : public BaseParticle {
 public:
-	//LR_vector *_base_patches;
+	//LR_vector *_base_patch_positions;
 	int N_patches; //number of patches  = number of patches
 	int N_vertexes; //number of vertices of the shape; 0 = sphere
 

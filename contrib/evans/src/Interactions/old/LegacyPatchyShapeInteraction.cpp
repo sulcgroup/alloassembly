@@ -758,7 +758,7 @@ PatchyShapeParticle<number> PatchyShapeInteraction<number>::_process_particle_ty
         int patch_id;
         while( s >> patch_id)
         {
-            Patch<number> patch(this->_base_patches[patch_id]);
+            Patch<number> patch(this->_base_patch_positions[patch_id]);
             all_patches.push_back(patch);
             OX_LOG(Logger::LOG_INFO,"Particle of type %d adding a patch of color %d",type,patch._color);
             //s >> patch_id;

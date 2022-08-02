@@ -44,11 +44,12 @@ void AllostericPatchySwapInteraction::get_settings(input_file &inp) {
     // read number of patches
     getInputInt(&inp, "patch_types_N", &i, 1);
     _N_patch_types = i;
-    _base_patches.resize(_N_patch_types);
+    _base_patch_types.resize(_N_patch_types);
 
     // read number of particles
     getInputInt(&inp, "particle_types_N", &i, 1);
     _N_per_species.resize(i, 0); // resize particle type count vector
+    _base_patch_positions.resize(i);
 
     getInputNumber(&inp, "DPS_lambda", &_lambda, 0);
     getInputString(&inp, "DPS_interaction_matrix_file", _interaction_matrix_file, 0);
@@ -181,10 +182,10 @@ number AllostericPatchySwapInteraction::_patchy_two_body_point(BaseParticle *p, 
                 LR_vector patch_dist = _computed_r + q_patch_pos - p_patch_pos;
                 number dist = patch_dist.norm();
                 if (dist < _sqr_patch_rcut) {
-                    uint p_patch_type = pp->get_patch_color(p_patch_idx);
-                    uint q_patch_type = qq->get_patch_color(q_patch_idx);
-                    //                uint p_patch_type = _base_patches[p->type][p_patch_idx];
-                    //                uint q_patch_type = _base_patches[q->type][q_patch_idx];
+                    uint p_patch_type = abs(pp->get_patch_color(p_patch_idx));
+                    uint q_patch_type = abs(qq->get_patch_color(q_patch_idx));
+                    //                uint p_patch_type = _base_patch_positions[p->type][p_patch_idx];
+                    //                uint q_patch_type = _base_patch_positions[q->type][q_patch_idx];
                     number epsilon = _patchy_eps[p_patch_type + _N_patch_types * q_patch_type];
 
                     if (epsilon != 0.) {
@@ -310,8 +311,8 @@ number AllostericPatchySwapInteraction::_patchy_two_body_KF(BaseParticle *p, Bas
                     if (cosqr_minus_one < _patch_angular_cutoff) {
                         uint p_patch_type = pp->get_patch_color(p_patch_idx);
                         uint q_patch_type = qq->get_patch_color(q_patch_idx);
-                        //                    uint p_patch_type = _base_patches[p->type][p_patch_idx];
-                        //                    uint q_patch_type = _base_patches[q->type][q_patch_idx];
+                        //                    uint p_patch_type = _base_patch_positions[p->type][p_patch_idx];
+                        //                    uint q_patch_type = _base_patch_positions[q->type][q_patch_idx];
                         number epsilon = _patchy_eps[p_patch_type + _N_patch_types * q_patch_type];
 
                         // if the epsilon value (binding strength coefficient) between these two patches is nonzero
@@ -490,22 +491,11 @@ void AllostericPatchySwapInteraction::allocate_particles(std::vector<BaseParticl
             curr_species++;
             curr_limit += _N_per_species[curr_species];
         }
-//        if(_N_patches[curr_species] > 0 && _base_patch_types[curr_species].size() > 0) {
-//            particles[i] = new AllostericPatchyParticle(_base_patches[curr_species], curr_species, 1.);
-//        }
-//        // first initialization of a new species (I think?)
-//        else {
-//            auto new_particle = new AllostericPatchyParticle(_N_patches[curr_species], curr_species, 1.);
-//            particles[i] = new_particle;
-//            // we need to save the base patches so that the CUDA backend has access to them
-//            // TODO: revisit this vis a vis allostery
-//            _base_patches[curr_species] = new_particle->base_patches();
-//        }
-//        particles[i]->index = i;
-//        particles[i]->strand_id = i;
-//        particles[i]->type = particles[i]->btype = curr_species;
-        AllostericPatchyParticle& base_particle = _base_particle_types[curr_species];
+        particles[i] = new AllostericPatchyParticle(_base_particle_types[curr_species]);
 
+        particles[i]->index = i;
+        particles[i]->strand_id = i;
+        particles[i]->type = particles[i]->btype = curr_species;
     }
 }
 
@@ -519,8 +509,7 @@ void AllostericPatchySwapInteraction::_parse_interaction_matrix() {
         OX_LOG(Logger::LOG_INFO, ("No interaction matrix file " + _interaction_matrix_file + " found. Using default bindings.").c_str());
         for (int i = 0; i < _N_patch_types; i++) {
             for (int j = 0; j < _N_patch_types; j++) {
-                std::string key = Utils::sformat("patchy_eps[%d][%d]", i, j);
-                if (_base_patches[i].color() == -_base_patches[j].color()) {
+                if (_base_patch_types[i].color() == -_base_patch_types[j].color()) {
                     _patchy_eps[i + _N_patch_types * j] = _patchy_eps[j + _N_patch_types * i] = 1.0;
                 }
             }
@@ -553,21 +542,22 @@ void AllostericPatchySwapInteraction::_load_patchy_particle_files(std::string &p
     input_file obs_input;
     obs_input.init_from_file(fpatch); // open patch file input
 
-    int no = 0;
+    // patch number
+    int patch_idx = 0;
     char patch_no[1024]; //instantiate C string buffer - 1024 chars should be enough
-    snprintf(patch_no,1020,"patch_%d",no); // write patch index
+    snprintf(patch_no, 1020, "patch_%d", patch_idx); // write patch index
     std::string patch_string;
 
     while(  getInputString(&obs_input,patch_no,patch_string,0) == KEY_FOUND )
     {
         AllostericPatch patch = _process_patch_type(patch_string);
-        if(no >= _N_patch_types)
+        if(patch_idx >= _N_patch_types)
         {
             throw oxDNAException("Number of patch types is larger than N_patch_types = %d ",_N_patch_types);
         }
-        _base_patches[no] = patch;
-        no++;
-        snprintf(patch_no,1020,"patch_%d",no);
+        _base_patch_types[patch_idx] = patch;
+        patch_idx++;
+        snprintf(patch_no, 1020, "patch_%d", patch_idx);
     }
 
     fclose(fpatch);
@@ -581,26 +571,26 @@ void AllostericPatchySwapInteraction::_load_patchy_particle_files(std::string &p
     input_file p_input;
     p_input.init_from_file(fparticle);
 
-    int p_no = 0;
+    int particle_idx = 0;
     char particle_no[1024];
-    snprintf(particle_no, 1020, "particle_%d", p_no);
+    snprintf(particle_no, 1020, "particle_%d", particle_idx);
     std::string particle_string;
 
     while (getInputString(&p_input, particle_no, particle_string, 0) == KEY_FOUND) {
         AllostericPatchyParticle particle = _process_particle_type(particle_string);
         _base_particle_types.push_back(particle);
-//        if(p_no >= _N_particle_types)
+//        if(particle_idx >= _N_particle_types)
 //            throw oxDNAException ("More particle types in particle config file than specified in the input file. Aborting");
 
-//        _particle_types[p_no].copy_from(particle);
-        p_no++;
-        snprintf(particle_no, 1020, "particle_%d", p_no);
+        _base_patch_positions[particle_idx] = particle.int_centers; // cache patch positions so CUDA has access to them
+        particle_idx++;
+        snprintf(particle_no, 1020, "particle_%d", particle_idx);
     }
 
     fclose(fparticle);
 
-    OX_LOG(Logger::LOG_INFO, "Loaded %d patch types and %d particle types", no,p_no);
-    if(p_no != get_num_base_particle_types() || no != _N_patch_types)
+    OX_LOG(Logger::LOG_INFO, "Loaded %d patch types and %d particle types", patch_idx, particle_idx);
+    if(particle_idx != get_num_base_particle_types() || patch_idx != _N_patch_types)
         throw oxDNAException ("More (or less) particle or patches types in particle/patchy config file than specified in the input file. Aborting");
     _parse_interaction_matrix();
 }
@@ -657,8 +647,8 @@ AllostericPatchyParticle AllostericPatchySwapInteraction::_process_particle_type
     int type;
     getInputInt(obs_input,"type",&type,1);
 
-    std::vector<AllostericPatch > all_patches;
-    int _N_patches;
+    // init a vector to store patches for this particle
+    std::vector<AllostericPatch > particle_patches;
     std::string patches;
     if( getInputString(obs_input,"patches",patches,1) == KEY_FOUND )
     {
@@ -668,23 +658,23 @@ AllostericPatchyParticle AllostericPatchySwapInteraction::_process_particle_type
         int patch_id;
         while( s >> patch_id)
         {
-            AllostericPatch patch(this->_base_patches[patch_id]);
-            all_patches.push_back(patch);
+            AllostericPatch patch(this->_base_patch_types[patch_id]);
+            particle_patches.push_back(patch);
             OX_LOG(Logger::LOG_INFO,"Particle of type %d adding a patch of color %d",type,patch.color());
             //s >> patch_id;
         }
     }
 
-    _N_patches = all_patches.size();
     int N_vertexes = 0;
     OX_LOG(Logger::LOG_INFO,"Particle of type %d has %d vertexes",type,N_vertexes);
-    AllostericPatchyParticle p(0, 0);
+    AllostericPatchyParticle p(particle_patches.size(), type);
     int position = 0;
-    for(typename std::vector<AllostericPatch >::iterator i = all_patches.begin(); i != all_patches.end(); ++i)
+    for(typename std::vector<AllostericPatch >::iterator i = particle_patches.begin(); i != particle_patches.end(); ++i)
     {
         p.add_patch(*i,position);
         position++;
     }
+    p._set_base_patches();
     p.init_allostery();
 
 //	ParticleStateChange test_change(default_state, 2, 0);

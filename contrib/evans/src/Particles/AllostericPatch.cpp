@@ -25,6 +25,8 @@ AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _a2_xyz, LR_vector
                                  bool _active, std::string allostery_conditional, bool activation_reversible) :
                          _init_a1{_a1_xyz},
                          _init_a2{_a2_xyz},
+                         _a1{_a1_xyz},
+                         _a2{_a2_xyz},
                         _position(_position),
                         id(_id), active(_active),
                         _color(_color), /*strength(strength),*/
