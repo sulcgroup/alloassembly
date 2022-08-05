@@ -66,7 +66,7 @@ public:
 
     bool* get_binding_state() const;
     int n_patches() const;
-    bool* get_state_change_result(const ParticleStateChange& change) const;
+    bool get_state_change_result(const ParticleStateChange &change, int patch_idx) const;
 
 };
 

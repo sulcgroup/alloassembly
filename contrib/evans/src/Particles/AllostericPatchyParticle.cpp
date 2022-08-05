@@ -413,6 +413,6 @@ int AllostericPatchyParticle::n_patches() const {
     return patches.size();
 }
 
-bool* AllostericPatchyParticle::get_state_change_result(const ParticleStateChange &change) const {
-    return allostery_map[change];
+bool AllostericPatchyParticle::get_state_change_result(const ParticleStateChange &change, int patch_idx) const {
+    return change._state[patch_idx] != (std::find(allostery_map->at(change).begin(), allostery_map->at(change).end(), patch_idx) != allostery_map->at(change).end());
 }

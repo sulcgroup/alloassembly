@@ -21,6 +21,10 @@ struct swap_event;
 class CUDAAllostericPatchySwapInteraction: public CUDABaseInteraction, public AllostericPatchySwapInteraction {
 protected:
     c_number4 *_d_three_body_forces, *_d_three_body_torques;
+    float *_d_patchy_eps = nullptr;
+    float4 *_d_base_patches = nullptr;
+
+
     llint _step;
 public:
     static const int MAX_PATCHES = 5;
