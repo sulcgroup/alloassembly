@@ -40,16 +40,14 @@ AllostericPatchySwapInteraction::~AllostericPatchySwapInteraction() {
 void AllostericPatchySwapInteraction::get_settings(input_file &inp) {
     BaseInteraction::get_settings(inp);
 
-    int i; // allocate placeholder int & reuse
     // read number of patches
-    getInputInt(&inp, "patch_types_N", &i, 1);
-    _N_patch_types = i;
+    getInputInt(&inp, "patch_types_N", &_N_patch_types, 1);
     _base_patch_types.resize(_N_patch_types);
 
     // read number of particles
-    getInputInt(&inp, "particle_types_N", &i, 1);
-    _N_per_species.resize(i, 0); // resize particle type count vector
-    _base_patch_positions.resize(i);
+    getInputInt(&inp, "particle_types_N", &_N_particle_types, 1);
+    _N_per_species.resize(_N_particle_types, 0); // resize particle type count vector
+    _base_patch_positions.resize(_N_particle_types);
 
     getInputNumber(&inp, "DPS_lambda", &_lambda, 0);
     getInputString(&inp, "DPS_interaction_matrix_file", _interaction_matrix_file, 0);

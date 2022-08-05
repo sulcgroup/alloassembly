@@ -35,7 +35,7 @@ if (CUDA)
         set_target_properties(${ARGV0} PROPERTIES PREFIX "")
     endfunction()
 
-    cuda_add_library_no_prefix(CUDAAllostericPatchyInteraction MODULE EXCLUDE_FROM_ALL src/Interactions/CUDAAllostericPatchyInteraction.cu src/Interactions/CUDAAllostericPatchyInteraction.cpp)
+    cuda_add_library_no_prefix(CUDAAllostericPatchySwapInteraction MODULE EXCLUDE_FROM_ALL src/Interactions/CUDAAllostericPatchySwapInteraction.cu)
 
-    ADD_DEPENDENCIES(evans CUDAAllostericPatchyInteraction)
+    ADD_DEPENDENCIES(evans CUDAAllostericPatchySwapInteraction)
 endif(CUDA)

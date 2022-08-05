@@ -412,3 +412,7 @@ void AllostericPatchyParticle::init_allostery() {
 int AllostericPatchyParticle::n_patches() const {
     return patches.size();
 }
+
+bool* AllostericPatchyParticle::get_state_change_result(const ParticleStateChange &change) const {
+    return allostery_map[change];
+}

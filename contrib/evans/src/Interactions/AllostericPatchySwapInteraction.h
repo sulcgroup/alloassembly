@@ -12,8 +12,9 @@ class AllostericPatchySwapInteraction : public BaseInteraction {
 protected:
     /// Number of particles of each species
     std::vector<int> _N_per_species;
-    int _N = 0;
+    int _N = 0; // number of individual particles
     int _N_patch_types = 0;
+    int _N_particle_types = 0;
 
     /// Number of patches per particle
     std::vector<uint> _N_patches;
