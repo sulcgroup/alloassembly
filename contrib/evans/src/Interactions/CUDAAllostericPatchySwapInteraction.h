@@ -24,6 +24,9 @@ protected:
     float *_d_patchy_eps = nullptr;
     float4 *_d_base_patches = nullptr;
 
+    // particle internal state vars - req'd for allostery
+    short* particle_states;
+    bool* activation_states;
 
     llint _step;
 public:

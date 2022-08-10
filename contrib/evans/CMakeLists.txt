@@ -28,11 +28,13 @@ add_library_no_prefix(AllostericPatchySwapInteraction src/Interactions/Allosteri
 
 if (CUDA)
     SET(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} -rdynamic")
+    find_package("CUDA")
 
     # same thing but for CUDA libs
-    function(cuda_add_library_no_prefix)
-        cuda_add_library(${ARGN})
-        set_target_properties(${ARGV0} PROPERTIES PREFIX "")
+    function(cuda_add_library_no_prefix target source)
+        cuda_add_library(${target} MODULE EXCLUDE_FROM_ALL ${source} ${ARGN})
+        target_link_libraries(${target} ${CUDA_LIBRARIES})
+        set_target_properties(${target} PROPERTIES PREFIX "")
     endfunction()
 
     cuda_add_library_no_prefix(CUDAAllostericPatchySwapInteraction MODULE EXCLUDE_FROM_ALL src/Interactions/CUDAAllostericPatchySwapInteraction.cu)

@@ -58,10 +58,6 @@ __constant__ float MD_patch_angular_cutoff[1];
 texture<float, 1, cudaReadModeElementType> tex_patchy_eps;
 texture<float4, 1, cudaReadModeElementType> tex_base_patches;
 
-// particle internal state vars - req'd for allostery
-short* particle_states = nullptr;
-bool** activation_states = nullptr;
-
 #include "CUDA/cuda_utils/CUDA_lr_common.cuh"
 
 struct __align__(16) CUDA_FS_bond {
@@ -93,11 +89,49 @@ struct __align__(16) CUDA_FS_bond_list {
     }
 };
 
-__device__ void _patchy_point_two_body_interaction(c_number4 &ppos, c_number4 &qpos, c_number4 &a1, c_number4 &a2, c_number4 &a3, c_number4 &b1, c_number4 &b2, c_number4 &b3, c_number4 &F, c_number4 &torque, CUDA_FS_bond_list *bonds, int q_idx, CUDABox *box) {
+/**
+ * Computes a two-body point interaction
+ * @param ppos the position of particle p, as a quaternion. particle type can be derived from w
+ * @param qpos the position of particle q, as a quaternion. particle type can be derived from w
+ * @param a1 the first column of particle p rotation matrix
+ * @param a2 the second column of particle p rotation matrix
+ * @param a3 the third column of particle p rotation matrix
+ * @param b1 the first column of particle q rotation matrix
+ * @param b2 the second column of particle q rotation matrix
+ * @param b3 the third column of particle q rotation matrix
+ * @param Fs_from_quat(qo, b1, b2, b3);
+
+        // get particle states & activations
+        // I hope k_inde
+ * @param torque
+ * @param bonds
+ * @param q_idx
+ * @param box
+ * @param p_activation_states the activation states of the patches of particle p
+ * @param q_activation_states the activation states of the patches of particle q
+ * @param p_binding_state the binding state of particle p, where each binary digit is a patch binding state
+ * @param q_binding_state the binding state of particle q, where each binary digit is a patch binding state
+ */
+__device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
+                                                   c_number4 &qpos,
+                                                   c_number4 &a1,
+                                                   c_number4 &a2,
+                                                   c_number4 &a3,
+                                                   c_number4 &b1,
+                                                   c_number4 &b2,
+                                                   c_number4 &b3,
+                                                   c_number4 &F,
+                                                   c_number4 &torque,
+                                                   CUDA_FS_bond_list *bonds,
+                                                   int q_idx,
+                                                   CUDABox *box,
+                                                   bool* p_activation_states,
+                                                   bool* q_activation_states,
+                                                   short &p_binding_state,
+                                                   short &q_binding_state
+) {
     int ptype = get_particle_btype(ppos);
     int qtype = get_particle_btype(qpos);
-
-    int p_id, q_id;
 
     c_number4 r = box->minimum_image(ppos, qpos);
     c_number sqr_r = CUDA_DOT(r, r);
@@ -130,7 +164,7 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos, c_number4 &q
 
     for(int p_patch = 0; p_patch < p_N_patches; p_patch++) {
         // if patch is not active, continue
-        if (!activation_states[p_id][p_patch]){
+        if (!p_activation_states[p_patch]){
             continue;
         }
         c_number4 p_base_patch = tex1Dfetch(tex_base_patches, p_patch + ptype * CUDAAllostericPatchySwapInteraction::MAX_PATCHES);
@@ -142,7 +176,7 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos, c_number4 &q
 
         for(int q_patch = 0; q_patch < q_N_patches; q_patch++) {
             // if patch is not active, continue
-            if (!activation_states[q_id][q_patch]){
+            if (!q_activation_states[q_patch]){
                 continue;
             }
             c_number4 q_base_patch = tex1Dfetch(tex_base_patches, q_patch + qtype * CUDAAllostericPatchySwapInteraction::MAX_PATCHES);
@@ -195,23 +229,20 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos, c_number4 &q
                             my_bond.force.w = epsilon;
                         }
                         // update both particles binding states
-                        //retrieve particle states as shorts
-                        short p_binding_state = particle_states[p_id];
-                        short q_binding_state = particle_states[q_id];
                         // check for flips
-                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
-                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
-                            if (i < MD_N_patches[p_id] && MD_allosteric_controls[p_id][i][p_binding_state][p_patch]){
-                                activation_states[p_id][i] = !activation_states[p_id][i]; // flip activation state
-                            }
-                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
-                            if (i < MD_N_patches[q_id] && MD_allosteric_controls[q_id][i][q_binding_state][q_patch]){
-                                activation_states[q_id][i] = !activation_states[q_id][i]; // flip activation state
-                            }
-                        }
+//                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
+//                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
+//                            if (i < MD_N_patches[ptype] && MD_allosteric_controls[ptype][i][p_binding_state][p_patch]){
+//                                p_activation_states[i] = !p_activation_states[i]; // flip activation state
+//                            }
+//                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
+//                            if (i < MD_N_patches[qtype] && MD_allosteric_controls[qtype][i][q_binding_state][q_patch]){
+//                                q_activation_states[i] = !q_activation_states[i]; // flip activation state
+//                            }
+//                        }
                         // Bitwise xor with p_patch should flip binding state. TODO: double-check
-                        particle_states[p_id] = p_binding_state ^ (1 << p_patch);
-                        particle_states[q_id] = q_binding_state ^ (1 << q_patch);
+                        p_binding_state = p_binding_state ^ (1 << p_patch);
+                        q_binding_state = q_binding_state ^ (1 << q_patch);
                     }
                 }
             }
@@ -219,7 +250,44 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos, c_number4 &q
     }
 }
 
-__device__ void _patchy_KF_two_body_interaction(c_number4 &ppos, c_number4 &qpos, c_number4 &a1, c_number4 &a2, c_number4 &a3, c_number4 &b1, c_number4 &b2, c_number4 &b3, c_number4 &F, c_number4 &torque, CUDA_FS_bond_list *bonds, int q_idx, CUDABox *box) {
+
+/**
+ * Computes a two-body kern-frankel interaction
+ * @param ppos the position of particle p, as a quaternion. particle type can be derived from w
+ * @param qpos the position of particle q, as a quaternion. particle type can be derived from w
+ * @param a1 the first column of particle p rotation matrix
+ * @param a2 the second column of particle p rotation matrix
+ * @param a3 the third column of particle p rotation matrix
+ * @param b1 the first column of particle q rotation matrix
+ * @param b2 the second column of particle q rotation matrix
+ * @param b3 the third column of particle q rotation matrix
+ * @param F
+ * @param torque
+ * @param bonds
+ * @param q_idx
+ * @param box
+ * @param p_activation_states the activation states of the patches of particle p
+ * @param q_activation_states the activation states of the patches of particle q
+ * @param p_binding_state the binding state of particle p, where each binary digit is a patch binding state
+ * @param q_binding_state the binding state of particle q, where each binary digit is a patch binding state
+ */
+__device__ void _patchy_KF_two_body_interaction(c_number4 &ppos,
+                                                c_number4 &qpos,
+                                                c_number4 &a1,
+                                                c_number4 &a2,
+                                                c_number4 &a3,
+                                                c_number4 &b1,
+                                                c_number4 &b2,
+                                                c_number4 &b3,
+                                                c_number4 &F,
+                                                c_number4 &torque,
+                                                CUDA_FS_bond_list *bonds,
+                                                int q_idx,
+                                                CUDABox *box,
+                                                bool* p_activation_states,
+                                                bool* q_activation_states,
+                                                short &p_binding_state,
+                                                short &q_binding_state) {
     int ptype = get_particle_btype(ppos);
     int qtype = get_particle_btype(qpos);
 
@@ -262,6 +330,9 @@ __device__ void _patchy_KF_two_body_interaction(c_number4 &ppos, c_number4 &qpos
     int q_N_patches = MD_N_patches[qtype];
 
     for(int p_patch = 0; p_patch < p_N_patches; p_patch++) {
+        if (!p_activation_states[p_patch]){
+            continue;
+        }
         c_number4 p_base_patch = tex1Dfetch(tex_base_patches, p_patch + ptype * CUDAAllostericPatchySwapInteraction::MAX_PATCHES);
         c_number4 p_patch_pos = {
                 a1.x * p_base_patch.x + a2.x * p_base_patch.y + a3.x * p_base_patch.z,
@@ -286,6 +357,9 @@ __device__ void _patchy_KF_two_body_interaction(c_number4 &ppos, c_number4 &qpos
             c_number p_mod = expf(-cospr_part / (2.f * MD_patch_pow_cosmax[0]));
 
             for(int q_patch = 0; q_patch < q_N_patches; q_patch++) {
+                if (!q_activation_states[q_patch]){
+                    continue;
+                }
                 c_number4 q_base_patch = tex1Dfetch(tex_base_patches, q_patch + qtype * CUDAAllostericPatchySwapInteraction::MAX_PATCHES);
                 c_number4 q_patch_pos = {
                         b1.x * q_base_patch.x + b2.x * q_base_patch.y + b3.x * q_base_patch.z,
@@ -346,6 +420,23 @@ __device__ void _patchy_KF_two_body_interaction(c_number4 &ppos, c_number4 &qpos
                             my_bond.q_torque_ref_frame = _vectors_transpose_c_number4_product(b1, b2, b3, q_torque);
                             my_bond.q = q_idx;
                         }
+
+//                        // update both particles binding states
+//                        // check for flips
+//                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
+//                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
+//                            if (i < MD_N_patches[ptype] && MD_allosteric_controls[ptype][i][p_binding_state][p_patch]){
+//                                p_activation_states[i] = !p_activation_states[i]; // flip activation state
+//                            }
+//                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
+//                            if (i < MD_N_patches[qtype] && MD_allosteric_controls[qtype][i][q_binding_state][q_patch]){
+//                                q_activation_states[i] = !q_activation_states[i]; // flip activation state
+//                            }
+//                        }
+//                        // Bitwise xor with p_patch should flip binding state. TODO: double-check
+//                        p_binding_state = p_binding_state ^ (1 << p_patch);
+//                        q_binding_state = q_binding_state ^ (1 << q_patch);
+
                     }
 
                 }
@@ -397,8 +488,29 @@ __device__ void _three_body(CUDA_FS_bond_list *bonds, c_number4 &F, c_number4 &T
     }
 }
 
-// forces + second step without lists
-__global__ void DPS_forces(c_number4 *poss, GPU_quat *orientations, c_number4 *forces, c_number4 *three_body_forces, c_number4 *torques, c_number4 *three_body_torques, CUDABox *box) {
+/** forces + second step without lists
+ * @param poss
+ * @param orientations
+ * @param forces
+ * @param three_body_forces
+ * @param torques
+ * @param three_body_torques
+ * @param box
+ * @param p_activations
+ * @param q_activations
+ * @param p_state
+ * @param q_state
+ */
+__global__ void DPS_forces(c_number4 *poss,
+                           GPU_quat *orientations,
+                           c_number4 *forces,
+                           c_number4 *three_body_forces,
+                           c_number4 *torques,
+                           c_number4 *three_body_torques,
+                           CUDABox *box,
+                           bool* activation_states,
+                           short* particle_states
+) {
     if(IND >= MD_N[0]) return;
 
     c_number4 F = forces[IND];
@@ -407,6 +519,8 @@ __global__ void DPS_forces(c_number4 *poss, GPU_quat *orientations, c_number4 *f
     GPU_quat po = orientations[IND];
     c_number4 a1, a2, a3, b1, b2, b3;
     get_vectors_from_quat(po, a1, a2, a3);
+    bool* p_activations = &activation_states[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
+    short& p_state = particle_states[IND];
 
     CUDA_FS_bond_list bonds[CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
 
@@ -417,11 +531,48 @@ __global__ void DPS_forces(c_number4 *poss, GPU_quat *orientations, c_number4 *f
             GPU_quat qo = orientations[j];
             get_vectors_from_quat(qo, b1, b2, b3);
 
+            // get particle states & activations
+            // I hope j is the correct var
+            bool* q_activations = &activation_states[j];
+            short& q_state = particle_states[j];
+
             if(MD_is_KF[0]) {
-                _patchy_KF_two_body_interaction(ppos, qpos, a1, a2, a3, b1, b2, b3, F, T, bonds, j, box);
+                _patchy_KF_two_body_interaction(ppos,
+                                                qpos,
+                                                a1,
+                                                a2,
+                                                a3,
+                                                b1,
+                                                b2,
+                                                b3,
+                                                F,
+                                                T,
+                                                bonds,
+                                                j,
+                                                box,
+                                                p_activations,
+                                                q_activations,
+                                                p_state,
+                                                q_state);
             }
             else {
-                _patchy_point_two_body_interaction(ppos, qpos, a1, a2, a3, b1, b2, b3, F, T, bonds, j, box);
+                _patchy_point_two_body_interaction(ppos,
+                                                   qpos,
+                                                   a1,
+                                                   a2,
+                                                   a3,
+                                                   b1,
+                                                   b2,
+                                                   b3,
+                                                   F,
+                                                   T,
+                                                   bonds,
+                                                   j,
+                                                   box,
+                                                   p_activations,
+                                                   q_activations,
+                                                   p_state,
+                                                   q_state);
             }
         }
     }
@@ -432,8 +583,33 @@ __global__ void DPS_forces(c_number4 *poss, GPU_quat *orientations, c_number4 *f
     torques[IND] = _vectors_transpose_c_number4_product(a1, a2, a3, T);
 }
 
-// forces + second step with verlet lists
-__global__ void DPS_forces(c_number4 *poss, GPU_quat *orientations, c_number4 *forces, c_number4 *three_body_forces, c_number4 *torques, c_number4 *three_body_torques, int *matrix_neighs, int *c_number_neighs, CUDABox *box) {
+/** forces + second step with verlet lists
+ *
+ * @param poss
+ * @param orientations
+ * @param forces
+ * @param three_body_forces
+ * @param torques
+ * @param three_body_torques
+ * @param matrix_neighs
+ * @param c_number_neighs
+ * @param box
+ * @param p_activations
+ * @param q_activations
+ * @param p_state
+ * @param q_state
+ */
+__global__ void DPS_forces(c_number4 *poss,
+                           GPU_quat *orientations,
+                           c_number4 *forces,
+                           c_number4 *three_body_forces,
+                           c_number4 *torques,
+                           c_number4 *three_body_torques,
+                           int *matrix_neighs,
+                           int *c_number_neighs,
+                           CUDABox *box,
+                           bool* activation_states,
+                           short* particle_states) {
     if(IND >= MD_N[0]) return;
 
     c_number4 F = forces[IND];
@@ -442,6 +618,9 @@ __global__ void DPS_forces(c_number4 *poss, GPU_quat *orientations, c_number4 *f
     GPU_quat po = orientations[IND];
     c_number4 a1, a2, a3, b1, b2, b3;
     get_vectors_from_quat(po, a1, a2, a3);
+    // is IND the correct indexer here? I hope so!
+    bool* p_activations = &activation_states[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
+    short& p_state = particle_states[IND];
 
     CUDA_FS_bond_list bonds[CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
 
@@ -453,11 +632,48 @@ __global__ void DPS_forces(c_number4 *poss, GPU_quat *orientations, c_number4 *f
 
         GPU_quat qo = orientations[k_index];
         get_vectors_from_quat(qo, b1, b2, b3);
+
+        // get particle states & activations
+        // I hope k_index is the correct var
+        bool* q_activations = &activation_states[k_index * CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
+        short& q_state = particle_states[k_index];
         if(MD_is_KF[0]) {
-            _patchy_KF_two_body_interaction(ppos, qpos, a1, a2, a3, b1, b2, b3, F, T, bonds, k_index, box);
+            _patchy_KF_two_body_interaction(ppos,
+                                            qpos,
+                                            a1,
+                                            a2,
+                                            a3,
+                                            b1,
+                                            b2,
+                                            b3,
+                                            F,
+                                            T,
+                                            bonds,
+                                            k_index,
+                                            box,
+                                            p_activations,
+                                            q_activations,
+                                            p_state,
+                                            q_state);
         }
         else {
-            _patchy_point_two_body_interaction(ppos, qpos, a1, a2, a3, b1, b2, b3, F, T, bonds, k_index, box);
+            _patchy_point_two_body_interaction(ppos,
+                                               qpos,
+                                               a1,
+                                               a2,
+                                               a3,
+                                               b1,
+                                               b2,
+                                               b3,
+                                               F,
+                                               T,
+                                               bonds,
+                                               k_index,
+                                               box,
+                                               p_activations,
+                                               q_activations,
+                                               p_state,
+                                               q_state);
         }
     }
 
@@ -494,6 +710,14 @@ CUDAAllostericPatchySwapInteraction::~CUDAAllostericPatchySwapInteraction() {
     if(_d_base_patches != nullptr) {
         CUDA_SAFE_CALL(cudaFree(_d_base_patches));
         cudaUnbindTexture(tex_base_patches);
+    }
+
+    if (particle_states != nullptr) {
+        CUDA_SAFE_CALL(cudaFree(particle_states));
+    }
+
+    if (activation_states != nullptr) {
+        CUDA_SAFE_CALL(cudaFree(activation_states));
     }
 }
 
@@ -541,18 +765,22 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
     // init particle state vars
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&particle_states, sizeof(short) * N));
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&activation_states, sizeof(bool) * N * MAX_PATCHES));
-    bool unbound_state[MAX_PATCHES];
+    bool* unbound_state = new bool[MAX_PATCHES];
+    short* particle_states_empty = new short[N];
+    bool* all_activation_states = new bool[MAX_PATCHES * N];
     std::fill(unbound_state, unbound_state + MAX_PATCHES, false);
+    std::fill(particle_states_empty, particle_states_empty + N, 0);
     for (int i = 0; i < N; i++){
         AllostericPatchyParticle* pp = dynamic_cast<AllostericPatchyParticle*>(particles[i]);
-        particle_states[i] = 0;
-        bool activation_state[MAX_PATCHES];
         for (int x = 0; x < pp->n_patches(); x++){
-            activation_state[x] = pp->patch_status(unbound_state, x);
+            all_activation_states[i * MAX_PATCHES + x] = pp->patch_status(unbound_state, x);
         }
-        CUDA_SAFE_CALL(cudaMemcpy(&activation_states[i], activation_state, sizeof (bool) * MAX_PATCHES, cudaMemcpyHostToDevice));
-
     }
+    CUDA_SAFE_CALL(cudaMemcpy(activation_states, all_activation_states, sizeof(bool) * N * MAX_PATCHES, cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(particle_states, particle_states_empty, sizeof (short) * N, cudaMemcpyHostToDevice));
+    delete[] unbound_state;
+    delete[] particle_states_empty;
+    delete[] all_activation_states;
 
     for(auto particle : particles) {
         delete particle;
@@ -649,6 +877,16 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
     }
 }
 
+/**
+ *
+ * @param lists list of particles
+ * @param d_poss probably an array of particle positions?
+ * @param d_orientations probably an array of particle orientations?
+ * @param d_forces
+ * @param d_torques
+ * @param d_bonds
+ * @param d_box
+ */
 void CUDAAllostericPatchySwapInteraction::compute_forces(CUDABaseList *lists, c_number4 *d_poss, GPU_quat *d_orientations, c_number4 *d_forces, c_number4 *d_torques, LR_bonds *d_bonds, CUDABox *d_box) {
     int N = CUDABaseInteraction::_N;
     thrust::device_ptr < c_number4 > t_forces = thrust::device_pointer_cast(d_forces);
@@ -664,7 +902,17 @@ void CUDAAllostericPatchySwapInteraction::compute_forces(CUDABaseList *lists, c_
         else {
             DPS_forces
             <<<_launch_cfg.blocks, _launch_cfg.threads_per_block>>>
-                    (d_poss, d_orientations, d_forces, _d_three_body_forces,  d_torques, _d_three_body_torques, _v_lists->d_matrix_neighs, _v_lists->d_number_neighs, d_box);
+                    (d_poss,
+                     d_orientations,
+                     d_forces,
+                     _d_three_body_forces,
+                     d_torques,
+                     _d_three_body_torques,
+                     _v_lists->d_matrix_neighs,
+                     _v_lists->d_number_neighs,
+                     d_box,
+                     this->activation_states,
+                     this->particle_states);
             CUT_CHECK_ERROR("DPS_forces simple_lists error");
         }
     }
@@ -673,7 +921,15 @@ void CUDAAllostericPatchySwapInteraction::compute_forces(CUDABaseList *lists, c_
         if(_no_lists != NULL) {
             DPS_forces
             <<<_launch_cfg.blocks, _launch_cfg.threads_per_block>>>
-                    (d_poss, d_orientations, d_forces, _d_three_body_forces,  d_torques, _d_three_body_torques, d_box);
+                    (d_poss,
+                     d_orientations,
+                     d_forces,
+                     _d_three_body_forces,
+                     d_torques,
+                     _d_three_body_torques,
+                     d_box,
+                     this->activation_states,
+                     this->particle_states);
             CUT_CHECK_ERROR("DPS_forces no_lists error");
         }
     }
