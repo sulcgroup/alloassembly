@@ -25,6 +25,7 @@ endfunction()
 add_library_no_prefix(AllostericPatchySwapInteraction src/Interactions/AllostericPatchySwapInteraction.cpp src/Particles/AllostericPatchyParticle.cpp src/Particles/AllostericPatch.cpp)
 #add_library_no_prefix(AllostericPatchyParticle src/Particles/AllostericPatchyParticle.cpp)
 #add_library_no_prefix(AllostericPatch src/Particles/AllostericPatch.cpp)
+#add_library_no_prefix(PLClusterTopology src/Observables/PLClusterTopology.cpp)
 
 if (CUDA)
     SET(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} -rdynamic")
@@ -37,7 +38,6 @@ if (CUDA)
         set_target_properties(${target} PROPERTIES PREFIX "")
     endfunction()
 
-    cuda_add_library_no_prefix(CUDAAllostericPatchySwapInteraction MODULE EXCLUDE_FROM_ALL src/Interactions/CUDAAllostericPatchySwapInteraction.cu)
-
+    cuda_add_library_no_prefix(CUDAAllostericPatchySwapInteraction MODULE EXCLUDE_FROM_ALL src/Interactions/CUDAAllostericPatchySwapInteraction.cu src/Interactions/AllostericPatchySwapInteraction.cpp src/Particles/AllostericPatchyParticle.cpp src/Particles/AllostericPatch.cpp)
     ADD_DEPENDENCIES(evans CUDAAllostericPatchySwapInteraction)
 endif(CUDA)

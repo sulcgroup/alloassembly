@@ -48,7 +48,7 @@
 #include "AverageEnergy.h"
 #include "ContactMap.h"
 #include "AllVectors.h"
-#include "PLClusterTopology.h"
+#include "../../contrib/evans/src/Observables/PLClusterTopology.h"
 
 #include "Configurations/PdbOutput.h"
 #include "Configurations/ChimeraOutput.h"

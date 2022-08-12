@@ -230,16 +230,16 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
                         }
                         // update both particles binding states
                         // check for flips
-//                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
-//                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
-//                            if (i < MD_N_patches[ptype] && MD_allosteric_controls[ptype][i][p_binding_state][p_patch]){
-//                                p_activation_states[i] = !p_activation_states[i]; // flip activation state
-//                            }
-//                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
-//                            if (i < MD_N_patches[qtype] && MD_allosteric_controls[qtype][i][q_binding_state][q_patch]){
-//                                q_activation_states[i] = !q_activation_states[i]; // flip activation state
-//                            }
-//                        }
+                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
+                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
+                            if (i < MD_N_patches[ptype] && MD_allosteric_controls[ptype][i][p_binding_state][p_patch]){
+                                p_activation_states[i] = !p_activation_states[i]; // flip activation state
+                            }
+                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
+                            if (i < MD_N_patches[qtype] && MD_allosteric_controls[qtype][i][q_binding_state][q_patch]){
+                                q_activation_states[i] = !q_activation_states[i]; // flip activation state
+                            }
+                        }
                         // Bitwise xor with p_patch should flip binding state. TODO: double-check
                         p_binding_state = p_binding_state ^ (1 << p_patch);
                         q_binding_state = q_binding_state ^ (1 << q_patch);
@@ -421,21 +421,21 @@ __device__ void _patchy_KF_two_body_interaction(c_number4 &ppos,
                             my_bond.q = q_idx;
                         }
 
-//                        // update both particles binding states
-//                        // check for flips
-//                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
-//                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
-//                            if (i < MD_N_patches[ptype] && MD_allosteric_controls[ptype][i][p_binding_state][p_patch]){
-//                                p_activation_states[i] = !p_activation_states[i]; // flip activation state
-//                            }
-//                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
-//                            if (i < MD_N_patches[qtype] && MD_allosteric_controls[qtype][i][q_binding_state][q_patch]){
-//                                q_activation_states[i] = !q_activation_states[i]; // flip activation state
-//                            }
-//                        }
-//                        // Bitwise xor with p_patch should flip binding state. TODO: double-check
-//                        p_binding_state = p_binding_state ^ (1 << p_patch);
-//                        q_binding_state = q_binding_state ^ (1 << q_patch);
+                        // update both particles binding states
+                        // check for flips
+                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
+                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
+                            if (i < MD_N_patches[ptype] && MD_allosteric_controls[ptype][i][p_binding_state][p_patch]){
+                                p_activation_states[i] = !p_activation_states[i]; // flip activation state
+                            }
+                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
+                            if (i < MD_N_patches[qtype] && MD_allosteric_controls[qtype][i][q_binding_state][q_patch]){
+                                q_activation_states[i] = !q_activation_states[i]; // flip activation state
+                            }
+                        }
+                        // Bitwise xor with p_patch should flip binding state. TODO: double-check
+                        p_binding_state = p_binding_state ^ (1 << p_patch);
+                        q_binding_state = q_binding_state ^ (1 << q_patch);
 
                     }
 
@@ -496,10 +496,8 @@ __device__ void _three_body(CUDA_FS_bond_list *bonds, c_number4 &F, c_number4 &T
  * @param torques
  * @param three_body_torques
  * @param box
- * @param p_activations
- * @param q_activations
- * @param p_state
- * @param q_state
+ * @param activation_states
+ * @param particle_states
  */
 __global__ void DPS_forces(c_number4 *poss,
                            GPU_quat *orientations,

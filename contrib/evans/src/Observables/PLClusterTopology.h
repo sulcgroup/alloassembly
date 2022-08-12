@@ -11,7 +11,7 @@
 #define PLCLUSTERTOP_H_
 
 #define MCMOVE_CUSTOM
-#include "BaseObservable.h"
+#include "../../../../src/Observables/BaseObservable.h"
 
 /**
  * @brief Prints out all the interactions between all pairs of nucleotides with non-zero interaction energies (default) or between a pair of nucleotides (if specified)

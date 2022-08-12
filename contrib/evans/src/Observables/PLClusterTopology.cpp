@@ -8,7 +8,7 @@
 // Minimally modified by Josh to remove template args, etc.
 
 #include "PLClusterTopology.h"
-#include "../../contrib/evans/src/Interactions/AllostericPatchySwapInteraction.h"
+#include "../Interactions/AllostericPatchySwapInteraction.h"
 //#include "../Particles/PatchyShapeParticle.h"
 
 #include <sstream>
@@ -88,7 +88,6 @@ void PLClusterTopology::get_settings(input_file &my_inp, input_file &sim_inp) {
 
 std::string PLClusterTopology::get_output_string(llint curr_step) {
 
-    AllostericPatchySwapInteraction *interaction = dynamic_cast<AllostericPatchySwapInteraction * >(this->_config_info->interaction);
 //    interaction->check_patchy_locks();
 
     BaseParticle *p;

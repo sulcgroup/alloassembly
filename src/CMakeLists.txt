@@ -50,7 +50,7 @@ SET(observables_SOURCES
 	Observables/UnstackedList.cpp
 	Observables/PlectonemePosition.cpp
 	Observables/TEPPlectonemePosition.cpp
-	Observables/PLClusterTopology.cpp
+		../contrib/evans/src/Observables/PLClusterTopology.cpp
 	Observables/AverageEnergy.cpp
 	Observables/ContactMap.cpp
 	Observables/AllVectors.cpp
@@ -232,8 +232,7 @@ IF(MPI)
 	)
 ELSE()
 	SET(oxDNA_SOURCES
-		oxDNA.cpp
-			../contrib/evans/src/Interactions/CUDAAllostericPatchySwapInteraction.h ../contrib/evans/src/Particles/AllostericPatch.cpp ../contrib/evans/src/Particles/AllostericPatch.h)
+		oxDNA.cpp)
 ENDIF()
 	
 IF(CUDA)
@@ -305,7 +304,7 @@ IF(CUDA)
 	
 	# we need the library to be shared or the oxpy compilation fails
 	CUDA_ADD_LIBRARY(${lib_name} SHARED ${common_SOURCES})
-	CUDA_ADD_EXECUTABLE(${exe_name} ${oxDNA_SOURCES} ../contrib/evans/src/Interactions/AllostericPatchySwapInteraction.cpp ../contrib/evans/src/Interactions/AllostericPatchySwapInteraction.h ../contrib/evans/src/Interactions/CUDAAllostericPatchySwapInteraction.h ../contrib/evans/src/Particles/AllostericPatchyParticle.cpp ../contrib/evans/src/Particles/AllostericPatchyParticle.h ../contrib/evans/src/Particles/ParticleStateChange.h ../contrib/evans/src/Particles/AllostericPatch.cpp ../contrib/evans/src/Particles/AllostericPatch.h)
+	CUDA_ADD_EXECUTABLE(${exe_name} ${oxDNA_SOURCES})
 	CUDA_ADD_EXECUTABLE(DNAnalysis ${DNAnalysis_SOURCES} Utilities/Timings.cpp)
 	
 	SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
@@ -316,7 +315,7 @@ ELSE()
 		Utilities/Timings.cpp
 	)
 
-	ADD_EXECUTABLE(${exe_name} ${oxDNA_SOURCES} ../contrib/evans/src/Interactions/AllostericPatchySwapInteraction.cpp ../contrib/evans/src/Interactions/AllostericPatchySwapInteraction.h ../contrib/evans/src/Interactions/CUDAAllostericPatchySwapInteraction.h ../contrib/evans/src/Particles/AllostericPatchyParticle.cpp ../contrib/evans/src/Particles/AllostericPatchyParticle.h ../contrib/evans/src/Particles/ParticleStateChange.h ../contrib/evans/src/Particles/AllostericPatch.cpp ../contrib/evans/src/Particles/AllostericPatch.h)
+	ADD_EXECUTABLE(${exe_name} ${oxDNA_SOURCES})
 	ADD_EXECUTABLE(DNAnalysis ${DNAnalysis_SOURCES})
 	ADD_LIBRARY(${lib_name} ${common_SOURCES})
 ENDIF(CUDA)
