@@ -25,8 +25,8 @@ protected:
     float4 *_d_base_patches = nullptr;
 
     // particle internal state vars - req'd for allostery
-    short* particle_states;
-    bool* activation_states;
+    short *particle_states;
+    bool *activation_states;
 
     llint _step;
 public:
@@ -36,17 +36,24 @@ public:
     static const int MAX_STATES = 1 << MAX_PATCHES; // 2 ^ MAX_PATCHES
 
     CUDAAllostericPatchySwapInteraction();
+
     virtual ~CUDAAllostericPatchySwapInteraction();
 
     void get_settings(input_file &inp);
+
     void cuda_init(c_number box_side, int N);
+
     c_number get_cuda_rcut() {
         return this->get_rcut();
     }
 
-    void compute_forces(CUDABaseList *lists, c_number4 *d_poss, GPU_quat *d_orientations, c_number4 *d_forces, c_number4 *d_torques, LR_bonds *d_bonds, CUDABox *d_box);
-};
+    void compute_forces(CUDABaseList *lists, c_number4 *d_poss, GPU_quat *d_orientations, c_number4 *d_forces,
+                        c_number4 *d_torques, LR_bonds *d_bonds, CUDABox *d_box);
 
+    virtual number
+    pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) override;
+    virtual void begin_energy_computation() override;
+};
 extern "C" BaseInteraction *make_CUDAAllostericPatchySwapInteraction() {
     return new CUDAAllostericPatchySwapInteraction();
 }

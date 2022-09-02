@@ -37,13 +37,15 @@ protected:
 	int *_d_number_neighs_no_doubles = nullptr;
 	bool *_d_cell_overflow = nullptr;
 
+	cudaTextureObject_t _counters_cells_tex;
+
 	CUDA_kernel_cfg _cells_kernel_cfg;
 
 	std::vector<int> is_large(c_number4 *data);
 
 	void _compute_N_cells_side(int N_cells_side[3], number min_cell_size);
-	int _largest_N_in_cells(int N, c_number min_cell_size);
-	virtual void _init_cells();
+	int _largest_N_in_cells(c_number4 *poss, c_number min_cell_size);
+	virtual void _init_cells(c_number4 *poss=nullptr);
 
 public:
 	int *d_matrix_neighs = nullptr;

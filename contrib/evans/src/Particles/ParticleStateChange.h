@@ -8,9 +8,9 @@
 #include "../../../../src/Particles/BaseParticle.h"
 
 struct ParticleStateChange {
-    const bool* _state;
-    const int _state_size;
-    const int _change;
+    const bool* _state; // binding state
+    const int _state_size; // size of binding state
+    const int _change; // the index of the patch that binds or unbinds
     ParticleStateChange(bool* state, int state_size, int change) : _state(state), _state_size(state_size), _change(change){}
     ~ParticleStateChange(){
         delete [] this->_state;

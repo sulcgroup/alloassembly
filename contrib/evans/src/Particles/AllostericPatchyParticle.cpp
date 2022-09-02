@@ -413,6 +413,20 @@ int AllostericPatchyParticle::n_patches() const {
     return patches.size();
 }
 
+/**
+ * returns the effect of change on the patch at patch_idx. returns true if the patch will be flipped
+ * false otherwise
+ * @param change
+ * @param patch_idx
+ * @return
+ */
 bool AllostericPatchyParticle::get_state_change_result(const ParticleStateChange &change, int patch_idx) const {
-    return change._state[patch_idx] != (std::find(allostery_map->at(change).begin(), allostery_map->at(change).end(), patch_idx) != allostery_map->at(change).end());
+    bool statechange; // good housekeeping
+    // if change is not in the allostery map, no change to activation state, so return false
+    if (allostery_map->find(change) == allostery_map->end())
+        statechange = false;
+    // otherwise, see if patch_idx is in the vector of patches that get swapped by change, according to the allostery map
+    else
+        statechange = std::find(allostery_map->at(change).begin(), allostery_map->at(change).end(), patch_idx) != allostery_map->at(change).end();
+    return statechange;
 }

@@ -70,39 +70,6 @@ public:
 		return _xlow;
 	}
 
-    // JOSH NOTE: 7/8/2022 Added functions for backwards-compatibility
-    std::vector<number> A(){
-        return _A;
-    }
-
-    std::vector<number> B(){
-        return _B;
-    }
-
-    std::vector<number> C(){
-        return _C;
-    }
-
-    std::vector<number> D(){
-        return _D;
-    }
-
-    number xupp(){
-        return _xupp;
-    }
-
-    number delta(){
-        return _delta;
-    }
-
-    number inv_sqr_delta(){
-        return _inv_sqr_delta;
-    }
-
-    Mesh(number xlow, number xup, number dlta, number inv_dlta, std::vector<number> a, std::vector<number> b, std::vector<number> c, std::vector<number> d){
-
-    }
-
 private:
 	int _N;
 	number _delta, _inv_sqr_delta, _xlow, _xupp;

@@ -54,6 +54,7 @@ SimManager::~SimManager() {
 		if(updated > 0) {
 			OX_LOG(Logger::LOG_INFO, "Lists updated %d times (every ~%lf steps)", updated, _steps_run / (double)updated);
 		}
+		_backend.reset();
 	}
 }
 
@@ -165,6 +166,7 @@ void SimManager::run() {
 			_backend->fix_diffusion();
 		}
 
+		_backend->update_observables_data();
 		_backend->print_observables();
 		_backend->sim_step();
 		_backend->increment_current_step();

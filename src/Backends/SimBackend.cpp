@@ -53,7 +53,7 @@ SimBackend::SimBackend() {
 	_T = -1.;
 
 	ConfigInfo::init(&_particles, &_molecules);
-	_config_info = ConfigInfo::instance();
+	_config_info = ConfigInfo::instance().get();
 	_config_info->subscribe("T_updated", [this]() {
 		this->_on_T_update();
 	});
@@ -198,7 +198,7 @@ void SimBackend::get_settings(input_file &inp) {
 	getInputString(&inp, "lastconf_file", lastconf_file, 0);
 	output_inp_text = Utils::sformat("{\n\tname = %s\n\tprint_every = 0\n\tonly_last = 1\n}\n", lastconf_file.c_str());
 	_obs_output_last_conf = std::make_shared<ObservableOutput>(output_inp_text);
-	_obs_output_last_conf->add_observable("type = configuration");
+	_obs_output_last_conf->add_observable("type = configuration\nid = last_conf");
 	add_output(_obs_output_last_conf);
 
 	// Last configuration in binary, optional
@@ -309,6 +309,7 @@ void SimBackend::init() {
 	}
 
 	// initialise the molecules
+	Molecule::reset_id();
 	for(int i = 0; i < _N_strands; i++) {
 		_molecules.push_back(std::make_shared<Molecule>());
 	}
@@ -601,6 +602,20 @@ void SimBackend::print_observables() {
 	}
 
 	_backend_info = std::string("");
+}
+
+void SimBackend::update_observables_data() {
+	bool updated = false;
+	for(auto const &obs : _config_info->observables) {
+		if(obs->need_updating(current_step())) {
+			if(!updated) {
+				apply_simulation_data_changes();
+				updated = true;
+			}
+
+			obs->update_data(current_step());
+		}
+	}
 }
 
 void SimBackend::fix_diffusion() {

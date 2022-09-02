@@ -28,6 +28,7 @@ SET(observables_SOURCES
 	Observables/PairForce.cpp
 	Observables/ForceEnergy.cpp
 	Observables/Pressure.cpp
+	Observables/StressAutocorrelation.cpp
 	Observables/Density.cpp
 	Observables/Rdf.cpp
 	Observables/Distance.cpp
@@ -50,7 +51,6 @@ SET(observables_SOURCES
 	Observables/UnstackedList.cpp
 	Observables/PlectonemePosition.cpp
 	Observables/TEPPlectonemePosition.cpp
-		../contrib/evans/src/Observables/PLClusterTopology.cpp
 	Observables/AverageEnergy.cpp
 	Observables/ContactMap.cpp
 	Observables/AllVectors.cpp
@@ -232,7 +232,8 @@ IF(MPI)
 	)
 ELSE()
 	SET(oxDNA_SOURCES
-		oxDNA.cpp)
+		oxDNA.cpp 
+	)
 ENDIF()
 	
 IF(CUDA)

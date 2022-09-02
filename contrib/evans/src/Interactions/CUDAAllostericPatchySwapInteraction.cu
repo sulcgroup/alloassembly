@@ -201,6 +201,10 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
                 if(epsilon != (c_number) 0.f) {
                     c_number r_p = sqrtf(dist);
                     if((r_p - MD_rcut_ss[0]) < 0.f) {
+
+                        printf("Bond formed between patch type %i on particle type %i and patch type %i on particle type %i",
+                               p_patch, ptype, q_patch, qtype);
+
                         c_number exp_part = expf(MD_sigma_ss[0] / (r_p - MD_rcut_ss[0]));
                         c_number energy_part = epsilon * MD_A_part[0] * exp_part * (MD_B_part[0] / SQR(dist) - 1.f);
 
@@ -784,14 +788,18 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
         delete particle;
     }
 
-    int N_species = _N_patches.size();
+    int N_species = this->_base_particle_types.size();
     if(N_species > MAX_SPECIES) {
         throw oxDNAException("PatchySwapInteraction: cannot simulate more than %d species. You can increase this number in the PatchySwapInteraction.h file", MAX_SPECIES);
+    }
+    uint n_patches[N_species];
+    for (int i = 0; i < N_species; i++){
+        n_patches[i] = _base_particle_types[i].patches.size();
     }
 
     // the following quantities are initialised by read_topology and hence have to be copied over to the GPU after its call
     CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_N_patch_types, &_N_patch_types, sizeof(int)));
-    CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_N_patches, _N_patches.data(), sizeof(int) * N_species));
+    CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_N_patches, n_patches, sizeof(int) * N_species));
 
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&_d_patchy_eps, _patchy_eps.size() * sizeof(float)));
     std::vector<float> h_patchy_eps(_patchy_eps.begin(), _patchy_eps.end());
@@ -814,7 +822,7 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
     CUDA_SAFE_CALL(cudaBindTexture(NULL, tex_base_patches, _d_base_patches, N_base_patches * sizeof(float4)));
 
     for(int i = 0; i < N_species; i++) {
-        int n_patches = _N_patches[i];
+        int n_patches = _base_particle_types[i].patches.size();
 
         if(n_patches > MAX_PATCHES) {
             throw oxDNAException("CUDAAllostericPatchySwapInteraction: cannot simulate particles with more than %d patches. You can increase this number in the AllostericPatchySwapInteraction.h file", MAX_PATCHES);
@@ -856,8 +864,10 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
 
                 // encode flip value for each patch x in relation to q
                 for (int x = 0; x < MAX_PATCHES; x++) {
+                    bool* stateptr = new bool[MAX_PATCHES];
+                    std::copy(state, state + MAX_PATCHES, stateptr);
                     // get the particle state change originating at `state` when patch `x` is flipped
-                    ParticleStateChange state_change(state, MAX_PATCHES, x);
+                    ParticleStateChange state_change(stateptr, MAX_PATCHES, x);
                     // get the state change result, specifically the effect on patch p
                     patches_allosteric_flips[q][x] = _base_particle_types[i].get_state_change_result(state_change, p);
                 }
@@ -935,4 +945,26 @@ void CUDAAllostericPatchySwapInteraction::compute_forces(CUDABaseList *lists, c_
     // add the three body contributions to the two-body forces and torques
     thrust::transform(t_forces, t_forces + N, t_three_body_forces, t_forces, thrust::plus<c_number4>());
     thrust::transform(t_torques, t_torques + N, t_three_body_torques, t_torques, thrust::plus<c_number4>());
+}
+
+
+number CUDAAllostericPatchySwapInteraction::pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
+    if(compute_r) {
+        _computed_r = _box->min_image(p->pos, q->pos);
+    }
+
+    number energy = _spherical_patchy_two_body(p, q, false, update_forces);
+
+    if(_is_KF) {
+        energy += _patchy_two_body_KF(p, q, false, update_forces);
+    }
+    else {
+        energy += _patchy_two_body_point(p, q, false, update_forces);
+    }
+
+    return energy;
+}
+
+void CUDAAllostericPatchySwapInteraction::begin_energy_computation() {
+
 }

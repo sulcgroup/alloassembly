@@ -16,8 +16,6 @@ protected:
     int _N_patch_types = 0;
     int _N_particle_types = 0;
 
-    /// Number of patches per particle
-    std::vector<uint> _N_patches;
     /// Patch types
     /// positions of each patch on each particle type, cached here so CUDA has access to them
     std::vector<std::vector<LR_vector>> _base_patch_positions;
