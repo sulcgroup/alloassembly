@@ -174,18 +174,22 @@ number AllostericPatchySwapInteraction::_patchy_two_body_point(BaseParticle *p, 
         for(uint q_patch_idx = 0; q_patch_idx < q->N_int_centers(); q_patch_idx++) {
             AllostericPatch* p_patch = &pp->patches[p_patch_idx];
             AllostericPatch* q_patch = &qq->patches[q_patch_idx];
+            // if p_patch and q_patch are both bound or active
             if ((p_patch->bound || p_patch->is_active()) && (q_patch->bound || q_patch->is_active())) {
                 LR_vector q_patch_pos = q->int_centers[q_patch_idx];
 
                 LR_vector patch_dist = _computed_r + q_patch_pos - p_patch_pos;
                 number dist = patch_dist.norm();
+                // if the distance between the two patches is acceptable
                 if (dist < _sqr_patch_rcut) {
+                    // important to note: patch id != color!
                     uint p_patch_type = p_patch->get_id();
                     uint q_patch_type = q_patch->get_id();
                     //                uint p_patch_type = _base_patch_positions[p->type][p_patch_idx];
                     //                uint q_patch_type = _base_patch_positions[q->type][q_patch_idx];
                     number epsilon = _patchy_eps[p_patch_type + _N_patch_types * q_patch_type];
 
+                    // if the interaction coefficient is nonzero
                     if (epsilon != 0.) {
                         number r_p = sqrt(dist);
                         number exp_part = exp(_sigma_ss / (r_p - _rcut_ss));
@@ -203,6 +207,7 @@ number AllostericPatchySwapInteraction::_patchy_two_body_point(BaseParticle *p, 
                                    "Mismatch between binding states between patch %d on particle %d and patch %d on particle %d.",
                                    p->index, p_patch_idx, q->index, q_patch_idx);
                         }
+                        // if the two patches are not already bound
                         if (!pp->patches[p_patch_idx].bound) {
                             pp->update_active_patches(p_patch_idx);
                             qq->update_active_patches(q_patch_idx);
@@ -244,12 +249,14 @@ number AllostericPatchySwapInteraction::_patchy_two_body_point(BaseParticle *p, 
                     }
                 }
             }
-            else if (p_patch->bound){
-                assert(q_patch->bound);
-                p_patch->bound = q_patch->bound = false;
-                pp->update_active_patches(p_patch_idx);
-                qq->update_active_patches(q_patch_idx);
-            }
+            // commenting out unbind code for now because it causes
+            // problems and should never apply anyway
+//            else if (p_patch->bound){
+//                assert(q_patch->bound);
+//                p_patch->bound = q_patch->bound = false;
+//                pp->update_active_patches(p_patch_idx);
+//                qq->update_active_patches(q_patch_idx);
+//            }
         }
     }
 
@@ -377,12 +384,14 @@ number AllostericPatchySwapInteraction::_patchy_two_body_KF(BaseParticle *p, Bas
                         }
                     }
                 }
-                else if (p_patch->bound){
-                    assert(q_patch->bound);
-                    p_patch->bound = q_patch->bound = false;
-                    pp->update_active_patches(p_patch_idx);
-                    qq->update_active_patches(q_patch_idx);
-                }
+                // commenting out unbind code because it causes problems and should never
+                // apply anyway
+//                else if (p_patch->bound){
+//                    assert(q_patch->bound);
+//                    p_patch->bound = q_patch->bound = false;
+//                    pp->update_active_patches(p_patch_idx);
+//                    qq->update_active_patches(q_patch_idx);
+//                }
             }
         }
     }

@@ -25,8 +25,14 @@ protected:
     float4 *_d_base_patches = nullptr;
 
     // particle internal state vars - req'd for allostery
-    short *particle_states;
-    bool *activation_states;
+    // the binding states are an array (length num particles) of shorts where each bit in
+    // each short is a patch binding state - 0 for unbound, 1 for bound
+    // it's useful to store the binding states like this so that the binding state short
+    // can be used to query the binding state transition map (MD_allosteric_controls)
+    unsigned short *_particle_binding_states = nullptr;
+    // we store activation states as an array of booleans with length
+    // (num particles) x (max number of patches per particle) because it's simpler
+    bool *_particle_activation_states = nullptr;
 
     llint _step;
 public:
@@ -38,6 +44,9 @@ public:
     CUDAAllostericPatchySwapInteraction();
 
     virtual ~CUDAAllostericPatchySwapInteraction();
+
+    void sync_host();
+    void sync_GPU();
 
     void get_settings(input_file &inp);
 
@@ -53,6 +62,30 @@ public:
     virtual number
     pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) override;
     virtual void begin_energy_computation() override;
+
+    size_t getActivationStateArraySize() const {
+        return sizeof(bool) * cudaParticleMemoryCount() * MAX_PATCHES;
+    }
+
+    size_t getBindingStateArraySize() const {
+        return sizeof(short) * cudaParticleMemoryCount();
+    }
+
+    /**
+     * @return the number of particles that have had space allocated for them on the GPU
+     * this may be greater than the actual number of particles
+     */
+    int cudaParticleMemoryCount() const {
+        return CUDABaseInteraction::_N;
+    }
+
+    /**
+     * @return the actual number of particles in the simulation, according to the CPU-side
+     * memory
+     */
+    int realNumParticles() const {
+        return AllostericPatchySwapInteraction::_N;
+    }
 };
 extern "C" BaseInteraction *make_CUDAAllostericPatchySwapInteraction() {
     return new CUDAAllostericPatchySwapInteraction();

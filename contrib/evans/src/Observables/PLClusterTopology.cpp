@@ -224,4 +224,5 @@ std::string PLClusterTopology::get_output_string(llint curr_step) {
     return out.str();
 }
 
+extern "C" BaseObservable *make_PLClusterTopology() { return new PLClusterTopology(); }
 
