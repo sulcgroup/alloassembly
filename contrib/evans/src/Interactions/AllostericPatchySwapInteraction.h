@@ -6,6 +6,9 @@
 #ifndef OXDNA_ALLOSTERICPATCHYSWAPINTERACTION_H
 #define OXDNA_ALLOSTERICPATCHYSWAPINTERACTION_H
 
+// macro grabbed from https://stackoverflow.com/a/2249738
+#define GET_BIT(n,k) (n & ( 1 << k )) >> k
+
 #include "../../../../src/Interactions/BaseInteraction.h"
 #include "../Particles/AllostericPatchyParticle.h"
 class AllostericPatchySwapInteraction : public BaseInteraction {

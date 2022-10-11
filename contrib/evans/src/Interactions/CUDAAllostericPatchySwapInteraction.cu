@@ -133,6 +133,10 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
     int ptype = get_particle_btype(ppos);
     int qtype = get_particle_btype(qpos);
 
+    // DEBUG
+    int pidx = get_particle_index(ppos);
+    int qidx = get_particle_index(qpos);
+
     c_number4 r = box->minimum_image(ppos, qpos);
     c_number sqr_r = CUDA_DOT(r, r);
     if(sqr_r >= MD_sqr_rcut[0]) return;
@@ -162,9 +166,12 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
     int p_N_patches = MD_N_patches[ptype];
     int q_N_patches = MD_N_patches[qtype];
 
+    // loop patches on particle p
     for(int p_patch = 0; p_patch < p_N_patches; p_patch++) {
+
         // if patch is not active, continue
         if (!p_activation_states[p_patch]){
+//            printf("Patch %i on particle type %i cannot form binds due to patch inactive\n", p_patch, ptype);
             continue;
         }
         c_number4 p_base_patch = tex1Dfetch(tex_base_patches, p_patch + ptype * CUDAAllostericPatchySwapInteraction::MAX_PATCHES);
@@ -174,13 +181,16 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
                 a1.z * p_base_patch.x + a2.z * p_base_patch.y + a3.z * p_base_patch.z, 0.f
         };
 
+        // loop patches on particle q
         for(int q_patch = 0; q_patch < q_N_patches; q_patch++) {
 //            printf("Checking for bind between Patch %i on particle type %i & patch %i on particle type %i\n",
 //                   p_patch, ptype, q_patch, qtype);
             // if patch is not active, continue
             if (!q_activation_states[q_patch]){
+//                printf("Cannot bind to patch %i on particle type %i due to patch inactive\n", q_patch, qtype);
                 continue;
             }
+
             c_number4 q_base_patch = tex1Dfetch(tex_base_patches, q_patch + qtype * CUDAAllostericPatchySwapInteraction::MAX_PATCHES);
             c_number4 q_patch_pos = {
                     b1.x * q_base_patch.x + b2.x * q_base_patch.y + b3.x * q_base_patch.z,
@@ -206,17 +216,26 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
 //                       p_patch, p_patch_type, ptype,
 //                       q_patch, q_patch_type, qtype,
 //                       dist, MD_sqr_patch_rcut[0], epsilon);
+                // if the two patches can bond
                 if(epsilon != (c_number) 0.f) {
+                    // TODO: may be possible to vectorize this operation?
+                    bool p_has_bond = GET_BIT(p_binding_state, p_patch) == 1;
+                    bool q_has_bond = GET_BIT(q_binding_state, q_patch) == 1;
                     c_number r_p = sqrtf(dist);
                     if((r_p - MD_rcut_ss[0]) < 0.f) {
-
-                        printf("Bond formed between patch type %i on particle type %i and patch type %i on particle type %i\n",
-                               p_patch, ptype, q_patch, qtype);
+                        if (p_has_bond != q_has_bond){
+                            printf("Binding state mismatch between patch %i on particle %i and patch %i on particle %i\n",
+                                   p_patch, pidx, q_patch, qidx);
+                        }
+//                        printf("Bond formed between patch type %i on particle type %i and patch type %i on particle type %i\n",
+//                               p_patch, ptype, q_patch, qtype);
 
                         c_number exp_part = expf(MD_sigma_ss[0] / (r_p - MD_rcut_ss[0]));
                         c_number energy_part = epsilon * MD_A_part[0] * exp_part * (MD_B_part[0] / SQR(dist) - 1.f);
 
-                        c_number force_mod = epsilon * MD_A_part[0] * exp_part * (4.f * MD_B_part[0] / (SQR(dist) * r_p)) + MD_sigma_ss[0] * energy_part / SQR(r_p - MD_rcut_ss[0]);
+                        c_number force_mod =
+                                epsilon * MD_A_part[0] * exp_part * (4.f * MD_B_part[0] / (SQR(dist) * r_p)) +
+                                MD_sigma_ss[0] * energy_part / SQR(r_p - MD_rcut_ss[0]);
                         c_number4 tmp_force = patch_dist * (force_mod / r_p);
 
                         c_number4 p_torque = _cross(p_patch_pos, tmp_force);
@@ -231,33 +250,78 @@ __device__ void _patchy_point_two_body_interaction(c_number4 &ppos,
 
                         my_bond.q = q_idx;
 
-                        if(r_p > MD_sigma_ss[0]) {
+                        if (r_p > MD_sigma_ss[0]) {
                             my_bond.force = tmp_force;
                             my_bond.force.w = -energy_part;
                             my_bond.p_torque = p_torque;
-                            my_bond.q_torque_ref_frame = _vectors_transpose_c_number4_product(b1, b2, b3, _cross(q_patch_pos, tmp_force));
-                        }
-                        else {
+                            my_bond.q_torque_ref_frame = _vectors_transpose_c_number4_product(b1, b2, b3,
+                                                                                              _cross(q_patch_pos,
+                                                                                                     tmp_force));
+                        } else {
                             my_bond.force.w = epsilon;
                         }
-                        // update both particles binding states
-                        // check for flips
-                        for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++){
-                            // if particle p type has a patch i and that patch is flagged to be flipped by this transition
-                            if (i < MD_N_patches[ptype] && MD_allosteric_controls[ptype][i][p_binding_state][p_patch]){
-                                p_activation_states[i] = !p_activation_states[i]; // flip activation state
+
+                        // DEBUG
+//                        if (GET_BIT(p_binding_state, p_patch) == 0){
+//                            printf("Patch %i binding already processed\n", p_patch);
+//                        }
+
+                        // if these two patches should have a bond but that hasn't been set in the memory yet
+                        if (GET_BIT(p_binding_state, p_patch) == 0) {
+//                            printf("Current binding state on particle: %i. Patch %i binding: %i\n",
+//                                   p_binding_state, p_patch, GET_BIT(p_binding_state, p_patch));
+                            printf("New bond formed between patch %i on particle %i (type %i)"
+                                   " and patch %i on particle %i (type %i).\n",
+                               p_patch, pidx, ptype, q_patch, qidx, qtype);
+                            // update both particles binding states
+                            // check for flips
+                            for (int i = 0; i < CUDAAllostericPatchySwapInteraction::MAX_PATCHES; i++) {
+                                // if particle p type has a patch i and that patch is flagged to be flipped by this transition
+                                if (i < MD_N_patches[ptype] &&
+                                    MD_allosteric_controls[ptype][i][p_binding_state][p_patch]) {
+                                    printf("Flipping activation state of patch %i on particle %i (type %i) from %b to %b"
+                                           "due to state transition from %i to %i \n",
+                                           p_patch, pidx, ptype, p_activation_states[i], !p_activation_states[i],
+                                           p_binding_state, p_binding_state ^ (1 << p_patch));
+                                    p_activation_states[i] = !p_activation_states[i]; // flip activation state
+                                }
+                                // if particle q type has a patch i and that patch is flagged to be flipped by this transition
+                                if (i < MD_N_patches[qtype] &&
+                                    MD_allosteric_controls[qtype][i][q_binding_state][q_patch]) {
+                                    printf("Flipping activation state of patch %i on particle %i (type %i) from %b to %b"
+                                           "due to state transition from %i to %i \n",
+                                           q_patch, pidx, qtype, q_activation_states[i], !q_activation_states[i],
+                                           q_binding_state, q_binding_state ^ (1 << q_patch));
+                                    q_activation_states[i] = !q_activation_states[i]; // flip activation state
+                                }
                             }
-                            // if particle q type has a patch i and that patch is flagged to be flipped by this transition
-                            if (i < MD_N_patches[qtype] && MD_allosteric_controls[qtype][i][q_binding_state][q_patch]){
-                                q_activation_states[i] = !q_activation_states[i]; // flip activation state
+                            // Bitwise xor with p_patch should flip binding state. TODO: double-check
+                            p_binding_state = p_binding_state | (1 << p_patch);
+                            q_binding_state = q_binding_state | (1 << q_patch);
+//                            printf("New binding state on particle: %i. Patch %i binding: %i\n",
+//                                   p_binding_state, p_patch, GET_BIT(p_binding_state, p_patch));
+                            if (GET_BIT(p_binding_state, p_patch) != 1) {
+                                printf("Failed to set binding state of p (idx=%i)!\n", pidx);
                             }
+                            if (GET_BIT(q_binding_state, q_patch) != 1) {
+                                printf("Failed to set binding state of q (idx=%i)!\n", qidx);
+                            }
+
                         }
-                        // Bitwise xor with p_patch should flip binding state. TODO: double-check
-                        p_binding_state = p_binding_state ^ (2 << p_patch);
-                        q_binding_state = q_binding_state ^ (2 << q_patch);
                     }
                 }
             }
+        }
+        // if the patch previously had a bond but now doesn't
+        if (!hasBond && GET_BIT(p_binding_state, p_patch) == 1){
+            printf("WARN: bond breaking on patch %i of particle %i( type %i)\n", p_patch, pidx, ptype);
+            for (int i = 0; i < MD_N_patches[ptype]; i++) {
+                // if particle p type has a patch i and that patch is flagged to be flipped by this transition
+                if (MD_allosteric_controls[ptype][i][p_binding_state][p_patch]) {
+                    p_activation_states[i] = !p_activation_states[i]; // flip activation state
+                }
+            }
+            p_binding_state = p_binding_state ^ (1 << p_patch);
         }
     }
 }
@@ -587,7 +651,8 @@ __global__ void DPS_forces(c_number4 *poss,
         }
     }
 
-    _three_body(bonds, F, T, three_body_forces, three_body_torques);
+    // TODO: re-enable three-body?
+//    _three_body(bonds, F, T, three_body_forces, three_body_torques);
 
     forces[IND] = F;
     torques[IND] = _vectors_transpose_c_number4_product(a1, a2, a3, T);
@@ -687,7 +752,8 @@ __global__ void DPS_forces(c_number4 *poss,
         }
     }
 
-    _three_body(bonds, F, T, three_body_forces, three_body_torques);
+    // TODO: re-enable three-body?
+//    _three_body(bonds, F, T, three_body_forces, three_body_torques);
 
     forces[IND] = F;
     torques[IND] = _vectors_transpose_c_number4_product(a1, a2, a3, T);
@@ -757,7 +823,7 @@ void CUDAAllostericPatchySwapInteraction::sync_GPU() {
 
             // if patch is bound, set the bit particleState[p] to true
             if (particle->patches[p].bound) {
-                particleState = particleState ^ (2 << p);
+                particleState = particleState ^ (1 << p);
             }
 
             // get activation state
@@ -803,9 +869,12 @@ void CUDAAllostericPatchySwapInteraction::sync_host() {
     for (int i = 0; i < realNumParticles(); i++){
         AllostericPatchyParticle* particle = static_cast<AllostericPatchyParticle*>(CONFIG_INFO->particles()[i]);
         for (int p = 0; p < particle->n_patches(); p++){
+            // simply index the activation state array to get activation state
             bool activationState = activation_states[i * MAX_PATCHES + p];
+            // update patch activation state
             particle->patches[p].set_active(activationState);
-            bool newBindingState = binding_states[i] << p >= 1 << 16;
+            // retrieve binding state of this patch by getting the p-th bit of binding_states[i]
+            bool newBindingState = GET_BIT(binding_states[i], p) == 1;
             // can safely set patch binding directly b/c the above line will fix
             // activation states
             particle->patches[p].bound = newBindingState;
@@ -819,7 +888,7 @@ void CUDAAllostericPatchySwapInteraction::sync_host() {
             bool computed_activation = particle->patch_status(bindingState, p);
             if (computed_activation != particle->patches[p].is_active()) {
                 throw oxDNAException("Activation state %b of particle %d, patch %d is inconsistant with allosteric control conditional %s."
-                                     "Binding state: %d",
+                                     "Binding state: %i",
                                      computed_activation, i, p,
                                      particle->patches[p].get_allosteric_conditional().c_str(),
                                      binding_states[i]);
@@ -979,30 +1048,33 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
             bool patches_allosteric_flips[MAX_STATES][MAX_PATCHES];
 
             bool state[MAX_PATCHES];
-            for (int q = 0; q < MAX_STATES; q++){
+            for (unsigned short q = 0; q < MAX_STATES; q++){
                 // each unique state can be expressed as an MAX_STATES-digit binary number where
                 // each digit is a patch binding state
 
                 // first decode state
-                int n = q;
                 for (int x = 0; x < MAX_PATCHES; x++){
-                    state[x] = n & 1;
-                    n /= 2;
+                    state[x] = GET_BIT(q, x);
                 }
 
                 // encode flip value for each patch x in relation to q
                 for (int x = 0; x < MAX_PATCHES; x++) {
+                    // have to make a new pointer every time b/c the state change deconstructor deallocates
+                    // the array memory
                     bool* stateptr = new bool[MAX_PATCHES];
                     std::copy(state, state + MAX_PATCHES, stateptr);
                     // get the particle state change originating at `state` when patch `x` is flipped
                     ParticleStateChange state_change(stateptr, MAX_PATCHES, x);
+                    bool outcome = _base_particle_types[i].get_state_change_result(state_change, p);
+                    printf("State # %i, Change %i: %s => (%i flip: %b)", q, x, state_change.toString().c_str(), p, outcome);
                     // get the state change result, specifically the effect on patch p
-                    patches_allosteric_flips[q][x] = _base_particle_types[i].get_state_change_result(state_change, p);
+                    patches_allosteric_flips[q][x] = outcome;
                 }
             }
             // I'm like 79% sure these values are right
             int allo_mem_count = sizeof(bool) * MAX_STATES * MAX_PATCHES;
             int allo_mem_offset = (i * MAX_PATCHES + p) * allo_mem_offset;
+            // copy computed flips to array
             CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_allosteric_controls, patches_allosteric_flips, allo_mem_count, allo_mem_offset));
         }
 

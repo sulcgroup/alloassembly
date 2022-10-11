@@ -33,6 +33,9 @@ protected:
     // we store activation states as an array of booleans with length
     // (num particles) x (max number of patches per particle) because it's simpler
     bool *_particle_activation_states = nullptr;
+    // patch locks
+    // length (num particles) x (max number of patches per particle)
+    int* _patch_locks;
 
     llint _step;
 public:

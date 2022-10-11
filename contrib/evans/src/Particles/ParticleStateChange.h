@@ -27,6 +27,21 @@ struct ParticleStateChange {
         }
         return true;
     }
+    std::string toString() const {
+        std::stringstream buf;
+        buf << "(";
+        for (int i = 0; i < _state_size; i++){
+            buf << _state[i] << ",";
+        }
+        buf << ") [" << _change;
+        if (_state[_change]){
+            buf << "](T->F)";
+        }
+        else {
+            buf << "](F->T)";
+        }
+        return buf.str();
+    }
 };
 
 template <>
