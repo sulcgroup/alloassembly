@@ -29,13 +29,10 @@ protected:
     // each short is a patch binding state - 0 for unbound, 1 for bound
     // it's useful to store the binding states like this so that the binding state short
     // can be used to query the binding state transition map (MD_allosteric_controls)
-    unsigned short *_particle_binding_states = nullptr;
-    // we store activation states as an array of booleans with length
+    unsigned int *_particle_binding_states = nullptr;
+    // we store patch activations as an array of booleans with length
     // (num particles) x (max number of patches per particle) because it's simpler
-    bool *_particle_activation_states = nullptr;
-    // patch locks
-    // length (num particles) x (max number of patches per particle)
-    int* _patch_locks;
+    bool *_particle_activations = nullptr;
 
     llint _step;
 public:
@@ -66,11 +63,11 @@ public:
     pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) override;
     virtual void begin_energy_computation() override;
 
-    size_t getActivationStateArraySize() const {
+    size_t getActivationStateArrayLength() const {
         return sizeof(bool) * cudaParticleMemoryCount() * MAX_PATCHES;
     }
 
-    size_t getBindingStateArraySize() const {
+    size_t getBindingStateArrayLength() const {
         return sizeof(short) * cudaParticleMemoryCount();
     }
 
