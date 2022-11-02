@@ -63,12 +63,12 @@ public:
     pair_interaction_nonbonded(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) override;
     virtual void begin_energy_computation() override;
 
-    size_t getActivationStateArrayLength() const {
+    size_t getActivationsArrayLength() const {
         return sizeof(bool) * cudaParticleMemoryCount() * MAX_PATCHES;
     }
 
     size_t getBindingStateArrayLength() const {
-        return sizeof(short) * cudaParticleMemoryCount();
+        return sizeof(int) * cudaParticleMemoryCount();
     }
 
     /**

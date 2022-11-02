@@ -414,6 +414,21 @@ int AllostericPatchyParticle::n_patches() const {
 }
 
 /**
+ * this function just calls n_patches() for now but is included seperately for potential future-proofing
+ * @return the size of the particle's state, in # bits
+ */
+int AllostericPatchyParticle::state_size() const {
+    return n_patches();
+}
+
+/**
+ * @return the number of possible states, which is 2^state_size
+ */
+int AllostericPatchyParticle::n_states() const {
+    return pow(2, n_patches());
+}
+
+/**
  * returns the effect of change on the patch at patch_idx. returns true if the patch will be flipped
  * false otherwise
  * @param change

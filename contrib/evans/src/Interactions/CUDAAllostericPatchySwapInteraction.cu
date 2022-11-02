@@ -237,6 +237,7 @@ _patchy_point_two_body_interaction(c_number4 &ppos,
                 int p_patch_type = MD_patch_types[ptype][p_patch];
                 int q_patch_type = MD_patch_types[qtype][q_patch];
 
+
                 // query the 1-d texture memory that stores the epsilon values for patch types (NOT colors!)
                 c_number epsilon = tex1Dfetch(tex_patchy_eps, p_patch_type + MD_N_patch_types[0] * q_patch_type);
 //                printf("Patch %i (%i) on particle type %i is within interaction distance of patch %i (%i) on particle type %i! (%f < %f, epsilon=%f)\n",
@@ -285,7 +286,11 @@ _patchy_point_two_body_interaction(c_number4 &ppos,
                         }
 
                         // update binding state
+                        int oldState = p_state;
                         p_state = p_state | (1 << p_patch);
+                        if (p_state != oldState){
+                            printf("State of particle ID %i changed from %i to %i\n", IND, oldState, p_state);
+                        }
                     }
                 }
             }
@@ -550,6 +555,7 @@ __global__ void DPS_forces(c_number4 *poss,
     CUDA_FS_bond_list bonds[CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
 
     // loop through every other particle in the simulation
+    int oldState = particle_states[IND];
     for(int j = 0; j < MD_N[0]; j++) {
         if(j != IND) {
             c_number4 qpos = poss[j];
@@ -650,6 +656,7 @@ __global__ void DPS_forces(c_number4 *poss,
 
     // create a list of bonds
     CUDA_FS_bond_list bonds[CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
+    int oldState = particle_states[IND];
 
     int num_neighs = c_number_neighs[IND];
     for(int j = 0; j < num_neighs; j++) {
@@ -674,8 +681,8 @@ __global__ void DPS_forces(c_number4 *poss,
                                             bonds,
                                             k_index,
                                             box,
-                                            &patch_activations[IND], // pass memory address
-                                            &patch_activations[k_index], // pass memory address
+                                            &patch_activations[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES], // pass memory address
+                                            &patch_activations[k_index * CUDAAllostericPatchySwapInteraction::MAX_PATCHES], // pass memory address
                                             particle_states[IND]);
         }
         else {
@@ -692,8 +699,8 @@ __global__ void DPS_forces(c_number4 *poss,
                                                bonds,
                                                k_index,
                                                box,
-                                               &patch_activations[IND], // pass memory address
-                                               &patch_activations[k_index], // pass memory address
+                                               &patch_activations[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES], // pass memory address
+                                               &patch_activations[k_index * CUDAAllostericPatchySwapInteraction::MAX_PATCHES], // pass memory address
                                                particle_states[IND]);
         }
     }
@@ -705,12 +712,20 @@ __global__ void DPS_forces(c_number4 *poss,
 
     // apply new particle state to activations
     // there must be a better way to do this
-    int p_type = get_particle_btype(ppos);
-    if (particle_states[IND] != 0){
-        printf("Particle id %i state %i", IND, particle_states[IND]);
-    }
-    for (int i = 0; i < MD_N_patches[p_type]; i++){
-        patch_activations[IND + i] = MD_allosteric_controls[p_type][particle_states[IND]][i];
+    if (particle_states[IND] != oldState) {
+        int p_type = get_particle_btype(ppos);
+//        if (particle_states[IND] != 0) {
+            printf("Particle id %i (type %i) state %i\n", IND, p_type, particle_states[IND]);
+//        }
+        for (int i = 0; i < MD_N_patches[p_type]; i++) {
+            bool curr_activation = patch_activations[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES + i];
+            bool new_activation = MD_allosteric_controls[p_type][particle_states[IND]][i];
+            if (curr_activation != new_activation){
+                printf("Particle id %i (type %i) patch %i activation changed from %i to %i\n", IND, p_type, i, curr_activation, new_activation);
+                patch_activations[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES + i] = new_activation;
+            }
+//            patch_activations[IND + i] = MD_allosteric_controls[p_type][particle_states[IND]][i];
+        }
     }
 //    memcpy(MD_allosteric_controls[p_type][particle_states[IND]],
 //           patch_activations[IND], sizeof(bool) * )
@@ -765,7 +780,7 @@ void CUDAAllostericPatchySwapInteraction::get_settings(input_file &inp) {
  * copies data from CPU to GPU
  */
 void CUDAAllostericPatchySwapInteraction::sync_GPU() {
-    unsigned short* binding_states = new unsigned short[cudaParticleMemoryCount()];
+    unsigned int* binding_states = new unsigned int[cudaParticleMemoryCount()];
     bool* activation_states = new bool[cudaParticleMemoryCount() * MAX_PATCHES];
 
     // loop particles
@@ -793,7 +808,7 @@ void CUDAAllostericPatchySwapInteraction::sync_GPU() {
     // destination, source
     CUDA_SAFE_CALL(cudaMemcpy(_particle_activations,
                               activation_states,
-                              getActivationStateArrayLength(),
+                              getActivationsArrayLength(),
                               cudaMemcpyHostToDevice));
     // copy memory to gpu
     // destination, source
@@ -807,8 +822,8 @@ void CUDAAllostericPatchySwapInteraction::sync_GPU() {
  * copies data from GPU to CPU
  */
 void CUDAAllostericPatchySwapInteraction::sync_host() {
-    unsigned short* binding_states = new unsigned short[cudaParticleMemoryCount()];
-    bool* activation_states = new bool[cudaParticleMemoryCount() * MAX_PATCHES];
+    unsigned int* binding_states = new unsigned int[cudaParticleMemoryCount()];
+    bool* activations = new bool[cudaParticleMemoryCount() * MAX_PATCHES];
     // copy memory from gpu to cpu
     // destination, source
     CUDA_SAFE_CALL(cudaMemcpy(binding_states,
@@ -817,9 +832,9 @@ void CUDAAllostericPatchySwapInteraction::sync_host() {
                               cudaMemcpyDeviceToHost));
     // copy memory from gpu to cpu
     // destination, source
-    CUDA_SAFE_CALL(cudaMemcpy(activation_states,
+    CUDA_SAFE_CALL(cudaMemcpy(activations,
                               _particle_activations,
-                              getActivationStateArrayLength(),
+                              getActivationsArrayLength(),
                               cudaMemcpyDeviceToHost));
 
     // loop particles
@@ -827,9 +842,9 @@ void CUDAAllostericPatchySwapInteraction::sync_host() {
         AllostericPatchyParticle* particle = static_cast<AllostericPatchyParticle*>(CONFIG_INFO->particles()[i]);
         for (int p = 0; p < particle->n_patches(); p++){
             // simply index the activation state array to get activation state
-            bool activationState = activation_states[i * MAX_PATCHES + p];
+            bool activation = activations[i * MAX_PATCHES + p];
             // update patch activation state
-            particle->patches[p].set_active(activationState);
+            particle->patches[p].set_active(activation);
             // retrieve binding state of this patch by getting the p-th bit of binding_states[i]
             bool newBindingState = GET_BIT(binding_states[i], p) == 1;
             // can safely set patch binding directly b/c the above line will fix
@@ -844,14 +859,15 @@ void CUDAAllostericPatchySwapInteraction::sync_host() {
         for (int p = 0; p < particle->n_patches(); p++) {
             bool computed_activation = particle->patch_status(bindingState, p);
             if (computed_activation != particle->patches[p].is_active()) {
-                throw oxDNAException("Activation state %b of particle %d, patch %d is inconsistant with allosteric control conditional %s."
-                                     "Binding state: %i",
-                                     computed_activation, i, p,
-                                     particle->patches[p].get_allosteric_conditional().c_str(),
+                std::string conditional = particle->patches[p].get_allosteric_conditional();
+                throw oxDNAException("Activation state %d of particle %i, patch %i is inconsistant with allosteric control conditional %s. Binding state: %u",
+                                     particle->patches[p].is_active(),
+                                     i,
+                                     p,
+                                     conditional.c_str(),
                                      binding_states[i]);
             }
         }
-
     }
 //    for(int i = 0; i < AllostericPatchySwapInteraction::_N; i++) {
 //        AllostericPatchyParticle* particle = static_cast<AllostericPatchyParticle*>(CONFIG_INFO->particles()[i]);
@@ -922,26 +938,44 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
                                            getBindingStateArrayLength() * sizeof(unsigned int)));
     // allocate memory for patch activation states
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&_particle_activations,
-                                           getActivationStateArrayLength() * sizeof(bool)));
+                                           getActivationsArrayLength() * sizeof(bool)));
     bool* unbound_state = new bool[MAX_PATCHES];
     unsigned int* particle_states_empty = new unsigned int[N];
-    bool* all_activation_states = new bool[MAX_PATCHES * N];
+    bool* all_activations = new bool[MAX_PATCHES * N];
     std::fill(unbound_state, unbound_state + MAX_PATCHES, false);
     std::fill(particle_states_empty, particle_states_empty + N, 0);
-    for (int i = 0; i < N; i++){
+    printf("Initializing particle activations...\n");
+    for (int i = 0; i < N; i++) {
         AllostericPatchyParticle* pp = dynamic_cast<AllostericPatchyParticle*>(particles[i]);
+        printf("Particle %i (type %i): ", i, particles[i]->type);
         for (int x = 0; x < pp->n_patches(); x++){
-            all_activation_states[i * MAX_PATCHES + x] = pp->patch_status(unbound_state, x);
+            all_activations[i * MAX_PATCHES + x] = pp->patch_status(unbound_state, x);
+            printf("%i,",all_activations[i * MAX_PATCHES + x]);
         }
+        printf("\n");
     }
     CUDA_SAFE_CALL(cudaMemcpy(_particle_binding_states, particle_states_empty,
                               getBindingStateArrayLength() * sizeof(unsigned int), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_particle_activations, all_activation_states,
-                              getActivationStateArrayLength() * sizeof(bool), cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_particle_activations, all_activations,
+                              getActivationsArrayLength() * sizeof(bool), cudaMemcpyHostToDevice));
+
+    //DEBUG: do activations copy properly?
+//    bool* written_activations = new bool[MAX_PATCHES * N];
+//    CUDA_SAFE_CALL(cudaMemcpy(written_activations, _particle_activations, getActivationsArrayLength() * sizeof (bool),
+//                              cudaMemcpyDeviceToHost));
+//    printf("Checking activations... \n");
+//    for (int i = 0; i < N; i++){
+//        AllostericPatchyParticle* pp = dynamic_cast<AllostericPatchyParticle*>(particles[i]);
+//        printf("Particle %i (type %i): ", i, particles[i]->type);
+//        for (int x = 0; x < pp->n_patches(); x++){
+//            printf("%i,",written_activations[i * MAX_PATCHES + x]);
+//        }
+//        printf("\n");
+//    }
 
     delete[] unbound_state;
     delete[] particle_states_empty;
-    delete[] all_activation_states;
+    delete[] all_activations;
 
     for(auto particle : particles) {
         delete particle;
@@ -982,6 +1016,7 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
     CUDA_SAFE_CALL(cudaBindTexture(NULL, tex_base_patches, _d_base_patches, N_base_patches * sizeof(float4)));
 
     for(int i = 0; i < N_species; i++) {
+        printf("Particle type %i\n", i);
         int n_patches = _base_particle_types[i].patches.size();
 
         if(n_patches > MAX_PATCHES) {
@@ -1007,45 +1042,55 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
             LR_vector a2 = _base_particle_types[i].patches[i].a2();
             patch_a1s[p] = make_c_number4(a1.x, a1.y, a1.z, 0);
             patch_a2s[p] = make_c_number4(a2.x, a2.y, a2.z, 0);
+        }
 
-            // time to deal with allostery!
-            bool patches_allosteric_flips[MAX_STATES][MAX_PATCHES];
+        // time to deal with allostery!
+        bool patches_activations[MAX_PATCHES];
 
-            bool state[MAX_PATCHES];
-            for (unsigned int q = 0; q < MAX_STATES; q++){
-                // each unique state can be expressed as an MAX_STATES-digit binary number where
-                // each digit is a patch binding state
+        bool state[MAX_PATCHES];
+        int npatches = _base_particle_types[i].n_patches();
+        int nstates = _base_particle_types[i].n_states();
+        for (unsigned int i_state = 0; i_state < nstates; i_state++){
+            // each unique state can be expressed as an MAX_STATES-digit binary number where
+            // each digit is a patch binding state
 
-                // first decode state
-                for (int x = 0; x < MAX_PATCHES; x++){
-                    state[x] = GET_BIT(q, x);
-                }
+            // clear state array
+            std::fill(state, state + MAX_PATCHES, false);
 
-                // encode flip value for each patch x in relation to q
-                for (int x = 0; x < MAX_PATCHES; x++) {
-                    // have to make a new pointer every time b/c the state change deconstructor deallocates
-                    // the array memory
-                    bool* stateptr = new bool[MAX_PATCHES];
-                    std::copy(state, state + MAX_PATCHES, stateptr);
-                    // get the particle state change originating at `state` when patch `x` is flipped
-                    ParticleStateChange state_change(stateptr, MAX_PATCHES, x);
-                    bool outcome = _base_particle_types[i].get_state_change_result(state_change, p);
-                    printf("State # %i, Change %i: %s => (%i flip: %b)", q, x, state_change.toString().c_str(), p, outcome);
-                    // get the state change result, specifically the effect on patch p
-                    patches_allosteric_flips[q][x] = outcome;
-                }
+            // first decode state
+            for (int x = 0; x < _base_particle_types[i].n_patches(); x++){
+                state[x] = GET_BIT(i_state, x);
             }
-            // I'm like 79% sure these values are right
-            int allo_mem_count = sizeof(bool) * MAX_STATES * MAX_PATCHES;
-            int allo_mem_offset = (i * MAX_PATCHES + p) * allo_mem_offset;
-            // copy computed flips to array
-            CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_allosteric_controls, patches_allosteric_flips, allo_mem_count, allo_mem_offset));
+
+            // get status of each patch in state
+            printf("\tstate %u: ", i_state);
+            for (int x = 0; x < _base_particle_types[i].n_patches(); x++) {
+                patches_activations[x] = _base_particle_types[i].patch_status(state, x);
+                printf("%i,", patches_activations[x]);
+            }
+            printf("\n");
+            // copy values of patch s
+            int offset = sizeof (bool) * (i * (MAX_PATCHES * MAX_STATES) + i_state * MAX_PATCHES);
+
+            CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_allosteric_controls,
+                                              patches_activations,
+                                              sizeof(bool) * MAX_PATCHES,
+                                              offset));
         }
 
         // fourth argument is the offset
-        CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_patch_types, patch_types, sizeof(int) * n_patches, i * sizeof(int) * MAX_PATCHES));
-        CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_base_patch_a1s, patch_a1s, sizeof(float4) * n_patches, i * sizeof(float4) * MAX_PATCHES));
-        CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_base_patch_a2s, patch_a2s, sizeof(float4) * n_patches, i * sizeof(float4) * MAX_PATCHES));
+        CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_patch_types,
+                                          patch_types,
+                                          sizeof(int) * n_patches,
+                                          i * sizeof(int) * MAX_PATCHES));
+        CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_base_patch_a1s,
+                                          patch_a1s,
+                                          sizeof(float4) * n_patches,
+                                          i * sizeof(float4) * MAX_PATCHES));
+        CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_base_patch_a2s,
+                                          patch_a2s,
+                                          sizeof(float4) * n_patches,
+                                          i * sizeof(float4) * MAX_PATCHES));
     }
 }
 
@@ -1070,6 +1115,8 @@ void CUDAAllostericPatchySwapInteraction::compute_forces(CUDABaseList *lists, c_
     thrust::fill_n(t_three_body_torques, N, make_c_number4(0, 0, 0, 0));
 
 
+    // DEBUG
+//    printf("Beginning step %i\n", CONFIG_INFO->curr_step);
     CUDASimpleVerletList *_v_lists = dynamic_cast<CUDASimpleVerletList *>(lists);
     if(_v_lists != NULL) {
         if(_v_lists->use_edge()) throw oxDNAException("CUDAAllostericPatchySwapInteraction: use_edge is unsupported");

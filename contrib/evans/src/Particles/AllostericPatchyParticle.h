@@ -65,7 +65,9 @@ public:
         virtual void update_active_patches(int toggle_idx);
 
     bool* get_binding_state() const;
+    int state_size() const;
     int n_patches() const;
+    int n_states() const;
     bool get_state_change_result(const ParticleStateChange &change, int patch_idx) const;
 
 };
