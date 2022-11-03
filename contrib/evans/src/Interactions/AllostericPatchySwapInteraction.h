@@ -52,6 +52,7 @@ protected:
     bool _is_KF = false;
     /// Exponent for the Gaussian-like potential well used for the patches
     int _patch_power = 30;
+    /// delta = patch width. confusingly, Flavio calls this "alpha" (I think?)
     number _patch_delta;
     /// Angular width of the patches
     number _patch_cosmax;

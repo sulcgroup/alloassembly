@@ -51,6 +51,7 @@ __constant__ float MD_spherical_attraction_strength[1], MD_spherical_E_cut[1];
 /// KF-related quantities
 __constant__ bool MD_is_KF[1];
 __constant__ int MD_patch_power[1];
+// power delta = patch width raised to the 10th power
 __constant__ float MD_patch_pow_delta[1];
 __constant__ float MD_patch_pow_cosmax[1];
 __constant__ float MD_patch_angular_cutoff[1];
@@ -286,11 +287,11 @@ _patchy_point_two_body_interaction(c_number4 &ppos,
                         }
 
                         // update binding state
-                        int oldState = p_state;
+//                        int oldState = p_state;
                         p_state = p_state | (1 << p_patch);
-                        if (p_state != oldState){
-                            printf("State of particle ID %i changed from %i to %i\n", IND, oldState, p_state);
-                        }
+//                        if (p_state != oldState){
+//                            printf("State of particle ID %i changed from %i to %i\n", IND, oldState, p_state);
+//                        }
                     }
                 }
             }
@@ -330,12 +331,19 @@ _patchy_KF_two_body_interaction(c_number4 &ppos,
                                 c_number4 &b3,
                                 c_number4 &F,
                                 c_number4 &torque,
-                                CUDA_FS_bond_list *bonds, int q_idx, CUDABox *box, const bool *p_activation,
-                                const bool *q_activations, unsigned int &p_binding_state) {
+                                CUDA_FS_bond_list *bonds,
+                                int q_idx,
+                                CUDABox *box,
+                                const bool *p_activation,
+                                const bool *q_activations,
+                                unsigned int &p_binding_state) {
+    // get particle types
     int ptype = get_particle_btype(ppos);
     int qtype = get_particle_btype(qpos);
 
+    // r = displacement vector between positions of particles p and q
     c_number4 r = box->minimum_image(ppos, qpos);
+    // sqr_r: get r^2 (square of the distance) by taking the dot product of r with itself
     c_number sqr_r = CUDA_DOT(r, r);
     if(sqr_r >= MD_sqr_rcut[0]) return;
 
@@ -362,11 +370,16 @@ _patchy_KF_two_body_interaction(c_number4 &ppos,
     F.w += spherical_energy - MD_spherical_E_cut[0];
 
     // patch-patch part
+    // rmod = square-root of the distance squared = magnitude of distance between particles
     c_number rmod = sqrtf(sqr_r);
+    // normalized displacement vector between particles p and q
     c_number4 r_versor = r / rmod;
 
+    // distance between surfaces of particles p and q. sphere particle radius is fixed value 0.5
     c_number dist_surf = rmod - 1.f;
+    // square of the distance between the two particle surfaces
     c_number dist_surf_sqr = SQR(dist_surf);
+    //
     c_number r8b10 = SQR(SQR(dist_surf_sqr)) / MD_patch_pow_delta[0];
     c_number exp_part = -1.001f * expf(-0.5f * r8b10 * dist_surf_sqr);
 
@@ -385,6 +398,7 @@ _patchy_KF_two_body_interaction(c_number4 &ppos,
         };
         p_patch_pos *= 2.f;
 
+        // cospr = cosine of the
         c_number cospr = CUDA_DOT(p_patch_pos, r_versor);
         c_number cospr_minus_one = cospr - 1.f;
         if(cospr_minus_one < MD_patch_angular_cutoff[0]) {
@@ -412,6 +426,7 @@ _patchy_KF_two_body_interaction(c_number4 &ppos,
                 };
                 q_patch_pos *= 2.f;
 
+                // cosqr
                 c_number cosqr = -CUDA_DOT(q_patch_pos, r_versor);
                 c_number cosqr_minus_one = cosqr - 1.f;
                 if(cosqr_minus_one < MD_patch_angular_cutoff[0]) {
@@ -577,8 +592,8 @@ __global__ void DPS_forces(c_number4 *poss,
                                                 bonds,
                                                 j,
                                                 box,
-                                                &patch_activations[IND],
-                                                &patch_activations[j],
+                                                &patch_activations[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES],
+                                                &patch_activations[j * CUDAAllostericPatchySwapInteraction::MAX_PATCHES],
                                                 particle_states[IND]);
             }
             else {
@@ -595,8 +610,8 @@ __global__ void DPS_forces(c_number4 *poss,
                                                    bonds,
                                                    j,
                                                    box,
-                                                   &patch_activations[IND],
-                                                   &patch_activations[j],
+                                                   &patch_activations[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES],
+                                                   &patch_activations[j  * CUDAAllostericPatchySwapInteraction::MAX_PATCHES],
                                                    particle_states[IND]);
             }
         }
@@ -714,9 +729,9 @@ __global__ void DPS_forces(c_number4 *poss,
     // there must be a better way to do this
     if (particle_states[IND] != oldState) {
         int p_type = get_particle_btype(ppos);
-//        if (particle_states[IND] != 0) {
+        if (particle_states[IND] != 0) {
             printf("Particle id %i (type %i) state %i\n", IND, p_type, particle_states[IND]);
-//        }
+        }
         for (int i = 0; i < MD_N_patches[p_type]; i++) {
             bool curr_activation = patch_activations[IND * CUDAAllostericPatchySwapInteraction::MAX_PATCHES + i];
             bool new_activation = MD_allosteric_controls[p_type][particle_states[IND]][i];
@@ -781,7 +796,7 @@ void CUDAAllostericPatchySwapInteraction::get_settings(input_file &inp) {
  */
 void CUDAAllostericPatchySwapInteraction::sync_GPU() {
     unsigned int* binding_states = new unsigned int[cudaParticleMemoryCount()];
-    bool* activation_states = new bool[cudaParticleMemoryCount() * MAX_PATCHES];
+    bool* activations = new bool[cudaParticleMemoryCount() * MAX_PATCHES];
 
     // loop particles
     for(int i = 0; i < realNumParticles(); i++) {
@@ -800,14 +815,14 @@ void CUDAAllostericPatchySwapInteraction::sync_GPU() {
 
             // get activation state
             bool activationState = particle->patches[p].is_active();
-            activation_states[i * MAX_PATCHES + p] = activationState;
+            activations[i * MAX_PATCHES + p] = activationState;
         }
         binding_states[i] = particleState;
     }
     // copy memory to gpu
     // destination, source
     CUDA_SAFE_CALL(cudaMemcpy(_particle_activations,
-                              activation_states,
+                              activations,
                               getActivationsArrayLength(),
                               cudaMemcpyHostToDevice));
     // copy memory to gpu
@@ -816,12 +831,32 @@ void CUDAAllostericPatchySwapInteraction::sync_GPU() {
                               binding_states,
                               getBindingStateArrayLength(),
                               cudaMemcpyHostToDevice));
+
+    delete[] activations;
+    delete [] binding_states;
+
 }
 
 /**
  * copies data from GPU to CPU
  */
 void CUDAAllostericPatchySwapInteraction::sync_host() {
+
+    //DEBUG: do activations copy properly?
+    bool* written_activations = new bool[MAX_PATCHES * realNumParticles()];
+    CUDA_SAFE_CALL(cudaMemcpy(written_activations, _particle_activations, getActivationsArrayLength() * sizeof (bool),
+                              cudaMemcpyDeviceToHost));
+    printf("Checking activations... \n");
+    for (int i = 0; i < realNumParticles(); i++){
+        AllostericPatchyParticle* pp = dynamic_cast<AllostericPatchyParticle*>(CONFIG_INFO->particles()[i]);
+        printf("Particle %i (type %i): ", i, CONFIG_INFO->particles()[i]->type);
+        for (int x = 0; x < pp->n_patches(); x++){
+            printf("%i,",written_activations[i * MAX_PATCHES + x]);
+        }
+        printf("\n");
+    }
+    delete[] written_activations;
+
     unsigned int* binding_states = new unsigned int[cudaParticleMemoryCount()];
     bool* activations = new bool[cudaParticleMemoryCount() * MAX_PATCHES];
     // copy memory from gpu to cpu
@@ -868,7 +903,10 @@ void CUDAAllostericPatchySwapInteraction::sync_host() {
                                      binding_states[i]);
             }
         }
+        delete[] bindingState;
     }
+    delete[] binding_states;
+    delete[] activations;
 //    for(int i = 0; i < AllostericPatchySwapInteraction::_N; i++) {
 //        AllostericPatchyParticle* particle = static_cast<AllostericPatchyParticle*>(CONFIG_INFO->particles()[i]);
 //        short particleState;
@@ -939,25 +977,28 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
     // allocate memory for patch activation states
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&_particle_activations,
                                            getActivationsArrayLength() * sizeof(bool)));
-    bool* unbound_state = new bool[MAX_PATCHES];
-    unsigned int* particle_states_empty = new unsigned int[N];
-    bool* all_activations = new bool[MAX_PATCHES * N];
-    std::fill(unbound_state, unbound_state + MAX_PATCHES, false);
-    std::fill(particle_states_empty, particle_states_empty + N, 0);
-    printf("Initializing particle activations...\n");
-    for (int i = 0; i < N; i++) {
-        AllostericPatchyParticle* pp = dynamic_cast<AllostericPatchyParticle*>(particles[i]);
-        printf("Particle %i (type %i): ", i, particles[i]->type);
-        for (int x = 0; x < pp->n_patches(); x++){
-            all_activations[i * MAX_PATCHES + x] = pp->patch_status(unbound_state, x);
-            printf("%i,",all_activations[i * MAX_PATCHES + x]);
-        }
-        printf("\n");
-    }
-    CUDA_SAFE_CALL(cudaMemcpy(_particle_binding_states, particle_states_empty,
-                              getBindingStateArrayLength() * sizeof(unsigned int), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_particle_activations, all_activations,
-                              getActivationsArrayLength() * sizeof(bool), cudaMemcpyHostToDevice));
+
+    // initialize activations and states
+    // commented out because the code does this in sync_GPU anyway
+//    bool* unbound_state = new bool[MAX_PATCHES];
+//    unsigned int* particle_states_empty = new unsigned int[N];
+//    bool* all_activations = new bool[MAX_PATCHES * N];
+//    std::fill(unbound_state, unbound_state + MAX_PATCHES, false);
+//    std::fill(particle_states_empty, particle_states_empty + N, 0);
+//    printf("Initializing particle activations...\n");
+//    for (int i = 0; i < N; i++) {
+//        AllostericPatchyParticle* pp = dynamic_cast<AllostericPatchyParticle*>(particles[i]);
+//        printf("Particle %i (type %i): ", i, particles[i]->type);
+//        for (int x = 0; x < pp->n_patches(); x++){
+//            all_activations[i * MAX_PATCHES + x] = pp->patch_status(unbound_state, x);
+//            printf("%i,",all_activations[i * MAX_PATCHES + x]);
+//        }
+//        printf("\n");
+//    }
+//    CUDA_SAFE_CALL(cudaMemcpy(_particle_binding_states, particle_states_empty,
+//                              getBindingStateArrayLength() * sizeof(unsigned int), cudaMemcpyHostToDevice));
+//    CUDA_SAFE_CALL(cudaMemcpy(_particle_activations, all_activations,
+//                              getActivationsArrayLength() * sizeof(bool), cudaMemcpyHostToDevice));
 
     //DEBUG: do activations copy properly?
 //    bool* written_activations = new bool[MAX_PATCHES * N];
@@ -973,9 +1014,9 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
 //        printf("\n");
 //    }
 
-    delete[] unbound_state;
-    delete[] particle_states_empty;
-    delete[] all_activations;
+//    delete[] unbound_state;
+//    delete[] particle_states_empty;
+//    delete[] all_activations;
 
     for(auto particle : particles) {
         delete particle;
