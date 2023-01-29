@@ -24,8 +24,6 @@ __constant__ int MD_patch_types[CUDAAllostericPatchySwapInteraction::MAX_SPECIES
 
 // patch a1 values (for orientation)
 __constant__ float4 MD_base_patch_a1s[CUDAAllostericPatchySwapInteraction::MAX_SPECIES][CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
-// patch a2 values (for orientation)
-__constant__ float4 MD_base_patch_a2s[CUDAAllostericPatchySwapInteraction::MAX_SPECIES][CUDAAllostericPatchySwapInteraction::MAX_PATCHES];
 // TODO: consider making this texture memory? discuss with Lorenzo?
 
 // allosteric control list
@@ -1072,7 +1070,6 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
 
         float4 base_patches[MAX_PATCHES];
         float4 patch_a1s[MAX_PATCHES];
-        float4 patch_a2s[MAX_PATCHES];
         // allocate memory for patch position
         for(int p = 0; p < n_patches; p++) {
             // patch position
@@ -1080,9 +1077,7 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
             base_patches[p] = make_c_number4(patch_position.x, patch_position.y, patch_position.z, 0);
             // patch orientation
             LR_vector a1 = _base_particle_types[i].patches[p].a1();
-            LR_vector a2 = _base_particle_types[i].patches[i].a2();
             patch_a1s[p] = make_c_number4(a1.x, a1.y, a1.z, 0);
-            patch_a2s[p] = make_c_number4(a2.x, a2.y, a2.z, 0);
         }
 
         // time to deal with allostery!
@@ -1128,10 +1123,7 @@ void CUDAAllostericPatchySwapInteraction::cuda_init(c_number box_side, int N) {
                                           patch_a1s,
                                           sizeof(float4) * n_patches,
                                           i * sizeof(float4) * MAX_PATCHES));
-        CUDA_SAFE_CALL(cudaMemcpyToSymbol(MD_base_patch_a2s,
-                                          patch_a2s,
-                                          sizeof(float4) * n_patches,
-                                          i * sizeof(float4) * MAX_PATCHES));
+
     }
 }
 

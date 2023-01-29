@@ -614,9 +614,8 @@ AllostericPatch AllostericPatchySwapInteraction::_process_patch_type(std::string
     // the binding strength. defaults to 1
     float strength = 1.0f;
     // patch angles.
-    //a1 is the patch orientation vector (should be tangent to the surface of the particle)
-    //a2 is the "up" vector, should be perpendicular to the surface of the particle
-    LR_vector a1, a2;
+    //a1 is the "up" vector, should be perpendicular to the surface of the particle
+    LR_vector a1;
     // the position of the patch relative to the center of the particle
     LR_vector position;
     string vec;
@@ -639,17 +638,16 @@ AllostericPatch AllostericPatchySwapInteraction::_process_patch_type(std::string
 
     // load patch angles and position vector
     a1 = getVector(obs_input,"a1");
-    a2 = getVector(obs_input,"a2");
     position = getVector(obs_input,"position");
 
     // normalize patch angle vectors, since vector magnitude really should not be relevant here
+    // vector will probably already be normalized but best to be sure
     a1 = a1 / a1.norm();
-    a2 = a2 / a2.norm();
 
     getInputString(obs_input, "allostery_conditional", allostery_conditional, 1); //1?
 
     // construct patch. can be a straight up object since this will be immutable
-    AllostericPatch loaded_patch(a1, a2, position, id, color, true, allostery_conditional, false);
+    AllostericPatch loaded_patch(a1, position, id, color, true, allostery_conditional, false);
 
     //printf("Loaded patch %d with color %d \n",loaded_patch.id,loaded_patch.color);
     // deallocate memory for file reader

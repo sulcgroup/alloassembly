@@ -66,8 +66,6 @@ void AllostericPatchyParticle::add_patch(AllostericPatch &patch, int position) {
 void AllostericPatchyParticle::_set_base_patches() {
     for(int i = 0; i < this->N_int_centers(); i++) {
         patches[i].a1().normalize();
-        patches[i].a2().normalize();
-        //patches[i] *= 0.5;
     }
 }
 
@@ -82,8 +80,6 @@ void AllostericPatchyParticle::set_positions() {
     for(int i = 0; i < this->n_patches(); i++)
     {
         this->int_centers[i] = this->orientation * this->patches[i].position();
-        this->patches[i].set_a1(this->orientationT * patches[i].a1_initial());
-        this->patches[i].set_a2(this->orientationT * patches[i].a2_initial());
 //        this->patches[i].set_a1(patches[i].a1_x * this->orientationT.v1) + (patches[i].a1_y * this->orientationT.v2) + (patches[i].a1_z * this->orientationT.v3); //possibly can be accelerated
 //        this->patches[i].set_a2(patches[i].a2_x * this->orientationT.v1) + (patches[i].a2_y * this->orientationT.v2) + (patches[i].a2_z * this->orientationT.v3); //possibly can be accelerated
 

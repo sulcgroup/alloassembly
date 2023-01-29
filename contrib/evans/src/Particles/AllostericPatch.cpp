@@ -21,12 +21,10 @@ AllostericPatch::AllostericPatch() {
 //    locked_energy = 0;
 }
 
-AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _a2_xyz, LR_vector _position, int _id, int _color,
-                                 bool _active, std::string allostery_conditional, bool activation_reversible) :
-                         _init_a1{_a1_xyz},
-                         _init_a2{_a2_xyz},
+AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _position, int _id, int _color, bool _active,
+                                 std::string allostery_conditional, bool activation_reversible) :
                          _a1{_a1_xyz},
-                         _a2{_a2_xyz},
+//                         _a2{_a2_xyz},
                         _position(_position),
                         id(_id), active(_active),
                         _color(_color), /*strength(strength),*/
@@ -99,29 +97,21 @@ int AllostericPatch::get_id() const {
 LR_vector AllostericPatch::a1() {
     return _a1;
 }
-
-LR_vector AllostericPatch::a2() {
-    return _a2;
-}
+//
+//LR_vector AllostericPatch::a2() {
+//    return _a2;
+//}
 
 void AllostericPatch::set_a1(LR_vector v) {
     _a1 = v;
 }
-
-void AllostericPatch::set_a2(LR_vector v) {
-    _a2 = v;
-}
+//
+//void AllostericPatch::set_a2(LR_vector v) {
+//    _a2 = v;
+//}
 
 LR_vector AllostericPatch::position() const {
     return _position;
-}
-
-LR_vector AllostericPatch::a1_initial() {
-    return _init_a1;
-}
-
-LR_vector AllostericPatch::a2_initial() {
-    return _init_a2;
 }
 
 bool AllostericPatch::flipped() const {

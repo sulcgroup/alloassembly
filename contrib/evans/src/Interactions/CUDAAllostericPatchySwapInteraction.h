@@ -36,7 +36,8 @@ protected:
 
     llint _step;
 public:
-    static const int MAX_PATCHES = 5;
+//    static const int MAX_PATCHES = 6;
+    static const int MAX_PATCHES = 24;
     static const int MAX_SPECIES = 5;
     static const int MAX_NEIGHS = 20;
     static const int MAX_STATES = 1 << MAX_PATCHES; // 2 ^ MAX_PATCHES
