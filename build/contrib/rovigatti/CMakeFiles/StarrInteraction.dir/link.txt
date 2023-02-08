@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g  -rdynamic -shared  -o ../../../contrib/rovigatti/StarrInteraction.so CMakeFiles/StarrInteraction.dir/src/Interactions/StarrInteraction.cpp.o 

@@ -1,0 +1,1043 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						8
+					],
+					"jsonFile" : "directory-.-Release-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						85,
+						92,
+						93,
+						94
+					]
+				},
+				{
+					"build" : "src",
+					"jsonFile" : "directory-src-Release-b6cf2213fc5053b67c22.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "src",
+					"targetIndexes" : 
+					[
+						30,
+						83,
+						84,
+						88
+					]
+				},
+				{
+					"build" : "contrib",
+					"childIndexes" : 
+					[
+						3,
+						4,
+						5,
+						6,
+						7
+					],
+					"jsonFile" : "directory-contrib-Release-341bdebe30af16482086.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "contrib"
+				},
+				{
+					"build" : "contrib/evans",
+					"jsonFile" : "directory-contrib.evans-Release-f890ee21e288ed177210.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 0,
+					"source" : "contrib/evans",
+					"targetIndexes" : 
+					[
+						2,
+						8,
+						63,
+						86
+					]
+				},
+				{
+					"build" : "contrib/randisi",
+					"jsonFile" : "directory-contrib.randisi-Release-7f30de37830abacec003.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 0,
+					"source" : "contrib/randisi",
+					"targetIndexes" : 
+					[
+						10,
+						29,
+						89
+					]
+				},
+				{
+					"build" : "contrib/romano",
+					"jsonFile" : "directory-contrib.romano-Release-617df9114ab8cb412722.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 0,
+					"source" : "contrib/romano",
+					"targetIndexes" : 
+					[
+						1,
+						22,
+						23,
+						24,
+						25,
+						28,
+						32,
+						33,
+						36,
+						37,
+						38,
+						39,
+						41,
+						44,
+						45,
+						48,
+						50,
+						51,
+						54,
+						59,
+						61,
+						62,
+						65,
+						66,
+						72,
+						74,
+						77,
+						78,
+						90
+					]
+				},
+				{
+					"build" : "contrib/rovigatti",
+					"jsonFile" : "directory-contrib.rovigatti-Release-1ea9ba00707da2aba22b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 0,
+					"source" : "contrib/rovigatti",
+					"targetIndexes" : 
+					[
+						0,
+						3,
+						5,
+						6,
+						7,
+						9,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19,
+						20,
+						21,
+						26,
+						27,
+						31,
+						34,
+						35,
+						40,
+						42,
+						43,
+						46,
+						47,
+						49,
+						52,
+						53,
+						55,
+						56,
+						57,
+						58,
+						60,
+						64,
+						67,
+						68,
+						69,
+						70,
+						71,
+						73,
+						75,
+						76,
+						79,
+						80,
+						81,
+						82,
+						87,
+						91
+					]
+				},
+				{
+					"build" : "contrib/tostiguerra",
+					"jsonFile" : "directory-contrib.tostiguerra-Release-314e11856ff71510d004.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 0,
+					"source" : "contrib/tostiguerra",
+					"targetIndexes" : 
+					[
+						4,
+						95
+					]
+				},
+				{
+					"build" : "oxpy",
+					"jsonFile" : "directory-oxpy-Release-87b20babcacf4ce63d1d.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "oxpy"
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8
+					],
+					"name" : "oxDNA",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19,
+						20,
+						21,
+						22,
+						23,
+						24,
+						25,
+						26,
+						27,
+						28,
+						29,
+						30,
+						31,
+						32,
+						33,
+						34,
+						35,
+						36,
+						37,
+						38,
+						39,
+						40,
+						41,
+						42,
+						43,
+						44,
+						45,
+						46,
+						47,
+						48,
+						49,
+						50,
+						51,
+						52,
+						53,
+						54,
+						55,
+						56,
+						57,
+						58,
+						59,
+						60,
+						61,
+						62,
+						63,
+						64,
+						65,
+						66,
+						67,
+						68,
+						69,
+						70,
+						71,
+						72,
+						73,
+						74,
+						75,
+						76,
+						77,
+						78,
+						79,
+						80,
+						81,
+						82,
+						83,
+						84,
+						85,
+						86,
+						87,
+						88,
+						89,
+						90,
+						91,
+						92,
+						93,
+						94,
+						95
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 6,
+					"id" : "AOInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-AOInteraction-Release-ff5ad7cfbb54e2b21f96.json",
+					"name" : "AOInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "AVBDepletion::@1b508556103eef181a9d",
+					"jsonFile" : "target-AVBDepletion-Release-b4e9843f4196beea7552.json",
+					"name" : "AVBDepletion",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "AllostericPatchySwapInteraction::@2d304e29ca8bc3d02bb6",
+					"jsonFile" : "target-AllostericPatchySwapInteraction-Release-c90deb9f869c790c524f.json",
+					"name" : "AllostericPatchySwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "Bonds::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-Bonds-Release-2b724d125f12d87d25d4.json",
+					"name" : "Bonds",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "CGNucleicAcidsInteraction::@af8d7aa699fd64416102",
+					"jsonFile" : "target-CGNucleicAcidsInteraction-Release-362ebfc249ba2b1c3889.json",
+					"name" : "CGNucleicAcidsInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CPAnalysis::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CPAnalysis-Release-952c90df79a8662eb17a.json",
+					"name" : "CPAnalysis",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CPMixtureInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CPMixtureInteraction-Release-ace59150be684951b599.json",
+					"name" : "CPMixtureInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAAOInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAAOInteraction-Release-f7f59a53af3848cff6ec.json",
+					"name" : "CUDAAOInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "CUDAAllostericPatchySwapInteraction::@2d304e29ca8bc3d02bb6",
+					"jsonFile" : "target-CUDAAllostericPatchySwapInteraction-Release-eb0ec8413cc665fbf33b.json",
+					"name" : "CUDAAllostericPatchySwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDACPMixtureInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDACPMixtureInteraction-Release-0e059d9f4e7bc6df079f.json",
+					"name" : "CUDACPMixtureInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "CUDADNA2ModInteraction::@de42d6c4d7c5fab4b203",
+					"jsonFile" : "target-CUDADNA2ModInteraction-Release-86e7784da6b089929155.json",
+					"name" : "CUDADNA2ModInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDADetailedPatchySwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDADetailedPatchySwapInteraction-Release-26bd5588ba9a4410ca7c.json",
+					"name" : "CUDADetailedPatchySwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDADetailedPolymerSwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDADetailedPolymerSwapInteraction-Release-6e985d638e6d4657344c.json",
+					"name" : "CUDADetailedPolymerSwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAFSInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAFSInteraction-Release-5be9ca6126e52b5945c7.json",
+					"name" : "CUDAFSInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDALevyInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDALevyInteraction-Release-d4a9796831924ba495cc.json",
+					"name" : "CUDALevyInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAMGInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAMGInteraction-Release-ddf51c95e56a0f88dff6.json",
+					"name" : "CUDAMGInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAPatchySwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAPatchySwapInteraction-Release-9555cf2bf627c8f47af6.json",
+					"name" : "CUDAPatchySwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAPolymerInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAPolymerInteraction-Release-dcad99210186f57a7db2.json",
+					"name" : "CUDAPolymerInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAPolymerSwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAPolymerSwapInteraction-Release-1f6d09cafe1e5927972f.json",
+					"name" : "CUDAPolymerSwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAStarrInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAStarrInteraction-Release-a8d755f973f2bb506318.json",
+					"name" : "CUDAStarrInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDATSPInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDATSPInteraction-Release-df4d7ae6c8317fc97ad6.json",
+					"name" : "CUDATSPInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "CUDAmWInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-CUDAmWInteraction-Release-d5e5954b8ba7e181c769.json",
+					"name" : "CUDAmWInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ChargedCylInteraction::@1b508556103eef181a9d",
+					"jsonFile" : "target-ChargedCylInteraction-Release-720b491e88ad601d6fc5.json",
+					"name" : "ChargedCylInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ChiralRodExplicit::@1b508556103eef181a9d",
+					"jsonFile" : "target-ChiralRodExplicit-Release-e2ff57fdd516b3b0ef44.json",
+					"name" : "ChiralRodExplicit",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ChiralRodInteraction::@1b508556103eef181a9d",
+					"jsonFile" : "target-ChiralRodInteraction-Release-2147d0f6dd4830ebf4d5.json",
+					"name" : "ChiralRodInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ClosestN::@1b508556103eef181a9d",
+					"jsonFile" : "target-ClosestN-Release-09caa91548cb7744e659.json",
+					"name" : "ClosestN",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "ConstructwiseBonds::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-ConstructwiseBonds-Release-d1ce24184b90ac7444ed.json",
+					"name" : "ConstructwiseBonds",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "ConstructwisePressure::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-ConstructwisePressure-Release-315b0300171c41f41c5e.json",
+					"name" : "ConstructwisePressure",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "CutVolume::@1b508556103eef181a9d",
+					"jsonFile" : "target-CutVolume-Release-8ef3cefadaa6cdeb8c1c.json",
+					"name" : "CutVolume",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "DNA2ModInteraction::@de42d6c4d7c5fab4b203",
+					"jsonFile" : "target-DNA2ModInteraction-Release-b9fa2fdfd7d252f6979e.json",
+					"name" : "DNA2ModInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "DNAnalysis::@145eef247bfb46b6828c",
+					"jsonFile" : "target-DNAnalysis-Release-9a81944c4fba0df7b887.json",
+					"name" : "DNAnalysis",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "DensityPressureProfile::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-DensityPressureProfile-Release-5d32a354e838fa6f77ee.json",
+					"name" : "DensityPressureProfile",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Depletion::@1b508556103eef181a9d",
+					"jsonFile" : "target-Depletion-Release-d18cd9fe712d07861734.json",
+					"name" : "Depletion",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "DepletionVolume::@1b508556103eef181a9d",
+					"jsonFile" : "target-DepletionVolume-Release-348537e22f4972dd61bb.json",
+					"name" : "DepletionVolume",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "DetailedPatchySwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-DetailedPatchySwapInteraction-Release-961630b2e3f1e57ade22.json",
+					"name" : "DetailedPatchySwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "DetailedPolymerSwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-DetailedPolymerSwapInteraction-Release-ea70c2fea90b87ffe376.json",
+					"name" : "DetailedPolymerSwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "DirkInteraction::@1b508556103eef181a9d",
+					"jsonFile" : "target-DirkInteraction-Release-d011f61fee320367abea.json",
+					"name" : "DirkInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "DirkInteraction2::@1b508556103eef181a9d",
+					"jsonFile" : "target-DirkInteraction2-Release-ed530b8aef855cde05a5.json",
+					"name" : "DirkInteraction2",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "DirkInteractionBias::@1b508556103eef181a9d",
+					"jsonFile" : "target-DirkInteractionBias-Release-cf0f30c8424771c72971.json",
+					"name" : "DirkInteractionBias",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "DirkInteractionSin::@1b508556103eef181a9d",
+					"jsonFile" : "target-DirkInteractionSin-Release-02a1eda222e035bff671.json",
+					"name" : "DirkInteractionSin",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "EmptyVolume::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-EmptyVolume-Release-8478114356a21df117d9.json",
+					"name" : "EmptyVolume",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Exhaust::@1b508556103eef181a9d",
+					"jsonFile" : "target-Exhaust-Release-849ab87b0a16051aaa7a.json",
+					"name" : "Exhaust",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "FSConf::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-FSConf-Release-27bfa464b335b451c2cc.json",
+					"name" : "FSConf",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "FSInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-FSInteraction-Release-5ac03b8223a5140f8564.json",
+					"name" : "FSInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "FakePressure::@1b508556103eef181a9d",
+					"jsonFile" : "target-FakePressure-Release-1e9eb1fc3d7a027c722b.json",
+					"name" : "FakePressure",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "FreeVolume::@1b508556103eef181a9d",
+					"jsonFile" : "target-FreeVolume-Release-4988a0af74e47e304c10.json",
+					"name" : "FreeVolume",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "GenericGrByInsertion::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-GenericGrByInsertion-Release-db972b1af74c461e94a6.json",
+					"name" : "GenericGrByInsertion",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "GraftedInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-GraftedInteraction-Release-7886624110ec592f34ca.json",
+					"name" : "GraftedInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Grow::@1b508556103eef181a9d",
+					"jsonFile" : "target-Grow-Release-5d1304b208f0f5e6f081.json",
+					"name" : "Grow",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "Gyradius::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-Gyradius-Release-d11fb1dd24423e08f130.json",
+					"name" : "Gyradius",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "HardIcoInteraction::@1b508556103eef181a9d",
+					"jsonFile" : "target-HardIcoInteraction-Release-adfa15c28c78eef80f1e.json",
+					"name" : "HardIcoInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Icosahedron::@1b508556103eef181a9d",
+					"jsonFile" : "target-Icosahedron-Release-aa6c825ef76b44992229.json",
+					"name" : "Icosahedron",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "LevyDelta::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-LevyDelta-Release-9e4da44ba11338a22c5e.json",
+					"name" : "LevyDelta",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "LevyInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-LevyInteraction-Release-f1d1fc112f6eb137ea24.json",
+					"name" : "LevyInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "MCMovePatchyShape::@1b508556103eef181a9d",
+					"jsonFile" : "target-MCMovePatchyShape-Release-3bc2875c883cc8ca511e.json",
+					"name" : "MCMovePatchyShape",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "MGAnalysis::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-MGAnalysis-Release-01856350dde63d10741f.json",
+					"name" : "MGAnalysis",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "MGAssemblyConf::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-MGAssemblyConf-Release-6bc2d8b31d91a85f62ea.json",
+					"name" : "MGAssemblyConf",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "MGInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-MGInteraction-Release-aaed5b0f5313e853e8fc.json",
+					"name" : "MGInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "MicrogelElasticity::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-MicrogelElasticity-Release-716a02d1c836deae03a6.json",
+					"name" : "MicrogelElasticity",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NDepletion::@1b508556103eef181a9d",
+					"jsonFile" : "target-NDepletion-Release-071b0356063c8c48f6c9.json",
+					"name" : "NDepletion",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "NathanNeighs::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-NathanNeighs-Release-814864f6decebfe9b49e.json",
+					"name" : "NathanNeighs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NematicS::@1b508556103eef181a9d",
+					"jsonFile" : "target-NematicS-Release-978a7a4ae21966b02185.json",
+					"name" : "NematicS",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "PLCluster::@1b508556103eef181a9d",
+					"jsonFile" : "target-PLCluster-Release-560656ebf72e1158114c.json",
+					"name" : "PLCluster",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "PLClusterTopology::@2d304e29ca8bc3d02bb6",
+					"jsonFile" : "target-PLClusterTopology-Release-e1ebc0f8f717c467d217.json",
+					"name" : "PLClusterTopology",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "PatchyBonds::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-PatchyBonds-Release-920c7c77025a24616174.json",
+					"name" : "PatchyBonds",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "PatchyShapeInteraction::@1b508556103eef181a9d",
+					"jsonFile" : "target-PatchyShapeInteraction-Release-be4d7b5e7d71f9181130.json",
+					"name" : "PatchyShapeInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "PatchyShapeParticle::@1b508556103eef181a9d",
+					"jsonFile" : "target-PatchyShapeParticle-Release-e44ff76c2fc81a49fac5.json",
+					"name" : "PatchyShapeParticle",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "PatchySwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-PatchySwapInteraction-Release-a003f208e3bb9ed44895.json",
+					"name" : "PatchySwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "PolydisperseLTInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-PolydisperseLTInteraction-Release-07941de7fc62dd62067b.json",
+					"name" : "PolydisperseLTInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "PolymerInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-PolymerInteraction-Release-9e4551825ab3f539b9ae.json",
+					"name" : "PolymerInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "PolymerSwapInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-PolymerSwapInteraction-Release-9c20f90aa78dfda753f8.json",
+					"name" : "PolymerSwapInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "RadialDensityProfile::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-RadialDensityProfile-Release-f4ca6556c3dc94c0fa9c.json",
+					"name" : "RadialDensityProfile",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Reappear::@1b508556103eef181a9d",
+					"jsonFile" : "target-Reappear-Release-5d041d85d8ade20e139a.json",
+					"name" : "Reappear",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "Remoteness::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-Remoteness-Release-cf6031bc4e960152715c.json",
+					"name" : "Remoteness",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "SideChange::@1b508556103eef181a9d",
+					"jsonFile" : "target-SideChange-Release-50232aaa263f9ffa7967.json",
+					"name" : "SideChange",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "StarrConf::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-StarrConf-Release-c6eb2203f1801bd513e6.json",
+					"name" : "StarrConf",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "StarrInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-StarrInteraction-Release-69cdad4fb034baccb0bb.json",
+					"name" : "StarrInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Swap::@1b508556103eef181a9d",
+					"jsonFile" : "target-Swap-Release-792dce3df1c23c18fc77.json",
+					"name" : "Swap",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Swim::@1b508556103eef181a9d",
+					"jsonFile" : "target-Swim-Release-b25fe203fb45d0c560c1.json",
+					"name" : "Swim",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "TSPAnalysis::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-TSPAnalysis-Release-089466f14850f68dea40.json",
+					"name" : "TSPAnalysis",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "TSPInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-TSPInteraction-Release-5d6b8545ce98be8098ad.json",
+					"name" : "TSPInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "VoidPercolation::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-VoidPercolation-Release-9b4a567b3192c77c1f3b.json",
+					"name" : "VoidPercolation",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "Widom::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-Widom-Release-3153573a0b28556dff4b.json",
+					"name" : "Widom",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "common::@145eef247bfb46b6828c",
+					"jsonFile" : "target-common-Release-47287e3a090d6d560657.json",
+					"name" : "common",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "confGenerator::@145eef247bfb46b6828c",
+					"jsonFile" : "target-confGenerator-Release-03051b192e5575e9135e.json",
+					"name" : "confGenerator",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "docs::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-docs-Release-ba7ef5ed5668b6fc5bda.json",
+					"name" : "docs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "evans::@2d304e29ca8bc3d02bb6",
+					"jsonFile" : "target-evans-Release-6cb598e86ba379b5bba0.json",
+					"name" : "evans",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "mWInteraction::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-mWInteraction-Release-700cd162655f993cbabc.json",
+					"name" : "mWInteraction",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "oxDNA::@145eef247bfb46b6828c",
+					"jsonFile" : "target-oxDNA-Release-3fddd56025db3b48b728.json",
+					"name" : "oxDNA",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "randisi::@de42d6c4d7c5fab4b203",
+					"jsonFile" : "target-randisi-Release-c9490cae63d2d3dcb376.json",
+					"name" : "randisi",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "romano::@1b508556103eef181a9d",
+					"jsonFile" : "target-romano-Release-1049e8ca96a47291193e.json",
+					"name" : "romano",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "rovigatti::@8c6a0a773379a755f49b",
+					"jsonFile" : "target-rovigatti-Release-94efc42793ef4dd16f4f.json",
+					"name" : "rovigatti",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test-Release-e953b7084faf50762dcf.json",
+					"name" : "test",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_quick::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_quick-Release-1ca93d722afdb9999bab.json",
+					"name" : "test_quick",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_run::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_run-Release-49f215d0ba3287ad9e1e.json",
+					"name" : "test_run",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "tostiguerra::@af8d7aa699fd64416102",
+					"jsonFile" : "target-tostiguerra-Release-0d45ba8c47a61d79645c.json",
+					"name" : "tostiguerra",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/josh/git/alloassembly/build",
+		"source" : "/home/josh/git/alloassembly"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

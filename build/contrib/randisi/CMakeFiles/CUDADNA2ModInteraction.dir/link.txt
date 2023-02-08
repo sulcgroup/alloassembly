@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,CUDADNA2ModInteraction.so -o ../../../contrib/randisi/CUDADNA2ModInteraction.so CMakeFiles/CUDADNA2ModInteraction.dir/src/Interactions/DNA2ModInteraction.cpp.o CMakeFiles/CUDADNA2ModInteraction.dir/src/Interactions/CUDADNA2ModInteraction_generated_CUDADNA2ModInteraction.cu.o 

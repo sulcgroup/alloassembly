@@ -21,15 +21,14 @@ AllostericPatch::AllostericPatch() {
 //    locked_energy = 0;
 }
 
-AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _position, int _id, int _color, bool _active,
-                                 std::string allostery_conditional, bool activation_reversible) :
+AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _position, int _id, int color, int state_var,
+                                 int activation_var) :
                          _a1{_a1_xyz},
-//                         _a2{_a2_xyz},
+                         _state_var{state_var},
+                         _activation_var{activation_var},
                         _position(_position),
-                        id(_id), active(_active),
+                        id(_id),
                         _color(_color), /*strength(strength),*/
-                        allostery_conditional(allostery_conditional),
-                        activation_reversible(activation_reversible),
                         _flipped(false),
                         bound{false} {
 //    a1_x = _a1_xyz.x;
@@ -50,10 +49,6 @@ AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _position, int _id
 
 int AllostericPatch::get_color() const {
     return _color;
-}
-
-std::string AllostericPatch::get_allosteric_conditional() const {
-    return allostery_conditional;
 }
 
 //bool AllostericPatch::locked_to(int particle_id,int patch_id) const {
@@ -82,7 +77,7 @@ void AllostericPatch::set_active(bool bNewVal) {
 
 bool AllostericPatch::toggle_active()
 {
-    if (this->activation_reversible || !this->_flipped)
+    if (!this->_flipped)
     {
         this->active = !this->active;
         this->_flipped = true;
@@ -97,18 +92,26 @@ int AllostericPatch::get_id() const {
 LR_vector AllostericPatch::a1() {
     return _a1;
 }
-//
-//LR_vector AllostericPatch::a2() {
-//    return _a2;
-//}
 
 void AllostericPatch::set_a1(LR_vector v) {
     _a1 = v;
 }
-//
-//void AllostericPatch::set_a2(LR_vector v) {
-//    _a2 = v;
-//}
+
+int AllostericPatch::state_var() const {
+    return _state_var;
+}
+
+int AllostericPatch::activation_var() const {
+    return _activation_var;
+}
+
+bool AllostericPatch::is_allosterically_controlled() const {
+    return activation_var() != 0;
+}
+
+bool AllostericPatch::is_allosteric_controller() const {
+    return _state_var != 0;
+}
 
 LR_vector AllostericPatch::position() const {
     return _position;

@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,ClosestN.so -o ../../../contrib/romano/ClosestN.so CMakeFiles/ClosestN.dir/src/Observables/ClosestN.cpp.o 

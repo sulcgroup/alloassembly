@@ -6,11 +6,10 @@
 #ifndef OXDNA_ALLOSTERICPATCHYSWAPINTERACTION_H
 #define OXDNA_ALLOSTERICPATCHYSWAPINTERACTION_H
 
-// macro grabbed from https://stackoverflow.com/a/2249738
-#define GET_BIT(n,k) (n & ( 1 << k )) >> k
 
 #include "../../../../src/Interactions/BaseInteraction.h"
 #include "../Particles/AllostericPatchyParticle.h"
+
 class AllostericPatchySwapInteraction : public BaseInteraction {
 protected:
     /// Number of particles of each species
@@ -30,6 +29,9 @@ protected:
 //    std::vector<std::vector<int>> _base_patch_positions;
 //    /// Base position of the patches for each particle species
 //    std::vector<std::vector<LR_vector>> _base_patch_positions;
+
+    std::map<int, StateTransitionMap> _state_transition_maps;
+    std::map<int, ActivationUpdateMap> _activation_update_maps;
 
     std::string _interaction_matrix_file;
 
@@ -85,6 +87,7 @@ protected:
     AllostericPatch _process_patch_type(std::string input_string);
     AllostericPatchyParticle _process_particle_type(std::string input_string);
 
+    void _process_state_transition_map(int ptype);
 
     inline std::vector<PatchyBond> &_particle_bonds(BaseParticle *p) {
         return static_cast<AllostericPatchyParticle *>(p)->bonds;
@@ -103,6 +106,8 @@ public:
 
     virtual void get_settings(input_file &inp);
     virtual void init();
+
+    void step();
 
     virtual void allocate_particles(std::vector<BaseParticle *> &particles);
 

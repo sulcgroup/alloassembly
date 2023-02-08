@@ -148,7 +148,8 @@ public:
 
 	void _set_base_patches();
 
-    void init_allostery();
+    void init_allostery(int state_size, std::vector<std::array<unsigned short, 4>> *transitionMap,
+                        std::set<int> **updateMap);
 
 public:
     AllostericPatchyParticle(int N_patches, int type);
@@ -181,11 +182,7 @@ public:
 	void set_lock(int patch_idx, int particle=-1,int patch=-1,number energy=0, bool ignore_refresh=false);
 	void unlock(int patch_idx, bool ignore_refresh=false);
 
-	virtual bool patch_status(bool* binding_status, int patch_idx) const;
-
-	virtual void update_active_patches(int toggle_idx);
-
-	bool* get_binding_state() const;
+    virtual void update_active_patches(int oldState);
 
 };
 
@@ -201,25 +198,11 @@ public:
 		this->copy_from(p);
 	}
 
-	void copy_from(const BaseParticle &bb);
+	void copy_from(const BaseParticle &bb);;
 
-	bool patch_status(bool* binding_status, int patch_idx) const{
-	//		return this->patch_status(bindingstatus, this->patches[patch_idx].allostery_conditional);
-			bool status = this->patch_status(binding_status, this->patches[patch_idx].allostery_conditional);
-			//DEBUG LOGGING - might actually want to keep some of this in
-			std::string status_str = "[";
-			for (int i = 0; i < this->N_patches; i++) {
-				status_str += (binding_status[i] ? " T" : " F");
-			}
-			status_str += "]";
-			if ( this->patches[patch_idx].allostery_conditional != "true") {
-				OX_LOG(Logger::LOG_INFO, "Patch %d of particle type %d with binding state %s will be %s according to patch logic \"%s\".", patch_idx, this->type, status_str.c_str(), std::to_string(status).c_str(), this->patches[patch_idx].allostery_conditional.c_str());
-			}
-			return status;
-		};
-	bool patch_status(bool* particle_status, std::string logic) const;
-	void update_active_patches(int toggle_idx);
-    void init_allostery();
+    void update_active_patches(int oldState);
+    void init_allostery(int state_size, std::vector<std::array<unsigned short, 4>> *transitionMap,
+                        std::set<int> **updateMap);
 };
 
 class AdvAllosteryPatchyShapeParticle : public AllostericPatchyParticle{

@@ -122,6 +122,14 @@ void AllostericPatchySwapInteraction::init() {
     _sqr_rcut = SQR(_rcut);
 }
 
+void AllostericPatchySwapInteraction::step() {
+    for (BaseParticle* p : CONFIG_INFO->particles()){
+        AllostericPatchyParticle *pp = dynamic_cast<AllostericPatchyParticle *>(p);
+        int r = (int) (float(rand() / RAND_MAX) * STATE_TRANSITION_SUBDIV);
+        pp->do_state_transition(r);
+    }
+}
+
 number AllostericPatchySwapInteraction::_spherical_patchy_two_body(BaseParticle *p, BaseParticle *q, bool compute_r, bool update_forces) {
     number sqr_r = _computed_r.norm();
     if(sqr_r > _sqr_rcut) {
@@ -209,8 +217,8 @@ number AllostericPatchySwapInteraction::_patchy_two_body_point(BaseParticle *p, 
                         }
                         // if the two patches are not already bound
                         if (!pp->patches[p_patch_idx].bound) {
-                            pp->update_active_patches(p_patch_idx);
-                            qq->update_active_patches(q_patch_idx);
+                            pp->set_patch_bound(p_patch_idx);
+                            qq->set_patch_bound(q_patch_idx);
                         }
 
                         if (update_forces) {
@@ -593,6 +601,7 @@ void AllostericPatchySwapInteraction::_load_patchy_particle_files(std::string &p
 
         _base_patch_positions[particle_idx] = particle.int_centers; // cache patch positions so CUDA has access to them
         particle_idx++;
+        // increment particle name key string
         snprintf(particle_no, 1020, "particle_%d", particle_idx);
     }
 
@@ -613,6 +622,10 @@ AllostericPatch AllostericPatchySwapInteraction::_process_patch_type(std::string
     int color;
     // the binding strength. defaults to 1
     float strength = 1.0f;
+    // state var corresponding to whether this patch is bound or not
+    int state_var = 0;
+    // state var corresponding to whether this patch is active or not
+    int activation_var = 0;
     // patch angles.
     //a1 is the "up" vector, should be perpendicular to the surface of the particle
     LR_vector a1;
@@ -636,6 +649,9 @@ AllostericPatch AllostericPatchySwapInteraction::_process_patch_type(std::string
     getInputInt(obs_input,"color",&color,1);
     getInputFloat(obs_input,"strength",&strength,1); // currently unused
 
+    getInputInt(obs_input, "state_var", &state_var, 0);
+    getInputInt(obs_input, "activation_var", &activation_var, 0);
+
     // load patch angles and position vector
     a1 = getVector(obs_input,"a1");
     position = getVector(obs_input,"position");
@@ -644,10 +660,12 @@ AllostericPatch AllostericPatchySwapInteraction::_process_patch_type(std::string
     // vector will probably already be normalized but best to be sure
     a1 = a1 / a1.norm();
 
-    getInputString(obs_input, "allostery_conditional", allostery_conditional, 1); //1?
+//    getInputString(obs_input, "allostery_conditional", allostery_conditional, 1); //1?
+
+
 
     // construct patch. can be a straight up object since this will be immutable
-    AllostericPatch loaded_patch(a1, position, id, color, true, allostery_conditional, false);
+    AllostericPatch loaded_patch(a1, position, id, 0, 0, 0);
 
     //printf("Loaded patch %d with color %d \n",loaded_patch.id,loaded_patch.color);
     // deallocate memory for file reader
@@ -661,6 +679,8 @@ AllostericPatchyParticle AllostericPatchySwapInteraction::_process_particle_type
     input_file *obs_input = Utils::get_input_file_from_string(input_string);
     int type;
     getInputInt(obs_input,"type",&type,1);
+
+    int state_size = 0;
 
     // init a vector to store patches for this particle
     std::vector<AllostericPatch > particle_patches;
@@ -689,13 +709,59 @@ AllostericPatchyParticle AllostericPatchySwapInteraction::_process_particle_type
         p.add_patch(*i,position);
         position++;
     }
+
     p._set_base_patches();
-    p.init_allostery();
+
+    // if the patch is allosteric
+    if ((getInputInt(obs_input, "state_size", &state_size, 0) == KEY_FOUND) && state_size > 0){
+        _process_state_transition_map(type);
+        _activation_update_maps[type] = new std::set<int>[state_size * state_size];
+        p.init_allostery(state_size, &_state_transition_maps[type], &_activation_update_maps[type]);
+
+    }
 
 //	ParticleStateChange test_change(default_state, 2, 0);
 
 //	std::vector<int> t = (*p.allostery_map)[test_change];
     return p;
+}
+
+/**
+ * Reads a state transition probability map from a text file and emplaces
+ * it in the object's map of transition probability maps
+ * @param ptype
+ */
+void AllostericPatchySwapInteraction::_process_state_transition_map(int ptype) {
+
+    char transition_map_file_name[1024]; //instantiate C string buffer - 1024 chars should be enough
+    snprintf(transition_map_file_name, 1020, "particle_%d_statetransition.txt", ptype);
+
+    ifstream fin;
+    fin.open(transition_map_file_name);
+
+    // create state transition map
+    StateTransitionMap stateTransitionMap;
+
+    std::string line;
+    while (getline(fin, line)){
+        int pidx = 0;
+        std::array<unsigned int, STATE_TRANSITION_SUBDIV> statemap;
+        istringstream strstream(line);
+        while (strstream >> statemap[pidx]){
+            if (pidx > STATE_TRANSITION_SUBDIV){
+                throw oxDNAException("Too long line #%d, transition map file %s", stateTransitionMap.size(), transition_map_file_name);
+            }
+            pidx++;
+        }
+        if (pidx != STATE_TRANSITION_SUBDIV){
+            throw oxDNAException("Too short line #%d, transition map file %s", stateTransitionMap.size(), transition_map_file_name);
+        }
+        stateTransitionMap.push_back(statemap);
+    }
+
+    fin.close();
+    // emplace state transition map in map (too many maps!)
+    _state_transition_maps[ptype] = stateTransitionMap;
 }
 
 //std::vector<LR_vector> AllostericPatchySwapInteraction::_parse_base_patches(std::string filename, int N_patches) {

@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g  -rdynamic -shared  -o ../../../contrib/rovigatti/PatchySwapInteraction.so CMakeFiles/PatchySwapInteraction.dir/src/Interactions/PatchySwapInteraction.cpp.o 

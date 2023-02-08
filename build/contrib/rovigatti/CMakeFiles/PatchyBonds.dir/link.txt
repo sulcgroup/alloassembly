@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g  -rdynamic -shared  -o ../../../contrib/rovigatti/PatchyBonds.so CMakeFiles/PatchyBonds.dir/src/Observables/PatchyBonds.cpp.o 

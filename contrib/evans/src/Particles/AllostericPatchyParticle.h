@@ -7,7 +7,27 @@
 
 #include "../../../../src/Particles/PatchyParticle.h"
 #include "AllostericPatch.h"
-#include "ParticleStateChange.h"
+
+#define STATE_TRANSITION_SUBDIV 4
+
+
+// macro grabbed from https://stackoverflow.com/a/2249738
+#define GET_BIT(n,k) (n & ( 1 << k )) >> k
+
+
+
+
+/** the State Transition Map is a probabilistic map of how likely the particle is to transition from any given state
+    to a different state. the index of the outer vector is the state, and the inner index is probabiliistic. to
+    determine if a state transition happens the program generates a random number from 0 to STATE_TRANSITION_SUBDIV
+    and transitions the particle state to the state at that index
+ */
+typedef std::vector<std::array<unsigned int, STATE_TRANSITION_SUBDIV>> StateTransitionMap;
+
+/// the Activation Update Map is a flattened 2d array where the x and y keys are "before" and "after" states
+/// and the values are the indexes of patches that will have their activations flipped when the particle
+/// flips from state x to state y
+typedef std::set<int>* ActivationUpdateMap;
 
 /**
  * An allosteric patchy particle
@@ -17,7 +37,10 @@
  */
 class AllostericPatchyParticle : public BaseParticle {
 protected:
-    std::unordered_map<ParticleStateChange, std::vector<int>>* allostery_map;
+    unsigned int _state;
+    int _state_size;
+    StateTransitionMap* _transitionMap;
+    ActivationUpdateMap* _updateMap;
 public:
     std::vector<PatchyBond> bonds;
     //LR_vector *_base_patch_positions;
@@ -27,9 +50,8 @@ public:
 
     void _set_base_patches();
 
-    void init_allostery();
+    void init_allostery(int state_size, StateTransitionMap *transitionMap, ActivationUpdateMap *updateMap);
 
-public:
     AllostericPatchyParticle(int N_patches, int type);
     AllostericPatchyParticle(const AllostericPatchyParticle &b) : AllostericPatchyParticle(b.n_patches(), b.type)
     {
@@ -58,17 +80,17 @@ public:
 //    void set_lock(int patch_idx, int particle=-1,int patch=-1,number energy=0, bool ignore_refresh=false);
 //    void unlock(int patch_idx, bool ignore_refresh=false);
 
-    virtual bool patch_status(bool* binding_status, int patch_idx) const;
-    bool patch_status(bool* particle_status, std::string logic) const;
 
+    void update_active_patches(int oldState);
+    void set_patch_bound(int pidx);
 
-        virtual void update_active_patches(int toggle_idx);
-
-    bool* get_binding_state() const;
+    unsigned int get_state() const;
+    void set_state(unsigned int new_state);
     int state_size() const;
     int n_patches() const;
     int n_states() const;
-    bool get_state_change_result(const ParticleStateChange &change, int patch_idx) const;
+
+    int do_state_transition(int rand_idx);
 
 };
 

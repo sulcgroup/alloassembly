@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,SideChange.so -o ../../../contrib/romano/SideChange.so CMakeFiles/SideChange.dir/src/Backends/MCMoves/SideChange.cpp.o 

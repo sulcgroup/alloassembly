@@ -22,16 +22,13 @@ protected:
 //    int locked_to_patch; //id of the particle this patch is bound to; used to make sure 1 patch is only in 1 interaction
 //    number locked_energy;
 
+    // index of state variable that corresponds to whether this patch is bound or not
+    int _state_var;
+    // index of state variable that corresponds to whether this patch is active or not
+    int _activation_var;
+
     int _color; //this is the color of the patch
 //    number strength;  //sets the strength of the interaction
-
-    // this is a string representing a conditional that can activate/deactivate the patch
-    // default value true means that the patch is always active
-    // important to note that this var will be processed to create the particle's overall
-    // control table; it is not directly in the simulation
-    std::string allostery_conditional;
-
-    bool activation_reversible; //NOT YET IMPLEMENTED
 
     bool _flipped;
 public:
@@ -40,14 +37,13 @@ public:
 
     AllostericPatch();
 
-    AllostericPatch(LR_vector a1_xyz, LR_vector position, int id, int color, bool active,
-                    std::string allostery_conditional, bool activation_reversible);
+    AllostericPatch(LR_vector a1_xyz, LR_vector position, int id, int color, int state_var,
+                    int activation_var);
 
 //    bool is_locked() const;
 
     int get_color() const;
     int get_id() const;
-    std::string get_allosteric_conditional() const;
 
 //    bool locked_to(int particle_id,int patch_id) const;
 //    bool locked_to_particle_id(int particle_id) const;
@@ -67,6 +63,11 @@ public:
     bool toggle_active();
     bool flipped() const;
     int color() const;
+
+    int state_var() const;
+    int activation_var() const;
+    bool is_allosterically_controlled() const;
+    bool is_allosteric_controller() const;
 };
 
 #endif //OXDNA_ALLOSTERICPATCH_H

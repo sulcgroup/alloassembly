@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g  -rdynamic -shared  -o ../../../contrib/rovigatti/TSPAnalysis.so CMakeFiles/TSPAnalysis.dir/src/Observables/TSPAnalysis.cpp.o 

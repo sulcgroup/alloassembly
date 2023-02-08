@@ -3,7 +3,6 @@
 //
 
 #include "AllostericPatchyParticle.h"
-#include "ParticleStateChange.h"
 
 /**
  * elementwise comparison of two LR_vector objects. I'm honestly a bit shocked this function doesn't already exist
@@ -28,7 +27,8 @@ AllostericPatchyParticle::AllostericPatchyParticle(int _N_patches, int _type) : 
 
 
 AllostericPatchyParticle::~AllostericPatchyParticle() {
-
+    // DO NOT DELETE MAP POINTERS!!!
+    // those were allocated elsewhere and will be deallocated elsewhere
 }
 
 void AllostericPatchyParticle::copy_from(const BaseParticle &b)
@@ -47,7 +47,9 @@ void AllostericPatchyParticle::copy_from(const BaseParticle &b)
         this->patches[i] = bb->patches[i];
     }
     this->int_centers = b.int_centers;
-    allostery_map = bb->allostery_map;
+    _transitionMap = bb->_transitionMap;
+    _state_size = bb->state_size();
+    _state = bb->get_state();
 }
 
 void AllostericPatchyParticle::add_patch(AllostericPatch &patch, int position) {
@@ -211,102 +213,18 @@ void parse_boolean_statement(bool &status, bool operand, char &op){ //0/10 funct
     op = 0; //reset operation
 }
 
-bool AllostericPatchyParticle::patch_status(bool* binding_status, int patch_idx) const {
-    return patch_status(binding_status, patches[patch_idx].get_allosteric_conditional());
+void AllostericPatchyParticle::set_patch_bound(int pidx) {
+    patches[pidx].bound = true;
+    if (patches[pidx].is_allosteric_controller()){
+        int var = patches[pidx].state_var();
+        // set var to true
+        _state |= 1 << var;
+    }
 }
 
+void AllostericPatchyParticle::update_active_patches(int oldState){
+    int newState = get_state();
 
-bool AllostericPatchyParticle::patch_status(bool* particle_status, std::string logic) const{
-    if (logic == "true"){
-        return true;
-    }
-    else if (logic == "false") {
-        return false;
-    }
-    //	int paren_count = 0;
-    int paren_count = 0;
-    std::string::iterator paren_start;
-    std::string numstr;
-    bool prefix = true;
-    bool negate_flag = true; // default to no negation
-    char op = 0;
-    for (std::string::iterator it = logic.begin(); it != logic.end(); ++it) {
-        if (*it == '('){
-            if (paren_count == 0)
-            {
-                paren_start = it; //should invoke copy constructor
-            }
-            paren_count++;
-        }
-        else if (*it == ')') {
-            paren_count--;
-            if (paren_count == 0)
-            {
-                std::string subexpr(paren_start + 1, it);
-                bool paren_statement_val = this->patch_status(particle_status, subexpr) == negate_flag;
-                parse_boolean_statement(prefix, paren_statement_val, op);
-            }
-        }
-        else if (paren_count == 0) { //if program is mid-parentheses, continue until it finds a close-paren
-            if (*it == '!'){
-                negate_flag = false;
-                continue;
-
-            }
-            if (int('0') <= *it && *it <= int('9')) {
-                numstr += *it;
-                continue;
-            }
-            if (*it == '&' || *it == '|') {
-
-                op = *it;
-                //deliberately no "else" here; evaluating numstr can coexist w/ operators
-            }
-            if (numstr != ""){ // either whitespace or an operator terminate a logical statement
-                int patch = stoi(numstr);
-                if (patch >= this->n_patches()){
-                    throw oxDNAException("Patch index " + numstr + " out of bounds.");
-                }
-                bool val = particle_status[patch] == negate_flag;
-
-                parse_boolean_statement(prefix, val, op);
-
-                // clear numstr and negate_flag
-                negate_flag = true;
-                numstr = "";
-            }
-        }
-    }
-
-    //parse suffix
-    if (numstr != ""){ // either whitespace or an operator terminate a logical statement
-        int patch = stoi(numstr);
-        if (patch >= this->n_patches()){
-            throw oxDNAException("Patch index " + numstr + " out of bounds.");
-        }
-        bool val = particle_status[patch] == negate_flag;
-
-        parse_boolean_statement(prefix, val, op);
-    }
-
-    return prefix;
-}
-
-
-// WARNING: the array returned by this method allocates memory, which must be deallocated!
-bool* AllostericPatchyParticle::get_binding_state() const {
-    bool* particle_status = new bool[this->n_patches()];
-    for (int i = 0; i < this->n_patches(); i++)
-    {
-        particle_status[i] = this->patches[i].bound;
-    }
-    return particle_status;
-}
-
-
-void AllostericPatchyParticle::update_active_patches(int toggle_idx){
-    bool* particle_status = this->get_binding_state();
-    ParticleStateChange change(particle_status, this->n_patches(), toggle_idx);
     //DEBUGGING
     //	for (std::unordered_map<ParticleStateChange, std::vector<int>>::iterator it = this->allostery_map->begin(); it != this->allostery_map->end(); ++it)
     //	{
@@ -315,7 +233,7 @@ void AllostericPatchyParticle::update_active_patches(int toggle_idx){
     //
     //		}
     //	}
-    std::vector<int> updates = (*this->allostery_map)[change];
+    std::set<int> updates = (*this->_updateMap)[state_size() * oldState + newState];
     if (updates.size() == 0){
         return;
     }
@@ -324,7 +242,7 @@ void AllostericPatchyParticle::update_active_patches(int toggle_idx){
     std::string flips = "[";
     //#endif
     bool state_changed = false;
-    for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
+    for (std::set<int>::iterator it = updates.begin(); it != updates.end(); ++it)
     {
         bool a_before = this->patches[*it].is_active();
         bool a_after = this->patches[*it].toggle_active();
@@ -338,9 +256,9 @@ void AllostericPatchyParticle::update_active_patches(int toggle_idx){
     std::string status_before_str = "[";
     std::string status_after_str = "[";
     std::string new_activations = "[";
-    for (int i = 0; i < this->n_patches(); i++) {
-        status_before_str += (particle_status[i] ? " T" : " F");
-        status_after_str += (particle_status[i] != (i == toggle_idx) ? " T" : " F"); //right?
+    for (int i = 0; i < this->state_size(); i++) {
+        status_before_str += (GET_BIT(get_state(), i) ? " T" : " F");
+        status_after_str += (GET_BIT(get_state(), i) != (i == oldState) ? " T" : " F"); //right?
         new_activations += std::to_string(i) + ":" + (this->patches[i].is_active() ? "T " : "F ");
     }
     status_before_str += "]";
@@ -356,88 +274,104 @@ void AllostericPatchyParticle::update_active_patches(int toggle_idx){
     //don't need to delete particle_status b/c that will be done automatically when change goes out of scope
 }
 
-void AllostericPatchyParticle::init_allostery() {
-    std::unordered_map<ParticleStateChange, std::vector<int>>* allosteric_control = new std::unordered_map<ParticleStateChange, std::vector<int>>();
-    // construct allosteric control
-    for (int i = 0; i < pow(2, this->n_patches()); i++){
-        for (int iSwap = 0; iSwap < this->n_patches(); iSwap++)
-        {
-            bool* key = new bool[this->n_patches()];
-            for (int iPatch = 0; iPatch < this->n_patches(); iPatch++) {
-                key[iPatch] = i % int(pow(2, this->n_patches() - iPatch)) < pow(2, this->n_patches() - iPatch - 1);
-            }
-            ParticleStateChange* change = new ParticleStateChange(key, this->n_patches(), iSwap);
-            std::vector<int> affected_patches;
-            bool key_after[this->n_patches()];
-            // REALLY feels like there's a better way of doing this
-            for (int j = 0; j < this->n_patches(); j++) {
-                key_after[j] = key[j];
-            }
-            key_after[iSwap] = !key_after[iSwap];
+/**
+ * Initializes this particle's allosteric control
+ * @param transitionMap a pointer to an ALREADY GENERATED StateTransitionMap object which will be used to gen allsotery
+ * @param updateMap a pointer to an EMPTY StateTransitionMap which this method will populate
+ */
+void AllostericPatchyParticle::init_allostery(int state_size, StateTransitionMap *transitionMap,
+                                              ActivationUpdateMap *updateMap) {
+    _state_size = state_size;
+    // set map pointers
+    _transitionMap = transitionMap;
+    _updateMap = updateMap;
 
-            // loop through the patches on this particle
-            for (int iPatch = 0; iPatch < this->n_patches(); iPatch++){
-                // if the patch
-                bool patch_status_before = this->patch_status(key, iPatch);
-                bool patch_status_after = this->patch_status(key_after, iPatch);
-                if (patch_status_before != patch_status_after){
-                    affected_patches.push_back(iPatch);
+    // generate update map
+    for (int beforeState = 0; beforeState < state_size; beforeState++){
+        for (int afterState = 0; afterState < state_size; afterState++){
+            int idx = beforeState * state_size + afterState;
+            for (int pidx = 0; pidx < n_patches(); pidx++){
+                if (patches[pidx].is_allosterically_controlled()){
+                    // get absolute value of control idx
+                    // doesn't really matter whether it's positive or negative - only whether
+                    // the bit at that position changes
+                    int controlidx = abs(patches[pidx].activation_var());
+                    // if the bit at the control idx changes
+                    if (GET_BIT(beforeState, controlidx) != GET_BIT(afterState, controlidx)){
+                        (*_updateMap[idx]).emplace(pidx); // add to list of flips
+                    }
                 }
-            }
-            if (affected_patches.size() > 0)
-            {
-                (*allosteric_control)[*change] = affected_patches;
-            }
-            else {
-                delete change;
             }
         }
     }
 
     //initialize state
-    bool default_state[this->n_patches()];
+    _state = 0;
+
     for (int i = 0; i < this->n_patches(); i++){
-        default_state[i] = false; // default state = no bonding
+        if (this->patches[i].is_allosterically_controlled()){
+            int statevar = patches[i].activation_var();
+            // if statevar is negative, patch starts active. else, patch starts inactive
+            this->patches[i].set_active(statevar < 0);
+        }
+        else {
+            this->patches[i].set_active(true);
+        }
     }
-    for (int i = 0; i < this->n_patches(); i++){
-        this->patches[i].set_active(this->patch_status(default_state, i));
+}
+
+int AllostericPatchyParticle::do_state_transition(int rand_idx) {
+    unsigned int oldState = get_state();
+    _state = (*_transitionMap)[oldState][rand_idx];
+    if (_state != oldState){
+        update_active_patches(oldState);
     }
-    this->allostery_map = allosteric_control;
 }
 
 int AllostericPatchyParticle::n_patches() const {
     return patches.size();
 }
 
+unsigned int AllostericPatchyParticle::get_state() const {
+    return _state;
+}
+
+void AllostericPatchyParticle::set_state(unsigned int new_state) {
+    _state =  new_state; // set state
+    // update activations
+    for (int p = 0; p < n_patches(); p++){
+        int activator = patches[p].activation_var();
+        bool active;
+        if (activator == 0){
+            active = true;
+        }
+        else if (activator > 0){
+            active = GET_BIT(new_state, activator);
+        }
+        else {
+            active = !GET_BIT(new_state, -activator);
+        }
+        // update patch activation state
+        patches[p].set_active(active);
+        // if the patch has a binding state var, update binding state to reflect
+        if (patches[p].state_var() != 0) {
+            patches[p].bound = GET_BIT(new_state, patches[p].state_var());
+        }
+        // nothing to do otherwise
+    }
+}
+
 /**
- * this function just calls n_patches() for now but is included seperately for potential future-proofing
  * @return the size of the particle's state, in # bits
  */
 int AllostericPatchyParticle::state_size() const {
-    return n_patches();
+    return _state_size;
 }
 
 /**
  * @return the number of possible states, which is 2^state_size
  */
 int AllostericPatchyParticle::n_states() const {
-    return pow(2, n_patches());
+    return 1 << state_size();
 }
 
-/**
- * returns the effect of change on the patch at patch_idx. returns true if the patch will be flipped
- * false otherwise
- * @param change
- * @param patch_idx
- * @return
- */
-bool AllostericPatchyParticle::get_state_change_result(const ParticleStateChange &change, int patch_idx) const {
-    bool statechange; // good housekeeping
-    // if change is not in the allostery map, no change to activation state, so return false
-    if (allostery_map->find(change) == allostery_map->end())
-        statechange = false;
-    // otherwise, see if patch_idx is in the vector of patches that get swapped by change, according to the allostery map
-    else
-        statechange = std::find(allostery_map->at(change).begin(), allostery_map->at(change).end(), patch_idx) != allostery_map->at(change).end();
-    return statechange;
-}

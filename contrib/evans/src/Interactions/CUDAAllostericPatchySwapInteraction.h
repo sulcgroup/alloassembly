@@ -7,6 +7,7 @@
 #define OXDNA_CUDAALLOSTERICPATCHYSWAPINTERACTION_H
 
 
+#include <curand_kernel.h>
 #include "CUDA/Interactions/CUDABaseInteraction.h"
 
 #include "AllostericPatchySwapInteraction.h"
@@ -20,6 +21,9 @@ struct swap_event;
 
 class CUDAAllostericPatchySwapInteraction: public CUDABaseInteraction, public AllostericPatchySwapInteraction {
 protected:
+    // rng (for state transitions)
+    curandState *_d_rand_state;
+
     c_number4 *_d_three_body_forces, *_d_three_body_torques;
     float *_d_patchy_eps = nullptr;
     float4 *_d_base_patches = nullptr;
@@ -29,10 +33,22 @@ protected:
     // each short is a patch binding state - 0 for unbound, 1 for bound
     // it's useful to store the binding states like this so that the binding state short
     // can be used to query the binding state transition map (MD_allosteric_controls)
-    unsigned int *_particle_binding_states = nullptr;
-    // we store patch activations as an array of booleans with length
-    // (num particles) x (max number of patches per particle) because it's simpler
-    bool *_particle_activations = nullptr;
+    unsigned int *_cu_particle_states = nullptr;
+
+    // flattened 3d array of particle activations as a function of type and state
+    // first axis is particle type, second is state index, third is patch index
+    // item at _particle_activation_map[type_idx * NUM_STATES * NUM_PATCHEs + state_idx * NUM_PATCHES + patch_idx
+    // will be true if particle type type_idx patch number patch_idx is active when the particle is in state state_idx
+    // this is effectively a method for mapping particle.patches[p]._activation_var to CUDA
+    bool* _cu_particle_activation_map = nullptr;
+
+    // flattened 3d array that expidites state transitions
+    // first axis is particle type, second axis is state, third is a table that the program rolls on to determine
+    // how the particle should change state
+    unsigned int* _cu_state_transition_map = nullptr;
+
+    // temporary variable to store patch activations
+    bool* _patch_activations = nullptr;
 
     llint _step;
 public:
@@ -87,6 +103,18 @@ public:
     int realNumParticles() const {
         return AllostericPatchySwapInteraction::_N;
     }
+
+    /**
+     * @return the largest particle state size in the simulation
+     */
+    int maxStateSize() const {
+        int iMaxSize = 0;
+        for (int i = 0; i < _N_particle_types; i++){
+            iMaxSize = std::max(iMaxSize, _base_particle_types[i].state_size());
+        }
+        return iMaxSize;
+    }
+
 };
 extern "C" BaseInteraction *make_CUDAAllostericPatchySwapInteraction() {
     return new CUDAAllostericPatchySwapInteraction();
