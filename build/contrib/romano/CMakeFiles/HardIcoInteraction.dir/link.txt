@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,HardIcoInteraction.so -o ../../../contrib/romano/HardIcoInteraction.so CMakeFiles/HardIcoInteraction.dir/src/Interactions/HardIcoInteraction.cpp.o CMakeFiles/HardIcoInteraction.dir/src/Particles/Icosahedron.cpp.o 

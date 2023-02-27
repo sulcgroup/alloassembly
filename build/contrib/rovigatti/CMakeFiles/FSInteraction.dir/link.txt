@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g  -rdynamic -shared  -o ../../../contrib/rovigatti/FSInteraction.so CMakeFiles/FSInteraction.dir/src/Interactions/FSInteraction.cpp.o 

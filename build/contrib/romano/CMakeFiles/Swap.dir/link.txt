@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,Swap.so -o ../../../contrib/romano/Swap.so CMakeFiles/Swap.dir/src/Backends/MCMoves/Swap.cpp.o 
