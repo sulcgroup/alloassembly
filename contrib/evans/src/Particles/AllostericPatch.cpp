@@ -21,14 +21,14 @@ AllostericPatch::AllostericPatch() {
 //    locked_energy = 0;
 }
 
-AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _position, int _id, int color, int state_var,
+AllostericPatch::AllostericPatch(LR_vector _a1_xyz, LR_vector _position, int id, int color, int state_var,
                                  int activation_var) :
                          _a1{_a1_xyz},
                          _state_var{state_var},
                          _activation_var{activation_var},
                         _position(_position),
-                        id(_id),
-                        _color(_color), /*strength(strength),*/
+                        id(id),
+                        _color(color), /*strength(strength),*/
                         _flipped(false),
                         bound{false} {
 //    a1_x = _a1_xyz.x;

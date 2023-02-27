@@ -18,7 +18,6 @@
 146964	148904	1660242365075985744	src/CMakeFiles/common_debug.dir/Interactions/RNAInteraction.cpp.o	d4dfdf41f6570e62
 2338	53509	1660242269661213004	src/CMakeFiles/common_debug.dir/CUDA/Backends/common_debug_generated_CUDABaseBackend.cu.o	4e6366a41c82c267
 6	16660	1662155908668968678	src/CMakeFiles/common.dir/CUDA/Thermostats/common_generated_CUDANoThermostat.cu.o	bc687882e2353d6c
-2	8246	1660460970524731883	contrib/evans/CMakeFiles/CUDAAllostericPatchySwapInteraction.dir/src/Interactions/CUDAAllostericPatchySwapInteraction_generated_CUDAAllostericPatchySwapInteraction.cu.o	60016ee565e2b70f
 12806	14349	1659712828783196473	contrib/rovigatti/CMakeFiles/CUDALevyInteraction.dir/src/Interactions/LevyInteraction.cpp.o	202ebe4125b56787
 13991	23810	1659596925579131816	/home/josh/git/alloassembly/build/contrib/rovigatti/CMakeFiles/CUDALevyInteraction.dir/src/Interactions/CUDALevyInteraction_generated_CUDALevyInteraction.cu.o	95dcdbbc3ca48921
 12953	22386	1659596924155158576	/home/josh/git/alloassembly/build/contrib/rovigatti/CMakeFiles/CUDACPMixtureInteraction.dir/src/Interactions/CUDACPMixtureInteraction_generated_CUDACPMixtureInteraction.cu.o	d7846394f401c098
@@ -150,7 +149,6 @@
 472032	473895	1662156365912974260	src/CMakeFiles/common.dir/Backends/Thermostats/ThermostatFactory.cpp.o	b2409e576388e25e
 151080	152875	1660242369048101173	src/CMakeFiles/common_debug.dir/Backends/MCMoves/MoveFactory.cpp.o	1a2ff40165881d3b
 427541	430421	1662156322432973729	src/CMakeFiles/common.dir/Utilities/Histogram.cpp.o	3521c19c4ebb6c21
-2	1339	1660460963625074100	contrib/evans/CMakeFiles/AllostericPatchySwapInteraction.dir/src/Particles/AllostericPatch.cpp.o	a2967280a63d7fee
 113546	115027	1660242331199001284	src/CMakeFiles/common_debug.dir/Forces/COMForce.cpp.o	6d1f078ebfb903e5
 460221	462471	1662156354488974120	src/CMakeFiles/common.dir/Observables/Configurations/Configuration.cpp.o	75ae9da8b06a63f2
 121528	122716	1660242338891224819	src/CMakeFiles/common_debug.dir/Observables/PotentialEnergy.cpp.o	67a3db05e85cb7c7
@@ -176,7 +174,6 @@
 136822	138706	1660242354879689441	src/CMakeFiles/common_debug.dir/Lists/VerletList.cpp.o	af98a1d5831b4508
 123460	125657	1660242341831310257	src/CMakeFiles/common_debug.dir/Observables/HBList.cpp.o	79a41b0566d682fd
 127434	128550	1660242344723394301	src/CMakeFiles/common_debug.dir/Observables/CoaxVariables.cpp.o	6e2b33cfbcbf0a18
-2	2792	1660460965076999478	contrib/evans/CMakeFiles/AllostericPatchySwapInteraction.dir/src/Interactions/AllostericPatchySwapInteraction.cpp.o	233f38135f3ac46e
 487134	488133	1662156380148974434	src/CMakeFiles/common.dir/Boxes/LeesEdwardsCubicBox.cpp.o	e94b397029116dcb
 488965	490402	1662156382420974461	src/CMakeFiles/DNAnalysis.dir/Managers/AnalysisManager.cpp.o	6e01770e6627417d
 4	15786	1660242231948117068	src/CMakeFiles/common_debug.dir/CUDA/Thermostats/common_debug_generated_CUDANoThermostat.cu.o	8409ef6b2596a3ad
@@ -259,7 +256,6 @@
 429868	432612	1662156324620973756	src/CMakeFiles/common.dir/Utilities/ConfigInfo.cpp.o	4e959371de402a90
 56922	388242	1662156280248973214	/home/josh/git/alloassembly/build/src/CMakeFiles/common.dir/CUDA/Lists/common_generated_CUDABinVerletList.cu.o	9d1133dfbf619eec
 15918	40373	1660242256528831380	/home/josh/git/alloassembly/build/src/CMakeFiles/common_debug.dir/CUDA/Interactions/common_debug_generated_CUDAPatchyInteraction.cu.o	e7de9670420aabcb
-2	8246	1660460970524731883	/home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/CUDAAllostericPatchySwapInteraction.dir/src/Interactions/CUDAAllostericPatchySwapInteraction_generated_CUDAAllostericPatchySwapInteraction.cu.o	60016ee565e2b70f
 480501	482226	1662156374240974361	src/CMakeFiles/common.dir/Interactions/HSInteraction.cpp.o	dfb7bae5424cba33
 4	880	1660239427730626957	src/CMakeFiles/oxDNA_debug.dir/__/contrib/evans/src/Particles/AllostericPatch.cpp.o	690e8b51f9ca7dfe
 463179	464851	1662156356864974149	src/CMakeFiles/common.dir/Observables/Configurations/JordanOutput.cpp.o	7d35b51cf6634702
@@ -300,17 +296,14 @@
 137697	140151	1660242356323731405	src/CMakeFiles/common_debug.dir/Backends/BackendFactory.cpp.o	d4b80880644adb5c
 454648	458034	1662156350048974066	src/CMakeFiles/common.dir/Observables/SaltExtrapolation.cpp.o	94ae096bea0a33ae
 1989	3697	1659712818131192815	contrib/rovigatti/CMakeFiles/Widom.dir/src/Observables/Widom.cpp.o	8e3bfedf5fd7b2d1
-8246	9985	1660460972268650052	contrib/evans/CMakeFiles/CUDAAllostericPatchySwapInteraction.dir/src/Interactions/AllostericPatchySwapInteraction.cpp.o	b47c6438fc24244e
 425593	427900	1662156319916973698	src/CMakeFiles/common.dir/Particles/Molecule.cpp.o	f29caaf746bfd84f
 462186	464269	1662156356284974142	src/CMakeFiles/common.dir/Observables/Configurations/TEPtclOutput.cpp.o	9b7d0418c2f630dc
 470972	472705	1662156364720974245	src/CMakeFiles/common.dir/Backends/Thermostats/SRDThermostat.cpp.o	b5054dcb980dcf40
 9985	10034	1660460972316647832	../contrib/evans/CUDAAllostericPatchySwapInteraction.so	1b7e2eefdf219db0
-8246	9546	1660460971828670507	contrib/evans/CMakeFiles/CUDAAllostericPatchySwapInteraction.dir/src/Particles/AllostericPatchyParticle.cpp.o	9cf4f681ccf1c809
 432974	434755	1662156326768973782	src/CMakeFiles/common.dir/Forces/SawtoothForce.cpp.o	c9bc88b3bfe30576
 2	1697	1659712816131192139	contrib/rovigatti/CMakeFiles/Bonds.dir/src/Observables/Bonds.cpp.o	ab4e9890fbff28c1
 25438	50701	1660242266857131518	/home/josh/git/alloassembly/build/src/CMakeFiles/common_debug.dir/CUDA/Interactions/common_debug_generated_CUDATEPInteraction.cu.o	eb9506f4052810b4
 464269	466115	1662156358128974165	src/CMakeFiles/common.dir/Lists/RodCells.cpp.o	61b41d6e35bb2402
-3	2232	1660460964517028129	contrib/evans/CMakeFiles/AllostericPatchySwapInteraction.dir/src/Particles/AllostericPatchyParticle.cpp.o	e78127012438f64b
 109869	110962	1660242327134883181	src/CMakeFiles/common_debug.dir/Managers/SimManager.cpp.o	e4e9c8d282e43fa7
 122717	124434	1660242340607274687	src/CMakeFiles/common_debug.dir/Observables/HBEnergy.cpp.o	adf2ded13a880c63
 77144	98918	1660242315070532593	src/CMakeFiles/common_debug.dir/CUDA/Backends/common_debug_generated_MD_CUDAMixedBackend.cu.o	775b3e3f22d4d1a9
@@ -390,8 +383,8 @@
 110644	112341	1660242328514923285	src/CMakeFiles/common_debug.dir/Utilities/Histogram.cpp.o	4f79000ad85fab10
 446404	450202	1662156342220973971	src/CMakeFiles/common.dir/Observables/HBEnergy.cpp.o	656c032a10500d97
 448229	451889	1662156343904973991	src/CMakeFiles/common.dir/Observables/OrderParameterValues.cpp.o	b996fa8f84044b1f
-151502	153423	1660242369596117098	src/CMakeFiles/common_debug.dir/Backends/MCMoves/VMMC.cpp.o	81084a6b4d1fa6d4
 152083	153201	1660242369376110705	src/CMakeFiles/common_debug.dir/Backends/MCMoves/ShapeMove.cpp.o	2b3c94e1786f118d
+151502	153423	1660242369596117098	src/CMakeFiles/common_debug.dir/Backends/MCMoves/VMMC.cpp.o	81084a6b4d1fa6d4
 115980	117479	1660242333651072541	src/CMakeFiles/common_debug.dir/Forces/MutualTrap.cpp.o	40972730d7f9211c
 482226	483858	1662156375876974381	src/CMakeFiles/common.dir/Interactions/PatchyInteraction.cpp.o	4587156a7d61bf38
 117592	118628	1660242334799105902	src/CMakeFiles/common_debug.dir/Forces/HardWall.cpp.o	a4aa175f5a5efd93
@@ -447,7 +440,6 @@
 10411	12281	1659712826715195755	contrib/rovigatti/CMakeFiles/DetailedPatchySwapInteraction.dir/src/Interactions/DetailedPatchySwapInteraction.cpp.o	d308188a02815841
 26120	36946	1659596938714887426	/home/josh/git/alloassembly/build/contrib/rovigatti/CMakeFiles/CUDAAOInteraction.dir/src/Interactions/CUDAAOInteraction_generated_CUDAAOInteraction.cu.o	e0f7879ebb9bd2ba
 125208	126608	1660242342779337806	src/CMakeFiles/common_debug.dir/Observables/PairForce.cpp.o	b4a9189f2a556952
-8246	9171	1660460971456687935	contrib/evans/CMakeFiles/CUDAAllostericPatchySwapInteraction.dir/src/Particles/AllostericPatch.cpp.o	bf6f3d68b6f66069
 480104	482714	1662156374728974367	src/CMakeFiles/common.dir/Interactions/TEPInteraction.cpp.o	2b3d40f0707deecf
 429729	429868	1662156321884973722	src/CMakeFiles/common.dir/Utilities/time_scales/time_scales.cpp.o	ee5664096f12aeb5
 112422	114395	1660242330566982917	src/CMakeFiles/common_debug.dir/PluginManagement/PluginManager.cpp.o	d4231b5efca83400
@@ -499,7 +491,7 @@
 6	18203	1662155910204968697	src/CMakeFiles/common.dir/CUDA/Thermostats/common_generated_CUDABaseThermostat.cu.o	7b1ccb5083217dfa
 137934	139742	1660242355915719548	src/CMakeFiles/common_debug.dir/Backends/SimBackend.cpp.o	49705026d77e3b55
 437651	439545	1662156331560973840	src/CMakeFiles/common.dir/Forces/RepulsiveSphere.cpp.o	6a1cd17e69013b5d
-1	701	1674971233336896399	build.ninja	ff2c8bbf2f5ca9b7
+1	701	1675877742519500609	build.ninja	ff2c8bbf2f5ca9b7
 423237	425653	1662156317664973671	src/CMakeFiles/common.dir/Observables/VectorAngle.cpp.o	9db4ddb9479fbbd4
 477517	478769	1662156370784974319	src/CMakeFiles/common.dir/Interactions/DNAInteraction_relax.cpp.o	92955640a0b3b17d
 478961	480540	1662156372552974341	src/CMakeFiles/common.dir/Interactions/RNAInteraction_relax.cpp.o	82feb2170a367bc8

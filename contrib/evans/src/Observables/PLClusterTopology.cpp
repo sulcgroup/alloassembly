@@ -8,7 +8,7 @@
 // Minimally modified by Josh to remove template args, etc.
 
 #include "PLClusterTopology.h"
-#include "../Interactions/AllostericPatchySwapInteraction.h"
+#include "../Interactions/AllostericPatchyInteraction.h"
 //#include "../Particles/PatchyShapeParticle.h"
 
 #include <sstream>
@@ -114,7 +114,7 @@ std::string PLClusterTopology::get_output_string(llint curr_step) {
         //printf("Particle %d has %d neighbors \n",i,neighs.size());
         for (unsigned int j = 0; j < neighs.size(); j++) {
             pair_energy = this->_config_info->interaction->pair_interaction_term(
-                    AllostericPatchySwapInteraction::PATCHY, p, neighs[j]
+                    AllostericPatchyInteraction::PATCHY, p, neighs[j]
             );
             if (pair_energy < 0 && i < neighs[j]->index) {
                 i_neighbors.push_back(neighs[j]->index);

@@ -98,7 +98,7 @@ rule CXX_EXECUTABLE_LINKER__confGenerator_Release
 #############################################
 # Rule for compiling CXX files.
 
-rule CXX_COMPILER__AllostericPatchySwapInteraction_Release
+rule CXX_COMPILER__AllostericPatchyInteraction_Release
   depfile = $DEP_FILE
   deps = gcc
   command = /usr/bin/c++ $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
@@ -108,7 +108,7 @@ rule CXX_COMPILER__AllostericPatchySwapInteraction_Release
 #############################################
 # Rule for linking CXX shared module.
 
-rule CXX_MODULE_LIBRARY_LINKER__AllostericPatchySwapInteraction_Release
+rule CXX_MODULE_LIBRARY_LINKER__AllostericPatchyInteraction_Release
   command = $PRE_LINK && /usr/bin/c++ -fPIC $LANGUAGE_COMPILE_FLAGS $ARCH_FLAGS $LINK_FLAGS -shared $SONAME_FLAG$SONAME -o $TARGET_FILE $in $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
   description = Linking CXX shared module $TARGET_FILE
   restat = $RESTAT
@@ -136,7 +136,7 @@ rule CXX_MODULE_LIBRARY_LINKER__PLClusterTopology_Release
 #############################################
 # Rule for compiling CXX files.
 
-rule CXX_COMPILER__CUDAAllostericPatchySwapInteraction_Release
+rule CXX_COMPILER__CUDAAllostericPatchyInteraction_Release
   depfile = $DEP_FILE
   deps = gcc
   command = /usr/bin/c++ $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
@@ -146,7 +146,7 @@ rule CXX_COMPILER__CUDAAllostericPatchySwapInteraction_Release
 #############################################
 # Rule for linking CXX shared module.
 
-rule CXX_MODULE_LIBRARY_LINKER__CUDAAllostericPatchySwapInteraction_Release
+rule CXX_MODULE_LIBRARY_LINKER__CUDAAllostericPatchyInteraction_Release
   command = $PRE_LINK && /usr/bin/c++ -fPIC $LANGUAGE_COMPILE_FLAGS $ARCH_FLAGS $LINK_FLAGS -shared $SONAME_FLAG$SONAME -o $TARGET_FILE $in $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
   description = Linking CXX shared module $TARGET_FILE
   restat = $RESTAT

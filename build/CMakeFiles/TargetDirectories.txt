@@ -13,9 +13,9 @@
 /home/josh/git/alloassembly/build/contrib/CMakeFiles/edit_cache.dir
 /home/josh/git/alloassembly/build/contrib/CMakeFiles/rebuild_cache.dir
 /home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/evans.dir
-/home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/AllostericPatchySwapInteraction.dir
+/home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/AllostericPatchyInteraction.dir
 /home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/PLClusterTopology.dir
-/home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/CUDAAllostericPatchySwapInteraction.dir
+/home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/CUDAAllostericPatchyInteraction.dir
 /home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/edit_cache.dir
 /home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/rebuild_cache.dir
 /home/josh/git/alloassembly/build/contrib/randisi/CMakeFiles/randisi.dir

@@ -57,12 +57,12 @@ if(NOT generated_file)
 endif()
 
 # Set these up as variables to make reading the generated file easier
-set(CMAKE_COMMAND "/snap/clion/203/bin/cmake/linux/bin/cmake") # path
+set(CMAKE_COMMAND "/snap/clion/222/bin/cmake/linux/x64/bin/cmake") # path
 set(source_file "/home/josh/git/alloassembly/contrib/evans/src/Interactions/CUDAAllostericPatchyInteraction.cu") # path
 set(NVCC_generated_dependency_file "/home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/CUDAAllostericPatchyInteraction.dir/src/Interactions/CUDAAllostericPatchyInteraction_generated_CUDAAllostericPatchyInteraction.cu.o.NVCC-depend") # path
 set(cmake_dependency_file "/home/josh/git/alloassembly/build/contrib/evans/CMakeFiles/CUDAAllostericPatchyInteraction.dir/src/Interactions/CUDAAllostericPatchyInteraction_generated_CUDAAllostericPatchyInteraction.cu.o.depend") # path
-set(CUDA_make2cmake "/snap/clion/203/bin/cmake/linux/share/cmake-3.23/Modules/FindCUDA/make2cmake.cmake") # path
-set(CUDA_parse_cubin "/snap/clion/203/bin/cmake/linux/share/cmake-3.23/Modules/FindCUDA/parse_cubin.cmake") # path
+set(CUDA_make2cmake "/snap/clion/222/bin/cmake/linux/x64/share/cmake-3.24/Modules/FindCUDA/make2cmake.cmake") # path
+set(CUDA_parse_cubin "/snap/clion/222/bin/cmake/linux/x64/share/cmake-3.24/Modules/FindCUDA/parse_cubin.cmake") # path
 set(build_cubin OFF) # bool
 set(CUDA_HOST_COMPILER "/usr/bin/cc") # path
 # We won't actually use these variables for now, but we need to set this, in
@@ -74,8 +74,12 @@ set(generated_cubin_file_internal "/home/josh/git/alloassembly/build/contrib/eva
 set(CUDA_NVCC_EXECUTABLE "/usr/local/cuda/bin/nvcc") # path
 set(CUDA_NVCC_FLAGS  ;; ) # list
 # Build specific configuration flags
+set(CUDA_NVCC_FLAGS_RELEASE  ; )
+set(CUDA_NVCC_FLAGS_DEBUG  ; )
+set(CUDA_NVCC_FLAGS_MINSIZEREL  ; )
+set(CUDA_NVCC_FLAGS_RELWITHDEBINFO  ; )
 set(nvcc_flags -m64;-DCUDAAllostericPatchyInteraction_EXPORTS) # list
-set(CUDA_NVCC_INCLUDE_DIRS [==[$<TARGET_PROPERTY:CUDAAllostericPatchyInteraction,INCLUDE_DIRECTORIES>]==]) # list (needs to be in lua quotes to address backslashes)
+set(CUDA_NVCC_INCLUDE_DIRS [==[/usr/local/cuda/include;$<TARGET_PROPERTY:CUDAAllostericPatchyInteraction,INCLUDE_DIRECTORIES>]==]) # list (needs to be in lua quotes to address backslashes)
 string(REPLACE "\\" "/" CUDA_NVCC_INCLUDE_DIRS "${CUDA_NVCC_INCLUDE_DIRS}")
 set(CUDA_NVCC_COMPILE_DEFINITIONS [==[$<TARGET_PROPERTY:CUDAAllostericPatchyInteraction,COMPILE_DEFINITIONS>]==]) # list (needs to be in lua quotes see #16510 ).
 set(format_flag "-c") # string
@@ -102,6 +106,10 @@ endif()
 # This is the list of host compilation flags.  It C or CXX should already have
 # been chosen by FindCUDA.cmake.
 set(CMAKE_HOST_FLAGS  -D_FORCE_INLINES -fPIC)
+set(CMAKE_HOST_FLAGS_RELEASE -O3 -DNDEBUG)
+set(CMAKE_HOST_FLAGS_DEBUG -g)
+set(CMAKE_HOST_FLAGS_MINSIZEREL -Os -DNDEBUG)
+set(CMAKE_HOST_FLAGS_RELWITHDEBINFO -O2 -g -DNDEBUG)
 
 # Take the compiler flags and package them up to be sent to the compiler via -Xcompiler
 set(nvcc_host_compiler_flags "")

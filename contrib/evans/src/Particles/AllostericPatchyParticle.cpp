@@ -298,7 +298,7 @@ void AllostericPatchyParticle::init_allostery(int state_size, StateTransitionMap
                     int controlidx = abs(patches[pidx].activation_var());
                     // if the bit at the control idx changes
                     if (GET_BIT(beforeState, controlidx) != GET_BIT(afterState, controlidx)){
-                        (*_updateMap[idx]).emplace(pidx); // add to list of flips
+                        (*_updateMap)[idx].emplace(pidx); // add to list of flips
                     }
                 }
             }
