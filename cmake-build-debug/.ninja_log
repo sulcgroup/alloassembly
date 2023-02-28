@@ -549,3 +549,7 @@
 1	6626	1677265850144338007	contrib/evans/CMakeFiles/CUDAAllostericPatchyInteraction.dir/src/Interactions/CUDAAllostericPatchyInteraction_generated_CUDAAllostericPatchyInteraction.cu.o	3cea09677ce0eb79
 1	6626	1677265850144338007	/home/josh/git/alloassembly/cmake-build-debug/contrib/evans/CMakeFiles/CUDAAllostericPatchyInteraction.dir/src/Interactions/CUDAAllostericPatchyInteraction_generated_CUDAAllostericPatchyInteraction.cu.o	3cea09677ce0eb79
 6626	6708	1677265850232337678	/home/josh/git/alloassembly/contrib/evans/CUDAAllostericPatchyInteraction.so	d45ed9d8637649fd
+3	2030	1677622864404605347	contrib/evans/CMakeFiles/CUDAAllostericPatchyInteraction.dir/src/Interactions/AllostericPatchyInteraction.cpp.o	bca292bfe754961f
+3	2078	1677622864452605466	contrib/evans/CMakeFiles/AllostericPatchyInteraction.dir/src/Interactions/AllostericPatchyInteraction.cpp.o	c233fcc272a6675a
+2030	2143	1677622864520605633	/home/josh/git/alloassembly/contrib/evans/CUDAAllostericPatchyInteraction.so	d45ed9d8637649fd
+2078	2168	1677622864544605691	/home/josh/git/alloassembly/contrib/evans/AllostericPatchyInteraction.so	adfb9581a0ae2c34

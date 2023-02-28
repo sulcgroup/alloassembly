@@ -749,10 +749,8 @@ void AllostericPatchyInteraction::_process_state_transition_map(int ptype) {
         int pidx = 0;
         std::array<unsigned int, STATE_TRANSITION_SUBDIV> statemap;
         istringstream strstream(line);
-        while (strstream >> statemap[pidx]){
-            if (pidx > STATE_TRANSITION_SUBDIV){
-                throw oxDNAException("Too long line #%d, transition map file %s", stateTransitionMap.size(), transition_map_file_name);
-            }
+        // any stuff after STATE_TRANSITION_SUBDIV spaces will be treated as comments
+        while (pidx < STATE_TRANSITION_SUBDIV && strstream >> statemap[pidx]){
             pidx++;
         }
         if (pidx != STATE_TRANSITION_SUBDIV){
