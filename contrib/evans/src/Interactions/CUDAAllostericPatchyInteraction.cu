@@ -543,10 +543,12 @@ __device__ void _three_body(CUDA_FS_bond_list *bonds, c_number4 &F, c_number4 &T
  * @param activations
  */
 __global__ void update_patch_activations(c_number4 *poss,
-                                         const unsigned int* particle_states,
-                                         bool* activations_map,
-                                         bool* activations){
+                                         int *particle_state_sizes,
+                                         const unsigned int *particle_states,
+                                         bool *activations_map,
+                                         bool *activations) {
     if(IND >= MD_N[0]) return;
+    if (particle_state_sizes[IND] == 0) return;
     int species = get_particle_type(poss[IND]);
     for (int i = 0; i < MD_N_patches[species]; i++){
         int idx = (species * CUDAAllostericPatchyInteraction::MAX_STATES + particle_states[IND]) * CUDAAllostericPatchyInteraction::MAX_PATCHES + i;
@@ -554,10 +556,12 @@ __global__ void update_patch_activations(c_number4 *poss,
     }
 }
 
-__global__ void step_particle_states(c_number4* poss,
-                                     curandState* rand,
-                                     const unsigned int* state_transition_map,
-                                     unsigned int* states){
+__global__ void step_particle_states(c_number4 *poss,
+                                     int *particle_state_sizes,
+                                     curandState *rand,
+                                     const unsigned int *state_transition_map,
+                                     unsigned int *states) {
+    if (particle_state_sizes[IND] == 0) return;
     int species = get_particle_type(poss[IND]);
     curandState rng = rand[IND];
     // roll on state transition table
@@ -960,6 +964,16 @@ void CUDAAllostericPatchyInteraction::cuda_init(c_number box_side, int N) {
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&_cu_particle_states,
                                            N * sizeof(unsigned int)));
 
+    // allocate memory for particle state sizes
+    CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&_cu_particle_state_sizes, N * sizeof(unsigned int )));
+
+    int stateSizes[N];
+    for (int i = 0; i < N; i++){
+        const AllostericPatchyParticle *p = dynamic_cast<const AllostericPatchyParticle *>(particles[i]);
+        stateSizes[i] = p->state_size();
+    }
+    CUDA_SAFE_CALL(cudaMemcpy(_cu_particle_state_sizes, &stateSizes, N * sizeof(int), cudaMemcpyHostToDevice));
+
     // init particle activation map
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&_cu_particle_activation_map,
                                            N_species * MAX_STATES * MAX_PATCHES * sizeof(bool)));
@@ -971,7 +985,6 @@ void CUDAAllostericPatchyInteraction::cuda_init(c_number box_side, int N) {
 
     // malloc _patch_activations but don't need to populate it, that will happen at first step
     CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc(&_patch_activations, N * MAX_PATCHES * sizeof (bool)));
-
 
     for(auto particle : particles) {
         delete particle;
@@ -1154,6 +1167,7 @@ void CUDAAllostericPatchyInteraction::compute_forces(CUDABaseList *lists, c_numb
 
     // set patch activations
     update_patch_activations<<<_launch_cfg.blocks, _launch_cfg.threads_per_block>>>(d_poss,
+                                                                                    this->_cu_particle_state_sizes,
                                                                                     this->_cu_particle_states,
                                                                                     this->_cu_particle_activation_map,
                                                                                     this->_patch_activations);
@@ -1205,6 +1219,7 @@ void CUDAAllostericPatchyInteraction::compute_forces(CUDABaseList *lists, c_numb
 
     // do state transition step
     step_particle_states<<<_launch_cfg.blocks, _launch_cfg.threads_per_block>>>(d_poss,
+                                                                                this->_cu_particle_state_sizes,
                                                                                 this->_d_rand_state,
                                                                                 this->_cu_state_transition_map,
                                                                                 this->_cu_particle_states);

@@ -28,6 +28,10 @@ protected:
     float *_d_patchy_eps = nullptr;
     float4 *_d_base_patches = nullptr;
 
+    // array to just store the state size of each particle
+    // allows me to skip allosteric computations on non allsoteric particles
+    int* _cu_particle_state_sizes = nullptr;
+
     // particle internal state vars - req'd for allostery
     // the binding states are an array (length num particles) of shorts where each bit in
     // each short is a patch binding state - 0 for unbound, 1 for bound
