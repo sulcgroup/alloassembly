@@ -714,12 +714,17 @@ AllostericPatchyParticle AllostericPatchyInteraction::_process_particle_type(std
 
     p._set_base_patches();
 
-    // if the patch is allosteric
+    // if the particle is allosteric
     if ((getInputInt(obs_input, "state_size", &state_size, 0) == KEY_FOUND) && state_size > 0){
         _process_state_transition_map(type);
         _activation_update_maps[type] = new std::set<int>[state_size * state_size];
         p.init_allostery(state_size, &_state_transition_maps[type], &_activation_update_maps[type]);
-
+    }
+    // if the paricle is not allosteric, set all patches to active
+    else {
+        for (int i = 0; i < p.n_patches(); i++){
+            p.patches[i].set_active(true);
+        }
     }
 
 //	ParticleStateChange test_change(default_state, 2, 0);
