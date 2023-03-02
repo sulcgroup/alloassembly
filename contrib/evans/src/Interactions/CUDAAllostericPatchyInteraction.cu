@@ -563,13 +563,16 @@ __global__ void step_particle_states(c_number4 *poss,
                                      unsigned int *states) {
     if (particle_state_sizes[IND] == 0) return;
     int species = get_particle_type(poss[IND]);
-    curandState rng = rand[IND];
-    // roll on state transition table
-    int table_idx = curand_uniform(&rng) * STATE_TRANSITION_SUBDIV;
-    // big line - do state transition!
-    states[IND] = state_transition_map[(species * CUDAAllostericPatchyInteraction::MAX_STATES + states[IND]) * STATE_TRANSITION_SUBDIV + table_idx];
-    // lorenzo does this in the other functions
-    rand[IND] = rng;
+
+    // for now, transition to the 0 column state
+    states[IND] = state_transition_map[(species * CUDAAllostericPatchyInteraction::MAX_STATES + states[IND]) * STATE_TRANSITION_SUBDIV];
+//    curandState rng = rand[IND];
+//    // roll on state transition table
+//    int table_idx = curand_uniform(&rng) * STATE_TRANSITION_SUBDIV;
+//    // big line - do state transition!
+//    states[IND] = state_transition_map[(species * CUDAAllostericPatchyInteraction::MAX_STATES + states[IND]) * STATE_TRANSITION_SUBDIV + table_idx];
+//    // lorenzo does this in the other functions
+//    rand[IND] = rng;
 }
 
 /** @deprecated use the version with Verlet lists
