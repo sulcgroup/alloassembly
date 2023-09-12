@@ -87,7 +87,6 @@ template<typename number>
 std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
 
 	PatchyShapeInteraction<number> *interaction = dynamic_cast<PatchyShapeInteraction<number> * >(this->_config_info.interaction);
-    interaction->check_patchy_locks();
 
 	BaseParticle<number> *p;
 	int N = *this->_config_info.N;
@@ -103,15 +102,74 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
 
 
     vector<vector<int>> adjList;
+    std::vector<BaseParticle<number> *> neighs;
+    // pre-pre-compute neighbors - idk how many times we may need to get neighbors
+    std::vector<std::vector<BaseParticle<number>*>> all_particle_neighs(*this->_config_info.N);
+    for (int i = 0; i < *this->_config_info.N; i++) {
+        p = this->_config_info.particles[i];
+        neighs =
+                this->_config_info.lists->get_all_neighbours(p);
+        all_particle_neighs[i] = neighs;
+    }
 
+    // precompute step - gotta catch up particle internal state w/ the position/bonds
+    // assume, for simplicity's sake that at least one particle has allostery
+    // this will still work even if no particles are allosteric
+    bool done_precomputing;
+    // note: this loop could be improved by itering pairs instead of each particle, which should be twice as efficient
+    // but frankly I do not care
+    do{
+        done_precomputing = true;
+        // loop each particle
+        for (int i = 0; i < *this->_config_info.N; i++){
+            PatchyShapeParticle<number>* pp = ((PatchyShapeParticle<number>*) this->_config_info.particles[i]);
+            // skip doing this for non-allosteric particles
+            if (!pp->allostery_map->empty()) {
+                neighs = all_particle_neighs[i];
+                for (unsigned int j = 0; j < neighs.size(); j++) {
+                    // do particle interaction
+                    bool* state_before = pp->get_state();
+                    // pair interaction can alter particles state
+                    pair_energy = this->_config_info.interaction->pair_interaction_term(
+                            PatchyShapeInteraction<number>::PATCHY,
+                            pp,
+                            neighs[j],
+                            NULL,
+                            true // gotta use update_forces=True or allostery won't update properly!
+                    );
+                    // if particles interact
+                    if (pair_energy < 0){
+                        // loop patches
+                        bool* state_after = pp->get_state();
+                        // compare arrays
+                        if (!std::equal(state_before, state_before + pp->N_patches, state_after)){
+                            done_precomputing = false;
+                            // do not break loop; still may want to do more particles!
+                        }
+
+                        delete[] state_after;
+                    }
+                    delete[] state_before;
+                }
+
+            }
+        }
+    } while  (!done_precomputing);
+
+    // don't check locks until AFTER we've updated allostery behavior!!!
+    interaction->check_patchy_locks();
+
+    // list particles
 	for (int i = 0; i < *this->_config_info.N; i++) {
 		p = this->_config_info.particles[i];
-		std::vector<BaseParticle<number> *> neighs =
-			this->_config_info.lists->get_all_neighbours(p);
+		neighs = all_particle_neighs[i];
 
+
+        // final computation step
         vector<int> i_neighbors;
 
         //printf("Particle %d has %d neighbors \n",i,neighs.size());
+        // loop particle neighbors
 		for (unsigned int j = 0; j < neighs.size(); j++) {
 			pair_energy = this->_config_info.interaction->pair_interaction_term(
 				PatchyShapeInteraction<number>::PATCHY, p, neighs[j]

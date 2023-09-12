@@ -374,33 +374,33 @@ void PatchyShapeParticle<number>::update_active_patches(int toggle_idx){
 //#ifdef DEBUG
 	std::string flips = "[";
 //#endif
-	for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
-	{
-		bool a_before = this->patches[*it].active;
-		bool a_after = this->patches[*it].toggle_active();
-		flips += std::to_string(*it) + ":" + (a_before ? "A" : "!A") + "->" + (a_after ? "A" : "NA") + ",Flp=" + std::to_string(this->patches[*it].flipped);
-
-
-	}
-//#ifdef DEBUG
-	flips += "]";
-	std::string status_before_str = "[";
-	std::string status_after_str = "[";
-	std::string new_activations = "[";
-	for (int i = 0; i < this->N_patches; i++) {
-		status_before_str += (particle_status[i] ? " T" : " F");
-		status_after_str += (particle_status[i] != (i == toggle_idx) ? " T" : " F"); //right?
-		new_activations += std::to_string(i) + ":" + (this->patches[i].active ? "T " : "F ");
-	}
-	status_before_str += "]";
-	status_after_str += "]";
-	new_activations += "]";
-	OX_LOG(Logger::LOG_INFO, "Particle with ID %d changed internal state from %s to %s, affecting patches %s. \nNew patch activations: %s.",
-			this->index,
-			status_before_str.c_str(),
-			status_after_str.c_str(),
-			flips.c_str(),
-			new_activations.c_str());
+//	for (std::vector<int>::iterator it = updates.begin(); it != updates.end(); ++it)
+//	{
+//		bool a_before = this->patches[*it].active;
+//		bool a_after = this->patches[*it].toggle_active();
+//		flips += std::to_string(*it) + ":" + (a_before ? "A" : "!A") + "->" + (a_after ? "A" : "NA") + ",Flp=" + std::to_string(this->patches[*it].flipped);
+//
+//
+//	}
+////#ifdef DEBUG
+//	flips += "]";
+//	std::string status_before_str = "[";
+//	std::string status_after_str = "[";
+//	std::string new_activations = "[";
+//	for (int i = 0; i < this->N_patches; i++) {
+//		status_before_str += (particle_status[i] ? " T" : " F");
+//		status_after_str += (particle_status[i] != (i == toggle_idx) ? " T" : " F"); //right?
+//		new_activations += std::to_string(i) + ":" + (this->patches[i].active ? "T " : "F ");
+//	}
+//	status_before_str += "]";
+//	status_after_str += "]";
+//	new_activations += "]";
+//	OX_LOG(Logger::LOG_INFO, "Particle with ID %d changed internal state from %s to %s, affecting patches %s. \nNew patch activations: %s.",
+//			this->index,
+//			status_before_str.c_str(),
+//			status_after_str.c_str(),
+//			flips.c_str(),
+//			new_activations.c_str());
 //#endif
 	//don't need to delete particle_status b/c that will be done automatically when change goes out of scope
 }

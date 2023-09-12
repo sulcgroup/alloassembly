@@ -655,9 +655,10 @@ template <typename number>
 PatchyShapeInteraction<number>::~PatchyShapeInteraction() {
 
 	// clear allostery map
-	for (int i_particle = 0; i_particle < this->_N_particle_types; i_particle++) {
-		delete this->_particle_types[i_particle].allostery_map; //deallocate memory for map object
-	}
+    // you actually don't deallocate memory for allostery map; i have no idea why but it causes a memory error
+//	for (int i_particle = 0; i_particle < this->_N_particle_types; i_particle++) {
+//		delete this->_particle_types[i_particle].allostery_map; //deallocate memory for map object
+//	}
 	delete [] _patch_types;
 	delete [] _particle_types;
 	delete [] _interaction_table_types;
@@ -684,24 +685,26 @@ Patch<number> PatchyShapeInteraction<number>::_process_patch_type(std::string in
 	LR_vector<number> position;
 	string vec;
 
-	// a logical string representing the conditional statement controlling whether this patch is active
-	std::string allostery_conditional;
+    // a logical string representing the conditional statement controlling whether this patch is active
+    std::string allostery_conditional;
 
-	// load id, color, strength
-	getInputInt(obs_input,"id",&id,1);
-	getInputInt(obs_input,"color",&color,1);
-	getInputFloat(obs_input,"strength",&strength,1);
+    // load id, color, strength
+    getInputInt(obs_input,"id",&id,1);
+    getInputInt(obs_input,"color",&color,1);
+    getInputFloat(obs_input,"strength",&strength,1);
 
-	// load patch angles and position vector
-	a1 = getVector<number>(obs_input,"a1");
-	a2 = getVector<number>(obs_input,"a2");
-	position = getVector<number>(obs_input,"position");
+    // load patch angles and position vector
+    a1 = getVector<number>(obs_input,"a1");
+    a2 = getVector<number>(obs_input,"a2");
+    position = getVector<number>(obs_input,"position");
 
-	// normalize patch angle vectors, since vector magnitude really should not be relevant here
-	a1 = a1 / a1.norm();
-	a2 = a2 / a2.norm();
+    // normalize patch angle vectors, since vector magnitude really should not be relevant here
+    a1 = a1 / a1.norm();
+    a2 = a2 / a2.norm();
 
-	getInputString(obs_input, "allostery_conditional", allostery_conditional, 1); //1?
+    if (getInputString(obs_input, "allostery_conditional", allostery_conditional, 0) != KEY_FOUND){
+        allostery_conditional = "true"; // default to patches always on
+    }
 
 	// construct patch. can be a straight up object since this will be immutable
 	Patch<number> loaded_patch(a1,a2,position,id,color,strength, true, allostery_conditional);
@@ -998,7 +1001,7 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 
 	//load allosteric logic type
 	std::string allostery_logic_type;
-	if (getInputString(&inp, "allosteric_logic_type", allostery_logic_type, 1) == KEY_FOUND){
+	if (getInputString(&inp, "allosteric_logic_type", allostery_logic_type, 0) == KEY_FOUND){
 		if (allostery_logic_type == "simple"){
 			this->_allostery_logic_type = ALLOSTERY_LOGIC_SIMPLE;
 		} else if (allostery_logic_type == "complex") {
