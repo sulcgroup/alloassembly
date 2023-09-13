@@ -118,17 +118,19 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
     bool done_precomputing;
     // note: this loop could be improved by itering pairs instead of each particle, which should be twice as efficient
     // but frankly I do not care
-    do{
+    do {
         done_precomputing = true;
         // loop each particle
         for (int i = 0; i < *this->_config_info.N; i++){
             PatchyShapeParticle<number>* pp = ((PatchyShapeParticle<number>*) this->_config_info.particles[i]);
             // skip doing this for non-allosteric particles
-            if (!pp->allostery_map->empty()) {
+//            if (!pp->allostery_map->empty()) {
                 neighs = all_particle_neighs[i];
                 for (unsigned int j = 0; j < neighs.size(); j++) {
-                    // do particle interaction
+                    PatchyShapeParticle<number>* qq = ((PatchyShapeParticle<number>*) neighs[j]);
+                                  // do particle interaction
                     bool* state_before = pp->get_state();
+                    bool* partner_state_before = qq->get_state();
                     // pair interaction can alter particles state
                     pair_energy = this->_config_info.interaction->pair_interaction_term(
                             PatchyShapeInteraction<number>::PATCHY,
@@ -138,7 +140,8 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
                             true // gotta use update_forces=True or allostery won't update properly!
                     );
                     // if particles interact
-                    if (pair_energy < 0){
+                    // skip if we're done precomputing anyway
+                    if (done_precomputing && pair_energy < 0){
                         // loop patches
                         bool* state_after = pp->get_state();
                         // compare arrays
@@ -148,11 +151,22 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
                         }
 
                         delete[] state_after;
+                        // skip if we're done precomputing anyway
+                        if (done_precomputing){
+                            // handle state change for other particles
+                            // otherwise we'll miss like 50% of state changes!!!
+                            bool* partner_state_after = ((PatchyShapeParticle<number>*) neighs[j])->get_state();
+                            if (!std::equal(partner_state_before, partner_state_before + qq->N_patches, partner_state_after)){
+                                done_precomputing = false;
+                            }
+                            delete[] partner_state_after;
+                        }
                     }
                     delete[] state_before;
+                    delete[] partner_state_before;
                 }
 
-            }
+//            }
         }
     } while  (!done_precomputing);
 
@@ -171,9 +185,11 @@ std::string PLClusterTopology<number>::get_output_string(llint curr_step) {
         //printf("Particle %d has %d neighbors \n",i,neighs.size());
         // loop particle neighbors
 		for (unsigned int j = 0; j < neighs.size(); j++) {
+            // compute pair energy
 			pair_energy = this->_config_info.interaction->pair_interaction_term(
 				PatchyShapeInteraction<number>::PATCHY, p, neighs[j]
 			);
+            // if pairs are bound and the particle hasn't already been accounted for
 			if (pair_energy < 0 && i < neighs[j]->index) {
                 i_neighbors.push_back(neighs[j]->index);
 				if (
