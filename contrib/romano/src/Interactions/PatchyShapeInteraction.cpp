@@ -510,19 +510,30 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
 
 					number cosa1 = pp->patches[pi].a1 * r_dist_dir;
 					number cosb1 = -qq->patches[pj].a1 * r_dist_dir;
-					number cosa2b2 = pp->patches[pi].a2 * qq->patches[pj].a2;
+
 
 					number  ta1 = LRACOS(cosa1);
 					number  tb1 = LRACOS(cosb1);
-					number  ta2b2 = LRACOS(cosa2b2);
 
 					number  fa1 =  _V_mod(PLPATCH_VM1,ta1);
 					number  fb1 =  _V_mod(PLPATCH_VM1,tb1) ;
 
-					number  fa2b2 =   _V_mod(PLPATCH_VM3,ta2b2);
 
 					number f1 =  K * (exp_part - _patch_E_cut);
-					number angular_part =  fa1 * fb1 * fa2b2;
+					number angular_part =  fa1 * fb1;
+                    number ta2b2, fa2b2; // needs to be in outer scope so it can be used again later
+                    // if torsion is active
+                    if (this->_use_torsion){
+                        //take the dot product of the two a2 vectors
+                        // the dot product should be 1 if the vectors are parallel, 0 if they're orthogonal
+                        number cosa2b2 = pp->patches[pi].a2 * qq->patches[pj].a2;
+                        // take the cosine of that dot product
+                        ta2b2 = LRACOS(cosa2b2);
+                        // apply narrow type modulation function to that cosine
+                        fa2b2 = _V_mod(PLPATCH_VM3,ta2b2);
+                        // incorporate our resulting modifier into the angle
+                        angular_part = angular_part * fa2b2;
+                    }
 
 					energy_ij = f1 * angular_part;
 					energy += energy_ij;
@@ -566,8 +577,12 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
 						 */
 						//printf("CRITICAL 2 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
 						//torque VM3
-						number fa2b2Dsin =  _V_modDsin(PLPATCH_VM3,ta2b2);
-						LR_vector<number> dir = -pp->patches[pi].a2.cross(qq->patches[pj].a2) *  (f1 * fa1 * fb1 * fa2b2Dsin );
+                        number force_multiplier = f1 * fa1 * fb1;
+                        if (this->_use_torsion) {
+                            force_multiplier *= _V_modDsin(PLPATCH_VM3, ta2b2);
+                        }
+                        LR_vector<number>dir = -pp->patches[pi].a2.cross(qq->patches[pj].a2) * force_multiplier;
+//						LR_vector<number> dir = -pp->patches[pi].a2.cross(qq->patches[pj].a2) *  (f1 * fa1 * fb1 * fa2b2Dsin );
 						LR_vector<number> torqueq = dir;
 						LR_vector<number> torquep = dir;
 
@@ -584,9 +599,13 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
 						torquep += ppatch.cross(tmp_force);
 						torqueq += qpatch.cross(tmp_force);
 
-						tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
-						tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
-						/*
+                        if (this->_use_torsion) {
+                            tmp_force +=
+                                    (pp->patches[pi].a1 - r_dist_dir * cosa1) * (f1 * fa1Dsin * fb1 * fa2b2 / rdist);
+                            tmp_force +=
+                                    -(qq->patches[pj].a1 + r_dist_dir * cosb1) * (f1 * fa1 * fb1Dsin * fa2b2 / rdist);
+
+                        }/*
 					tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1 / rdist);
 					tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin  / rdist);
 						 */
