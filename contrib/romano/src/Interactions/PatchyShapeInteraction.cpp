@@ -957,7 +957,6 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 	}
 	OX_LOG(Logger::LOG_INFO, "Using no_multipatch option: %d; only makes sense if used with MC2 MCMovePatchyShape!",this->_no_multipatch);
 
-	/*
 	int use_torsion = 1;
 	if( getInputBoolAsInt(&inp,"use_torsion",&use_torsion,0) == KEY_FOUND)
 	{
@@ -969,15 +968,14 @@ void PatchyShapeInteraction<number>::get_settings(input_file &inp) {
 	}
 	if(this->_use_torsion)
 	{
-	    this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_1PONLY_LJ4896_noEXC_interaction;
+//	    this->_int_map[PATCHY] = &PatchyShapeInteraction<number>::_patchy_1PONLY_LJ4896_noEXC_interaction;
 	    printf("Torsional constraints are on\n");
 	}
 	else
 	{
-		this->_int_map[PATCHY]  = &PatchyShapeInteraction<number>::_patchy_1PONLY_LJ4896_noEXCnoTorsion_interaction;
+//		this->_int_map[PATCHY]  = &PatchyShapeInteraction<number>::_patchy_1PONLY_LJ4896_noEXCnoTorsion_interaction;
 		printf("Torsional constraints are off\n");
 	}
-	 */
 
 	//NOT IMPLEMENTED
 	int same_type_bonding = 1;
