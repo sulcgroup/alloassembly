@@ -169,6 +169,7 @@ public:
 
 
 	inline number _patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
+	inline number _patchy_interaction_notorsion(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces);
 
 	virtual bool multipatch_allowed(void) {return  ! this->_no_multipatch;}
 
@@ -214,7 +215,6 @@ public:
 	number get_alpha() { return _patch_alpha; }
 
 
-	void check_loaded_particles(void); //needed for debugging
 
 	virtual void allocate_particles(BaseParticle<number> **particles, int N);
 

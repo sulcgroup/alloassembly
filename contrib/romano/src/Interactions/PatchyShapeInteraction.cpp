@@ -451,181 +451,320 @@ number PatchyShapeInteraction<number>::_exc_vol_interaction(BaseParticle<number>
 //USING THIS ONE!
 template<typename number>
 number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
-	number rnorm = r->norm();
-	if(rnorm > this->_sqr_rcut) return (number) 0.f;
+    number rnorm = r->norm();
+    if(rnorm > this->_sqr_rcut) return (number) 0.f;
 
-	number energy = (number) 0.f;
+    number energy = (number) 0.f;
 
-	/* repulsion energy, now moved to exc vol
-	number part = 1.0f / powf(rnorm, PATCHY_POWER * 0.5f);
-	energy = part - _E_cut;
+    /* repulsion energy, now moved to exc vol
+    number part = 1.0f / powf(rnorm, PATCHY_POWER * 0.5f);
+    energy = part - _E_cut;
 
-	if(update_forces) {
-		LR_vector<number> force = *r * (PATCHY_POWER * part / rnorm);
-		p->force -= force;
-		q->force += force;
-	}
+    if(update_forces) {
+        LR_vector<number> force = *r * (PATCHY_POWER * part / rnorm);
+        p->force -= force;
+        q->force += force;
+    }
 
-	 */
-	//printf("Particles %d and %d: distance %f  repulsion ene: %f\n",p->index,q->index,sqrt(rnorm),energy);
+     */
+    //printf("Particles %d and %d: distance %f  repulsion ene: %f\n",p->index,q->index,sqrt(rnorm),energy);
 
-	PatchyShapeParticle<number> *pp = static_cast<PatchyShapeParticle<number> *>(p);
-	PatchyShapeParticle<number> *qq = static_cast<PatchyShapeParticle<number> *>(q);
+    PatchyShapeParticle<number> *pp = static_cast<PatchyShapeParticle<number> *>(p);
+    PatchyShapeParticle<number> *qq = static_cast<PatchyShapeParticle<number> *>(q);
 
-	int c = 0;
-	LR_vector<number> tmptorquep(0, 0, 0);
-	LR_vector<number> tmptorqueq(0, 0, 0);
-	for(int pi = 0; pi < pp->N_patches; pi++) {
-		LR_vector<number> ppatch = p->int_centers[pi];
+    int c = 0;
+    LR_vector<number> tmptorquep(0, 0, 0);
+    LR_vector<number> tmptorqueq(0, 0, 0);
+    for(int pi = 0; pi < pp->N_patches; pi++) {
+        LR_vector<number> ppatch = p->int_centers[pi];
 
-		for(int pj = 0; pj < qq->N_patches; pj++) {
-			//printf("Patches %d and %d , colors %d %d \n",pi,pj,pp->patches[pi].color,qq->patches[pj].color);
+        for(int pj = 0; pj < qq->N_patches; pj++) {
+            //printf("Patches %d and %d , colors %d %d \n",pi,pj,pp->patches[pi].color,qq->patches[pj].color);
 
-			//if(pp->patches[pi].color == qq->patches[pj].color && pp->patches[pi].active && qq->patches[pj].active) //patches are complementary
-			if(this->_bonding_allowed(pp,qq,pi,pj)  )
-			{
+            //if(pp->patches[pi].color == qq->patches[pj].color && pp->patches[pi].active && qq->patches[pj].active) //patches are complementary
+            if(this->_bonding_allowed(pp,qq,pi,pj)  )
+            {
 
-				number K = pp->patches[pi].strength;
-				LR_vector<number> qpatch = q->int_centers[pj];
+                number K = pp->patches[pi].strength;
+                LR_vector<number> qpatch = q->int_centers[pj];
 
-				LR_vector<number> patch_dist = *r + qpatch - ppatch;
-				number dist = patch_dist.norm();
-				LR_vector<number> patch_dist_dir = patch_dist / sqrt(dist);
-				number rdist = sqrt(rnorm);
-				LR_vector<number> r_dist_dir = *r / rdist;
+                LR_vector<number> patch_dist = *r + qpatch - ppatch;
+                number dist = patch_dist.norm();
+                LR_vector<number> patch_dist_dir = patch_dist / sqrt(dist);
+                number rdist = sqrt(rnorm);
+                LR_vector<number> r_dist_dir = *r / rdist;
 
-				//printf("Patches %d and %d distance %f  cutoff is: %f,\n",pp->patches[pi].id,qq->patches[pj].id,dist,SQR(PATCHY_CUTOFF));
+                //printf("Patches %d and %d distance %f  cutoff is: %f,\n",pp->patches[pi].id,qq->patches[pj].id,dist,SQR(PATCHY_CUTOFF));
 
-				if(dist < SQR(PATCHY_CUTOFF)) {
-					//printf("CRITICAL CALCULATING FORCE BETWEEN %d %d",q->index,p->index);
-					c++;
-					number energy_ij = 0;
-					//distance part of attractive interaction
-					number r8b10 = dist*dist*dist*dist / _patch_pow_alpha;
-					number exp_part = -1.001f * exp(-(number)0.5f * r8b10 * dist);
+                if(dist < SQR(PATCHY_CUTOFF)) {
+                    //printf("CRITICAL CALCULATING FORCE BETWEEN %d %d",q->index,p->index);
+                    c++;
+                    number energy_ij = 0;
+                    //distance part of attractive interaction
+                    number r8b10 = dist*dist*dist*dist / _patch_pow_alpha;
+                    number exp_part = -1.001f * exp(-(number)0.5f * r8b10 * dist);
 
-					//energy += exp_part - _patch_E_cut;
+                    //energy += exp_part - _patch_E_cut;
 
-					//angular part of interaction
+                    //angular part of interaction
 
-					number cosa1 = pp->patches[pi].a1 * r_dist_dir;
-					number cosb1 = -qq->patches[pj].a1 * r_dist_dir;
+                    number cosa1 = pp->patches[pi].a1 * r_dist_dir;
+                    number cosb1 = -qq->patches[pj].a1 * r_dist_dir;
+                    number cosa2b2 = pp->patches[pi].a2 * qq->patches[pj].a2;
 
+                    number  ta1 = LRACOS(cosa1);
+                    number  tb1 = LRACOS(cosb1);
+                    number  ta2b2 = LRACOS(cosa2b2);
 
-					number  ta1 = LRACOS(cosa1);
-					number  tb1 = LRACOS(cosb1);
+                    number  fa1 =  _V_mod(PLPATCH_VM1,ta1);
+                    number  fb1 =  _V_mod(PLPATCH_VM1,tb1) ;
 
-					number  fa1 =  _V_mod(PLPATCH_VM1,ta1);
-					number  fb1 =  _V_mod(PLPATCH_VM1,tb1) ;
+                    number  fa2b2 =   _V_mod(PLPATCH_VM3,ta2b2);
 
+                    number f1 =  K * (exp_part - _patch_E_cut);
+                    number angular_part =  fa1 * fb1 * fa2b2;
 
-					number f1 =  K * (exp_part - _patch_E_cut);
-					number angular_part =  fa1 * fb1;
-                    number ta2b2, fa2b2; // needs to be in outer scope so it can be used again later
-                    // if torsion is active
-                    if (this->_use_torsion){
-                        //take the dot product of the two a2 vectors
-                        // the dot product should be 1 if the vectors are parallel, 0 if they're orthogonal
-                        number cosa2b2 = pp->patches[pi].a2 * qq->patches[pj].a2;
-                        // take the cosine of that dot product
-                        ta2b2 = LRACOS(cosa2b2);
-                        // apply narrow type modulation function to that cosine
-                        fa2b2 = _V_mod(PLPATCH_VM3,ta2b2);
-                        // incorporate our resulting modifier into the angle
-                        angular_part = angular_part * fa2b2;
+                    energy_ij = f1 * angular_part;
+                    energy += energy_ij;
+
+                    //PRO LUKASE:
+                    // if (energy_ij < -1.)
+                    // {
+                    //	printf("@@@@: particle: %d , patch %d binds to particle %d, patch %d \n",p->index,pi,q->index,pj);
+                    // }
+
+                    //patchy locking enabled for MD
+                    if(update_forces && this->_no_multipatch)
+                    {
+                        if (energy_ij < this->_lock_cutoff )
+                        {
+                            qq->set_lock(pj, p->index,pi,energy_ij);
+                            pp->set_lock(pi, q->index,pj,energy_ij);
+                        }
+                        else
+                        {
+                            qq->unlock(pj);
+                            pp->unlock(pi);
+
+                        }
+
                     }
 
-					energy_ij = f1 * angular_part;
-					energy += energy_ij;
+                    //printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f, cos: %f %f %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part,pp->patches[pi].a1.x,pp->patches[pi].a1.y,pp->patches[pi].a1.z);
 
-					//PRO LUKASE:
-					// if (energy_ij < -1.)
-					// {
-					//	printf("@@@@: particle: %d , patch %d binds to particle %d, patch %d \n",p->index,pi,q->index,pj);
-					// }
+                    //printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part);
+                    if(update_forces ) {
+                        number f1D =  (5 * exp_part * r8b10);
+                        LR_vector<number> tmp_force = patch_dist * (f1D * angular_part);
+                        //printf("CRITICAL 1 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
 
-					//patchy locking enabled for MD
-					if(update_forces && this->_no_multipatch)
-					{
-						if (energy_ij < this->_lock_cutoff )
-						{
-							qq->set_lock(pj, p->index,pi,energy_ij);
-							pp->set_lock(pi, q->index,pj,energy_ij);
-						}
-						else
-						{
-							qq->unlock(pj);
-							pp->unlock(pi);
-
-						}
-
-					}
-
-					//printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f, cos: %f %f %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part,pp->patches[pi].a1.x,pp->patches[pi].a1.y,pp->patches[pi].a1.z);
-
-					//printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part);
-					if(update_forces ) {
-						number f1D =  (5 * exp_part * r8b10);
-						LR_vector<number> tmp_force = patch_dist * (f1D * angular_part);
-						//printf("CRITICAL 1 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
-
-						number fa1Dsin =  _V_modDsin(PLPATCH_VM1,ta1);
-						number fb1Dsin =  _V_modDsin(PLPATCH_VM1,tb1);
-						/*
-					tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
-					tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
-						 */
-						//printf("CRITICAL 2 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
-						//torque VM3
-                        number force_multiplier = f1 * fa1 * fb1;
-                        if (this->_use_torsion) {
-                            force_multiplier *= _V_modDsin(PLPATCH_VM3, ta2b2);
-                        }
-                        LR_vector<number>dir = -pp->patches[pi].a2.cross(qq->patches[pj].a2) * force_multiplier;
-//						LR_vector<number> dir = -pp->patches[pi].a2.cross(qq->patches[pj].a2) *  (f1 * fa1 * fb1 * fa2b2Dsin );
-						LR_vector<number> torqueq = dir;
-						LR_vector<number> torquep = dir;
+                        number fa1Dsin =  _V_modDsin(PLPATCH_VM1,ta1);
+                        number fb1Dsin =  _V_modDsin(PLPATCH_VM1,tb1);
+                        /*
+                    tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
+                    tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
+                         */
+                        //printf("CRITICAL 2 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
+                        //torque VM3
+                        number fa2b2Dsin =  _V_modDsin(PLPATCH_VM3,ta2b2);
+                        LR_vector<number> dir = -pp->patches[pi].a2.cross(qq->patches[pj].a2) *  (f1 * fa1 * fb1 * fa2b2Dsin );
+                        LR_vector<number> torqueq = dir;
+                        LR_vector<number> torquep = dir;
 
 
-						//torque VM1
-						dir = r_dist_dir.cross(pp->patches[pi].a1);
-						torquep += dir * (f1 * fa1Dsin * fb1 );
+                        //torque VM1
+                        dir = r_dist_dir.cross(pp->patches[pi].a1);
+                        torquep += dir * (f1 * fa1Dsin * fb1 );
 
-						//torque VM2
-						dir = r_dist_dir.cross(qq->patches[pj].a1);
-						torqueq += dir * (f1 * fa1 * fb1Dsin );
+                        //torque VM2
+                        dir = r_dist_dir.cross(qq->patches[pj].a1);
+                        torqueq += dir * (f1 * fa1 * fb1Dsin );
 
 
-						torquep += ppatch.cross(tmp_force);
-						torqueq += qpatch.cross(tmp_force);
+                        torquep += ppatch.cross(tmp_force);
+                        torqueq += qpatch.cross(tmp_force);
 
-                        if (this->_use_torsion) {
-                            tmp_force +=
-                                    (pp->patches[pi].a1 - r_dist_dir * cosa1) * (f1 * fa1Dsin * fb1 * fa2b2 / rdist);
-                            tmp_force +=
-                                    -(qq->patches[pj].a1 + r_dist_dir * cosb1) * (f1 * fa1 * fb1Dsin * fa2b2 / rdist);
+                        tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
+                        tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
+                        /*
+                    tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1 / rdist);
+                    tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin  / rdist);
+                         */
 
-                        }/*
-					tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1 / rdist);
-					tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin  / rdist);
-						 */
+                        p->torque -= p->orientationT * torquep;
+                        q->torque += q->orientationT * torqueq;
 
-						p->torque -= p->orientationT * torquep;
-						q->torque += q->orientationT * torqueq;
+                        p->force -= tmp_force;
+                        q->force += tmp_force;
 
-						p->force -= tmp_force;
-						q->force += tmp_force;
-
-						// we are in the single bond per patch condition and hence we can safely return here
-						//return energy;
-					}
-				}
-			}
-		}
-	}
-	return energy;
+                        // we are in the single bond per patch condition and hence we can safely return here
+                        //return energy;
+                    }
+                }
+            }
+        }
+    }
+    return energy;
 }
 
+*///USING THIS ONE!
+template<typename number>
+number PatchyShapeInteraction<number>::_patchy_interaction_notorsion(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
+    number rnorm = r->norm();
+    if(rnorm > this->_sqr_rcut) return (number) 0.f;
+
+    number energy = (number) 0.f;
+
+    /* repulsion energy, now moved to exc vol
+    number part = 1.0f / powf(rnorm, PATCHY_POWER * 0.5f);
+    energy = part - _E_cut;
+
+    if(update_forces) {
+        LR_vector<number> force = *r * (PATCHY_POWER * part / rnorm);
+        p->force -= force;
+        q->force += force;
+    }
+
+     */
+    //printf("Particles %d and %d: distance %f  repulsion ene: %f\n",p->index,q->index,sqrt(rnorm),energy);
+
+    PatchyShapeParticle<number> *pp = static_cast<PatchyShapeParticle<number> *>(p);
+    PatchyShapeParticle<number> *qq = static_cast<PatchyShapeParticle<number> *>(q);
+
+    int c = 0;
+    LR_vector<number> tmptorquep(0, 0, 0);
+    LR_vector<number> tmptorqueq(0, 0, 0);
+    for(int pi = 0; pi < pp->N_patches; pi++) {
+        LR_vector<number> ppatch = p->int_centers[pi];
+
+        for(int pj = 0; pj < qq->N_patches; pj++) {
+            //printf("Patches %d and %d , colors %d %d \n",pi,pj,pp->patches[pi].color,qq->patches[pj].color);
+
+            //if(pp->patches[pi].color == qq->patches[pj].color && pp->patches[pi].active && qq->patches[pj].active) //patches are complementary
+            if(this->_bonding_allowed(pp,qq,pi,pj)  )
+            {
+
+                number K = pp->patches[pi].strength;
+                LR_vector<number> qpatch = q->int_centers[pj];
+
+                LR_vector<number> patch_dist = *r + qpatch - ppatch;
+                number dist = patch_dist.norm();
+                LR_vector<number> patch_dist_dir = patch_dist / sqrt(dist);
+                number rdist = sqrt(rnorm);
+                LR_vector<number> r_dist_dir = *r / rdist;
+
+                //printf("Patches %d and %d distance %f  cutoff is: %f,\n",pp->patches[pi].id,qq->patches[pj].id,dist,SQR(PATCHY_CUTOFF));
+
+                if(dist < SQR(PATCHY_CUTOFF)) {
+                    //printf("CRITICAL CALCULATING FORCE BETWEEN %d %d",q->index,p->index);
+                    c++;
+                    number energy_ij = 0;
+                    //distance part of attractive interaction
+                    number r8b10 = dist*dist*dist*dist / _patch_pow_alpha;
+                    number exp_part = -1.001f * exp(-(number)0.5f * r8b10 * dist);
+
+                    //energy += exp_part - _patch_E_cut;
+
+                    //angular part of interaction
+
+                    number cosa1 = pp->patches[pi].a1 * r_dist_dir;
+                    number cosb1 = -qq->patches[pj].a1 * r_dist_dir;
+                    number cosa2b2 = pp->patches[pi].a2 * qq->patches[pj].a2;
+
+                    number  ta1 = LRACOS(cosa1);
+                    number  tb1 = LRACOS(cosb1);
+                    number  ta2b2 = LRACOS(cosa2b2);
+
+                    number  fa1 =  _V_mod(PLPATCH_VM1,ta1);
+                    number  fb1 =  _V_mod(PLPATCH_VM1,tb1) ;
+
+                    number  fa2b2 =   _V_mod(PLPATCH_VM3,ta2b2);
+
+                    number f1 =  K * (exp_part - _patch_E_cut);
+                    number angular_part =  fa1 * fb1 * fa2b2;
+
+                    energy_ij = f1 * angular_part;
+                    energy += energy_ij;
+
+                    //PRO LUKASE:
+                    // if (energy_ij < -1.)
+                    // {
+                    //	printf("@@@@: particle: %d , patch %d binds to particle %d, patch %d \n",p->index,pi,q->index,pj);
+                    // }
+
+                    //patchy locking enabled for MD
+                    if(update_forces && this->_no_multipatch)
+                    {
+                        if (energy_ij < this->_lock_cutoff )
+                        {
+                            qq->set_lock(pj, p->index,pi,energy_ij);
+                            pp->set_lock(pi, q->index,pj,energy_ij);
+                        }
+                        else
+                        {
+                            qq->unlock(pj);
+                            pp->unlock(pi);
+
+                        }
+
+                    }
+
+                    //printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f, cos: %f %f %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part,pp->patches[pi].a1.x,pp->patches[pi].a1.y,pp->patches[pi].a1.z);
+
+                    //printf("Patches %d and %d distance %f , K:%f, attraction ene: %f, exp_part: %f, E_cut: %f, angular ene: %f\n",pp->patches[pi].id,qq->patches[pj].id,dist,K,(exp_part - _patch_E_cut),exp_part,_patch_E_cut,angular_part);
+                    if(update_forces ) {
+                        number f1D =  (5 * exp_part * r8b10);
+                        LR_vector<number> tmp_force = patch_dist * (f1D * angular_part);
+                        //printf("CRITICAL 1 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
+
+                        number fa1Dsin =  _V_modDsin(PLPATCH_VM1,ta1);
+                        number fb1Dsin =  _V_modDsin(PLPATCH_VM1,tb1);
+                        /*
+                    tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
+                    tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
+                         */
+                        //printf("CRITICAL 2 Adding %f %f %f \n",tmp_force.x,tmp_force.y,tmp_force.z);
+                        //torque VM3
+                        number fa2b2Dsin =  _V_modDsin(PLPATCH_VM3,ta2b2);
+                        LR_vector<number> dir = -pp->patches[pi].a2.cross(qq->patches[pj].a2) *  (f1 * fa1 * fb1 * fa2b2Dsin );
+                        LR_vector<number> torqueq = dir;
+                        LR_vector<number> torquep = dir;
+
+
+                        //torque VM1
+                        dir = r_dist_dir.cross(pp->patches[pi].a1);
+                        torquep += dir * (f1 * fa1Dsin * fb1 );
+
+                        //torque VM2
+                        dir = r_dist_dir.cross(qq->patches[pj].a1);
+                        torqueq += dir * (f1 * fa1 * fb1Dsin );
+
+
+                        torquep += ppatch.cross(tmp_force);
+                        torqueq += qpatch.cross(tmp_force);
+
+                        tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1* fa2b2 / rdist);
+                        tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin * fa2b2 / rdist);
+                        /*
+                    tmp_force += (pp->patches[pi].a1 -  r_dist_dir * cosa1) * (f1 * fa1Dsin *  fb1 / rdist);
+                    tmp_force += -(qq->patches[pj].a1 +  r_dist_dir * cosb1) * (f1 * fa1 *  fb1Dsin  / rdist);
+                         */
+
+                        p->torque -= p->orientationT * torquep;
+                        q->torque += q->orientationT * torqueq;
+
+                        p->force -= tmp_force;
+                        q->force += tmp_force;
+
+                        // we are in the single bond per patch condition and hence we can safely return here
+                        //return energy;
+                    }
+                }
+            }
+        }
+    }
+    return energy;
+}
 
 template <typename number>
 PatchyShapeInteraction<number>::PatchyShapeInteraction() : BaseInteraction<number, PatchyShapeInteraction<number> >()  {
@@ -1259,7 +1398,11 @@ number PatchyShapeInteraction<number>::pair_interaction_nonbonded(BaseParticle<n
 
 	number energy;
 
-	energy = this->_patchy_interaction(p, q, r, update_forces);
+    if (this->_use_torsion) {
+        energy = this->_patchy_interaction(p, q, r, update_forces);
+    } else {
+        energy = this->_patchy_interaction_notorsion(p, q, r, update_forces);
+    }
 	energy += this->_exc_vol_interaction(p,q,r,update_forces);
 
 	return energy;
@@ -1267,6 +1410,7 @@ number PatchyShapeInteraction<number>::pair_interaction_nonbonded(BaseParticle<n
 
 
 
+/*
 /*
 template<typename number>
 void PatchyShapeInteraction<number>::generate_random_configuration(BaseParticle<number> **particles, int N, number box_side) {
