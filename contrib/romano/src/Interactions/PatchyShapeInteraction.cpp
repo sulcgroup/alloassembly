@@ -607,7 +607,7 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
     return energy;
 }
 
-*///USING THIS ONE!
+///USING THIS ONE!
 template<typename number>
 number PatchyShapeInteraction<number>::_patchy_interaction_notorsion(BaseParticle<number> *p, BaseParticle<number> *q, LR_vector<number> *r, bool update_forces) {
     number rnorm = r->norm();
