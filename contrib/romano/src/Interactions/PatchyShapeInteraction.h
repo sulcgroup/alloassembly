@@ -53,7 +53,7 @@
  * interaction_type = plpatchy
  *
  * @verbatim
- *
+     *
 particle_types_N = <int> (number of particle types)
 patch_types_N  = <int> (number of patches type
 patchy_file = <string> (name of the file with patch types)
