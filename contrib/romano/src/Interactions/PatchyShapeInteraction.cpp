@@ -1300,20 +1300,23 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 	int N_types;
 	std::ifstream topology(this->_topology_filename, ios::in); // open a file stream to topology file
 	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
-	char line[4096]; // bad code, has caused segfault issue in the past. TODO: rewrite
-	topology.getline(line, 512);
-	sscanf(line, "%*d %d\n", &N_types);
+    int N_top_particles;
+
+    topology >> N_top_particles;
+    if (N_top_particles != N){
+        throw oxDNAException("Mismatch between particle counts %d and count in topology %d", N, N_top_particles);
+    }
+    topology >> N_types;
+
 	allocate_particles(particles, N);
 	//second line specifies numbero f particles of each  type
-	topology.getline(line,4090);
 	//printf ("N:%d FIRST LINE:--%s--\n", N, line);
-
-	std::stringstream ss(line); // create a string stream for line
+    std::string particles_list;
 
 	//int count_type;
 	int total_count = 0;
 	int type = 0;
-	while (ss >> type)
+	while (topology >> type)
 	{
 		//printf("Loaded type %d, and state is %d\n",type,ss.good());
 		fflush(stdout);
@@ -1343,7 +1346,7 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 		//printf("at the end of while, Loaded type %d, and state is %d\n",type,ss.good());
 
 	}
-	OX_LOG(Logger::LOG_INFO, "There were %d particles, %d types, and finished allocation, and line was %s, and N_particle types was %d",N,N_types,line,_N_particle_types);
+	OX_LOG(Logger::LOG_INFO, "There were %d particles, %d types, and finished allocation, and N_particle types was %d",N,N_types,_N_particle_types);
 	int patch_index = 0;
 	for(int i = 0; i < N; i++)
 	{
@@ -1360,8 +1363,8 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 		//printf("\n");
 	}
 
-
 	this->N_patches = patch_index;
+    OX_LOG(Logger::LOG_INFO, "Setup complete");
 }
 
 
