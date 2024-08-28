@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -O3 -DNDEBUG  -shared -Wl,-soname,PLClusterTopology.so -o ../../../contrib/romano/PLClusterTopology.so CMakeFiles/PLClusterTopology.dir/src/Observables/PLClusterTopology.cpp.o CMakeFiles/PLClusterTopology.dir/src/Interactions/PatchyShapeInteraction.cpp.o CMakeFiles/PLClusterTopology.dir/src/Particles/PatchyShapeParticle.cpp.o 
