@@ -685,7 +685,7 @@ Patch<number> PatchyShapeInteraction<number>::_process_patch_type(std::string in
 	string vec;
 
 	// a logical string representing the conditional statement controlling whether this patch is active
-	std::string allostery_conditional;
+	std::string allostery_conditional("true");
 
 	// load id, color, strength
 	getInputInt(obs_input,"id",&id,1);
@@ -701,7 +701,7 @@ Patch<number> PatchyShapeInteraction<number>::_process_patch_type(std::string in
 	a1 = a1 / a1.norm();
 	a2 = a2 / a2.norm();
 
-	getInputString(obs_input, "allostery_conditional", allostery_conditional, 1); //1?
+	getInputString(obs_input, "allostery_conditional", allostery_conditional, 0); //1?
 
 	// construct patch. can be a straight up object since this will be immutable
 	Patch<number> loaded_patch(a1,a2,position,id,color,strength, true, allostery_conditional);
@@ -1300,20 +1300,23 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 	int N_types;
 	std::ifstream topology(this->_topology_filename, ios::in); // open a file stream to topology file
 	if(!topology.good()) throw oxDNAException("Can't read topology file '%s'. Aborting", this->_topology_filename);
-	char line[4096]; // bad code, has caused segfault issue in the past. TODO: rewrite
-	topology.getline(line, 512);
-	sscanf(line, "%*d %d\n", &N_types);
+	char first_line[4096]; // bad code, has caused segfault issue in the past. TODO: rewrite
+	topology.getline(first_line, 512);
+	sscanf(first_line, "%*d %d\n", &N_types);
 	allocate_particles(particles, N);
 	//second line specifies numbero f particles of each  type
-	topology.getline(line,4090);
+//    std::string particles_list;
+//    topology >> particles_list;
+//    OX_LOG(Logger::LOG_INFO, particles_list.c_str());
+//	topology.getline(particles_line, 2*N);
 	//printf ("N:%d FIRST LINE:--%s--\n", N, line);
 
-	std::stringstream ss(line); // create a string stream for line
+//	std::stringstream ss(particles_list); // create a string stream for line
 
 	//int count_type;
 	int total_count = 0;
 	int type = 0;
-	while (ss >> type)
+	while (topology >> type)
 	{
 		//printf("Loaded type %d, and state is %d\n",type,ss.good());
 		fflush(stdout);
@@ -1343,7 +1346,7 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 		//printf("at the end of while, Loaded type %d, and state is %d\n",type,ss.good());
 
 	}
-	OX_LOG(Logger::LOG_INFO, "There were %d particles, %d types, and finished allocation, and line was %s, and N_particle types was %d",N,N_types,line,_N_particle_types);
+	OX_LOG(Logger::LOG_INFO, "There were %d particles, %d types, and finished allocation, and N_particle types was %d",N,N_types,_N_particle_types);
 	int patch_index = 0;
 	for(int i = 0; i < N; i++)
 	{
@@ -1362,6 +1365,7 @@ void PatchyShapeInteraction<number>::read_topology(int N, int *N_strands, BasePa
 
 
 	this->N_patches = patch_index;
+    OX_LOG(Logger::LOG_INFO, "Setup complete");
 }
 
 
