@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,MGInteraction.so -o /home/josh/git/alloassembly/contrib/rovigatti/MGInteraction.so CMakeFiles/MGInteraction.dir/src/Interactions/MGInteraction.cpp.o

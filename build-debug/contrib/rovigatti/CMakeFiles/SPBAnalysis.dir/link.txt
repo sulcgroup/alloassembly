@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,SPBAnalysis.so -o /home/josh/git/alloassembly/contrib/rovigatti/SPBAnalysis.so CMakeFiles/SPBAnalysis.dir/src/Observables/SPBAnalysis.cpp.o

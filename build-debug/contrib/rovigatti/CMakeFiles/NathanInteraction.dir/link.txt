@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,NathanInteraction.so -o /home/josh/git/alloassembly/contrib/rovigatti/NathanInteraction.so CMakeFiles/NathanInteraction.dir/src/Interactions/NathanInteraction.cpp.o

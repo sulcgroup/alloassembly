@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,StarrConf.so -o /home/josh/git/alloassembly/contrib/rovigatti/StarrConf.so CMakeFiles/StarrConf.dir/src/Observables/StarrConf.cpp.o

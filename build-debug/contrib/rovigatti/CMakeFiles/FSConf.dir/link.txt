@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,FSConf.so -o /home/josh/git/alloassembly/contrib/rovigatti/FSConf.so CMakeFiles/FSConf.dir/src/Observables/FSConf.cpp.o

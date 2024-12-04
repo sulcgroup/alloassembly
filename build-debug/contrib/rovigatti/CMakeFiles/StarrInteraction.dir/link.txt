@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,StarrInteraction.so -o /home/josh/git/alloassembly/contrib/rovigatti/StarrInteraction.so CMakeFiles/StarrInteraction.dir/src/Interactions/StarrInteraction.cpp.o

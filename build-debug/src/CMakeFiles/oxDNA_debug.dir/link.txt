@@ -1,0 +1,1 @@
+/usr/bin/c++  -D_FORCE_INLINES -g -rdynamic CMakeFiles/oxDNA_debug.dir/oxDNA.cpp.o -o ../bin/oxDNA_debug  libcommon_debug.a -ldl

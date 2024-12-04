@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,CPAnalysis.so -o /home/josh/git/alloassembly/contrib/rovigatti/CPAnalysis.so CMakeFiles/CPAnalysis.dir/src/Observables/CPAnalysis.cpp.o

@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,MicrogelElasticity.so -o /home/josh/git/alloassembly/contrib/rovigatti/MicrogelElasticity.so CMakeFiles/MicrogelElasticity.dir/src/Observables/MicrogelElasticity.cpp.o

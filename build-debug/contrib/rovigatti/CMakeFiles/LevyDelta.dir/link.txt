@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,LevyDelta.so -o /home/josh/git/alloassembly/contrib/rovigatti/LevyDelta.so CMakeFiles/LevyDelta.dir/src/Observables/LevyDelta.cpp.o

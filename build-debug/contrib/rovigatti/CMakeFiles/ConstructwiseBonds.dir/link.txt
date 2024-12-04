@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,ConstructwiseBonds.so -o /home/josh/git/alloassembly/contrib/rovigatti/ConstructwiseBonds.so CMakeFiles/ConstructwiseBonds.dir/src/Observables/ConstructwiseBonds.cpp.o

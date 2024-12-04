@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,ManfredoInteraction.so -o /home/josh/git/alloassembly/contrib/rovigatti/ManfredoInteraction.so CMakeFiles/ManfredoInteraction.dir/src/Interactions/ManfredoInteraction.cpp.o

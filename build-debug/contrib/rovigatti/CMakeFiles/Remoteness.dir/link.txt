@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,Remoteness.so -o /home/josh/git/alloassembly/contrib/rovigatti/Remoteness.so CMakeFiles/Remoteness.dir/src/Observables/Remoteness.cpp.o

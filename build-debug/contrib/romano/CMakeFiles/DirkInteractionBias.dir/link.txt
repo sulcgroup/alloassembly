@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -D_FORCE_INLINES -g -shared -Wl,-soname,DirkInteractionBias.so -o /home/josh/git/alloassembly/contrib/romano/DirkInteractionBias.so CMakeFiles/DirkInteractionBias.dir/src/Interactions/DirkInteractionBias.cpp.o
