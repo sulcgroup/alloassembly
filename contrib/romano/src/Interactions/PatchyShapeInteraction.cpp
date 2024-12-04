@@ -489,13 +489,14 @@ number PatchyShapeInteraction<number>::_patchy_interaction(BaseParticle<number> 
                 LR_vector<number> qpatch = q->int_centers[pj];
 
                 LR_vector<number> patch_dist = *r + qpatch - ppatch;
-                number dist = patch_dist.norm();
+                number dist = patch_dist.norm(); // this is actually the distance-squared
                 LR_vector<number> patch_dist_dir = patch_dist / sqrt(dist);
                 number rdist = sqrt(rnorm);
                 LR_vector<number> r_dist_dir = *r / rdist;
 
-                //printf("Patches %d and %d distance %f  cutoff is: %f,\n",pp->patches[pi].id,qq->patches[pj].id,dist,SQR(PATCHY_CUTOFF));
+//                printf("Patches %d and %d distance %f  cutoff is: %f,\n",pp->patches[pi].id,qq->patches[pj].id,dist,SQR(PATCHY_CUTOFF));
 
+                // if the patch-patch distance is less than the distance cutoff
                 if(dist < SQR(PATCHY_CUTOFF)) {
                     //printf("CRITICAL CALCULATING FORCE BETWEEN %d %d",q->index,p->index);
                     c++;
@@ -1712,8 +1713,8 @@ void PatchyShapeInteraction<number>::check_patchy_locks(ConfigInfo<number>  *Inf
 					{
 						if(p->patches[ppatch].locked_to(qid,qqpatch) || qq->patches[qqpatch].locked_to(pid,ppatch))
 						{
-                            printf("Found a wrong lock, they should be not locked: %d (%d) - %d (%d), %f",pid,ppatch,qid,qqpatch,new_ene);
-//							throw oxDNAException("Found a wrong lock, they should be not locked: %d (%d) - %d (%d), %f",pid,ppatch,qid,qqpatch,new_ene);
+//                            printf("Found a wrong lock, they should be not locked: %d (%d) - %d (%d), %f",pid,ppatch,qid,qqpatch,new_ene);
+							throw oxDNAException("Found a wrong lock, they should be not locked: %d (%d) - %d (%d), %f",pid,ppatch,qid,qqpatch,new_ene);
 						}
 
 					}
